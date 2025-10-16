@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm ci --prefer-offline --no-audit && npm run vercel-build",
-  "outputDirectory": "out",
+  "buildCommand": "npm ci --prefer-offline --no-audit && npm run build",
+  "outputDirectory": "dist",
   "installCommand": "npm ci --prefer-offline --no-audit",
   "framework": "vite",
   "nodeVersion": "18.x",
