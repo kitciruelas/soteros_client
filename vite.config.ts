@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 
 const base = process.env.BASE_PATH || '/'
 const isPreview = process.env.IS_PREVIEW ? true : false;
+const isProduction = process.env.NODE_ENV === 'production';
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -22,6 +23,13 @@ export default defineConfig({
           router: ['react-router-dom'],
           ui: ['recharts', 'leaflet']
         }
+      }
+    },
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: isProduction,  // Remove console.log only in production
+        drop_debugger: isProduction  // Remove debugger statements only in production
       }
     }
   },
