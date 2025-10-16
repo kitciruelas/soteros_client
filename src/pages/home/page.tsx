@@ -27,13 +27,6 @@ export default function Home() {
     totalIncidents: 0,
   })
   
-  // Default stats for fallback
-  const defaultStats = {
-    responders: 25,
-    evacuationCenters: 8,
-    residentsCovered: 1500,
-    totalIncidents: 12,
-  }
   const [loadingStats, setLoadingStats] = useState(true)
   const [statsError, setStatsError] = useState<string | null>(null)
   const [testimonials, setTestimonials] = useState<
@@ -143,12 +136,11 @@ export default function Home() {
           })
         } else {
           console.error('Stats API returned success: false', response)
-          setStatsError("Failed to load stats")
+          setStatsError("We're experiencing technical difficulties. Please try again later.")
         }
       } catch (error) {
         console.error('Error fetching stats:', error)
-        setStats(defaultStats) // Use default stats as fallback
-        setStatsError("Using sample data - API unavailable")
+        setStatsError("We're experiencing technical difficulties. Please try again later.")
       } finally {
         setLoadingStats(false)
       }
@@ -647,15 +639,12 @@ export default function Home() {
             </div>
           ) : statsError ? (
             <div className="text-center bg-white rounded-3xl shadow-xl border-2 border-gray-100 p-12 md:p-16">
-              <div className="w-20 h-20 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <i className="ri-information-line text-3xl text-yellow-500"></i>
+              <div className="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i className="ri-error-warning-line text-3xl text-red-500"></i>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Using Sample Data</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Unable to Load Statistics</h3>
               <p className="text-gray-600 text-lg">
-                {statsError.includes("sample data") 
-                  ? "Displaying sample statistics while we connect to our database."
-                  : "We're experiencing technical difficulties. Please try again later."
-                }
+                {statsError}
               </p>
             </div>
           ) : (
