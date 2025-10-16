@@ -1,0 +1,659 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import AdminSidebar from './AdminSidebar';
+import AdminAuthGuard from './AdminAuthGuard';
+import { getAuthState, clearAuthData } from '../utils/auth';
+import { adminAuthApi, incidentsApi } from '../utils/api';
+import { apiRequest } from '../utils/api';
+import websocketService, { type NotificationData } from '../services/websocketService';
+
+interface AdminLayoutProps {
+  children?: React.ReactNode;
+}
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [adminInfo, setAdminInfo] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [welfareReports, setWelfareReports] = useState<any[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('readNotifications');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const wsInitialized = useRef(false);
+  const [newNotificationCount, setNewNotificationCount] = useState(0);
+
+  useEffect(() => {
+    const authState = getAuthState();
+    if (authState.isAuthenticated && authState.userType === 'admin') {
+      setAdminInfo(authState.userData);
+    }
+
+    const handleAuthStateChange = () => {
+      const newAuthState = getAuthState();
+      if (newAuthState.isAuthenticated && newAuthState.userType === 'admin') {
+        setAdminInfo(newAuthState.userData);
+      } else {
+        setAdminInfo(null);
+      }
+    };
+
+    window.addEventListener('authStateChanged', handleAuthStateChange);
+    return () => window.removeEventListener('authStateChanged', handleAuthStateChange);
+  }, []);
+
+  // Initialize WebSocket connection and fetch notifications on mount
+  useEffect(() => {
+    const initializeWebSocket = async () => {
+      const authState = getAuthState();
+      if (authState.isAuthenticated && authState.userType === 'admin' && (authState as any).token && !wsInitialized.current) {
+        wsInitialized.current = true;
+        
+        // Request browser notification permission
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        
+        try {
+          setWsConnectionStatus('connecting');
+          await websocketService.connect((authState as any).token);
+          setWsConnectionStatus('connected');
+          
+          // Set up real-time notification handlers
+          websocketService.on('new_incident', handleNewIncident);
+          websocketService.on('new_welfare_report', handleNewWelfareReport);
+          websocketService.on('incident_updated', handleIncidentUpdate);
+          websocketService.on('welfare_updated', handleWelfareUpdate);
+          
+          console.log('WebSocket connected for real-time notifications');
+        } catch (error) {
+          console.error('Failed to connect WebSocket:', error);
+          setWsConnectionStatus('disconnected');
+        }
+      }
+    };
+
+    initializeWebSocket();
+    fetchNotifications();
+
+    // Cleanup WebSocket on unmount
+    return () => {
+      websocketService.off('new_incident', handleNewIncident);
+      websocketService.off('new_welfare_report', handleNewWelfareReport);
+      websocketService.off('incident_updated', handleIncidentUpdate);
+      websocketService.off('welfare_updated', handleWelfareUpdate);
+    };
+  }, []);
+
+  // Save read notifications to localStorage
+  useEffect(() => {
+    localStorage.setItem('readNotifications', JSON.stringify([...readNotifications]));
+  }, [readNotifications]);
+
+  const handleLogout = async () => {
+    try {
+      await adminAuthApi.logout();
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      clearAuthData();
+      websocketService.disconnect();
+      navigate('/admin/login');
+    }
+  };
+
+  // WebSocket event handlers for real-time notifications
+  const handleNewIncident = (incidentData: NotificationData) => {
+    console.log('New incident received via WebSocket:', incidentData);
+    
+    // Increment new notification counter
+    setNewNotificationCount(prev => prev + 1);
+    
+    // Add new incident to notifications list
+    setNotifications(prev => {
+      const newIncident = {
+        ...incidentData,
+        id: incidentData.id || (incidentData as any).incident_id,
+        date_reported: incidentData.date_reported || new Date().toISOString()
+      };
+      
+      // Check if incident already exists to avoid duplicates
+      const exists = prev.some(notif => 
+        (notif.id === newIncident.id || (notif as any).incident_id === newIncident.id)
+      );
+      
+      if (!exists) {
+        return [newIncident, ...prev].slice(0, 10); // Keep only latest 10
+      }
+      return prev;
+    });
+
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+      new Notification('New Incident Report', {
+        body: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
+        icon: '/images/Slogo.png',
+        tag: `incident-${incidentData.id}`
+      });
+    }
+  };
+
+  const handleNewWelfareReport = (welfareData: NotificationData) => {
+    console.log('New welfare report received via WebSocket:', welfareData);
+    
+    // Increment new notification counter
+    setNewNotificationCount(prev => prev + 1);
+    
+    // Add new welfare report to welfare reports list
+    setWelfareReports(prev => {
+      const newWelfareReport = {
+        ...welfareData,
+        type: 'welfare',
+        id: `welfare_${welfareData.report_id || welfareData.id}`,
+        title: 'Welfare Check - Needs Help',
+        description: welfareData.additional_info || welfareData.description || 'User needs assistance',
+        date_reported: welfareData.submitted_at || welfareData.date_reported || new Date().toISOString(),
+        priority_level: 'high',
+        user_name: `${welfareData.first_name || ''} ${welfareData.last_name || ''}`.trim() || welfareData.user_name || 'Unknown User'
+      };
+      
+      // Check if welfare report already exists to avoid duplicates
+      const exists = prev.some(report => 
+        report.id === newWelfareReport.id || 
+        report.report_id === welfareData.report_id
+      );
+      
+      if (!exists) {
+        return [newWelfareReport, ...prev].slice(0, 5); // Keep only latest 5
+      }
+      return prev;
+    });
+
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+      new Notification('Welfare Check - Needs Help', {
+        body: `${welfareData.user_name || 'User'} needs assistance`,
+        icon: '/images/Slogo.png',
+        tag: `welfare-${welfareData.report_id || welfareData.id}`
+      });
+    }
+  };
+
+  const handleIncidentUpdate = (incidentData: NotificationData) => {
+    console.log('Incident updated via WebSocket:', incidentData);
+    
+    // Update existing incident in notifications list
+    setNotifications(prev => 
+      prev.map(notif => 
+        (notif.id === incidentData.id || notif.incident_id === incidentData.id) 
+          ? { ...notif, ...incidentData }
+          : notif
+      )
+    );
+  };
+
+  const handleWelfareUpdate = (welfareData: NotificationData) => {
+    console.log('Welfare report updated via WebSocket:', welfareData);
+    
+    // Update existing welfare report in welfare reports list
+    setWelfareReports(prev => 
+      prev.map(report => 
+        (report.id === `welfare_${welfareData.report_id}` || report.report_id === welfareData.report_id)
+          ? { ...report, ...welfareData }
+          : report
+      )
+    );
+  };
+
+  // Fetch notifications (incidents and welfare reports) for admin
+  const fetchNotifications = async () => {
+    setIsLoadingNotifications(true);
+    
+    try {
+      // Fetch incidents and welfare reports in parallel for better performance
+      const [incidentsResponse, welfareResponse] = await Promise.allSettled([
+        incidentsApi.getIncidents(),
+        apiRequest('/admin/welfare/reports?status=needs_help&limit=5')
+      ]);
+
+      // Process incidents asynchronously
+      let latestIncidents = [];
+      if (incidentsResponse.status === 'fulfilled' && incidentsResponse.value.success && Array.isArray(incidentsResponse.value.incidents)) {
+        latestIncidents = incidentsResponse.value.incidents.slice(0, 10); // Show up to 10 incidents
+        // Update incidents immediately when available
+        setNotifications(latestIncidents);
+      }
+
+      // Process welfare reports asynchronously
+      let latestWelfareReports = [];
+      if (welfareResponse.status === 'fulfilled' && welfareResponse.value.success && Array.isArray(welfareResponse.value.reports)) {
+        latestWelfareReports = welfareResponse.value.reports.map((report: any) => ({
+          ...report,
+          type: 'welfare',
+          id: `welfare_${report.report_id}`,
+          title: 'Welfare Check - Needs Help',
+          description: report.additional_info || 'User needs assistance',
+          date_reported: report.submitted_at,
+          priority_level: 'high',
+          user_name: `${report.first_name || ''} ${report.last_name || ''}`.trim() || report.user_name || 'Unknown User'
+        }));
+        // Update welfare reports immediately when available
+        setWelfareReports(latestWelfareReports);
+      }
+
+      // Clean up read notifications that are no longer in the list
+      const allNotifications = [...latestIncidents, ...latestWelfareReports];
+      const currentIds = new Set(allNotifications.map((notif: any) => String(notif.id || notif.incident_id)));
+      setReadNotifications(prev => {
+        const cleaned = new Set([...prev].filter(id => currentIds.has(id)));
+        return cleaned;
+      });
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  // Toggle notification dropdown
+  const toggleNotifDropdown = () => {
+    if (!showNotifDropdown) {
+      // Always fetch notifications asynchronously when opening dropdown
+      fetchNotifications();
+      // Reset new notification counter when opening dropdown
+      setNewNotificationCount(0);
+    }
+    setShowNotifDropdown(!showNotifDropdown);
+  };
+
+  // Mark notification as read
+  const markAsRead = (notificationId: string | number) => {
+    const idString = String(notificationId);
+    setReadNotifications(prev => new Set([...prev, idString]));
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = () => {
+    const allIds = [...notifications, ...welfareReports].map((notif: any) => String(notif.id || notif.incident_id));
+    setReadNotifications(new Set(allIds));
+  };
+
+  // Get all notifications combined
+  const allNotifications = [...notifications, ...welfareReports]
+    .sort((a: any, b: any) => new Date(b.date_reported || b.submitted_at).getTime() - new Date(a.date_reported || a.submitted_at).getTime());
+
+  // Show only 10 notifications by default, or all if showAllNotifications is true
+  const displayedNotifications = showAllNotifications ? allNotifications : allNotifications.slice(0, 10);
+
+  // Get unread notifications count
+  const unreadCount = allNotifications.filter((notif: any) => !readNotifications.has(String(notif.id || notif.incident_id))).length;
+
+  // Get priority incidents count (including welfare reports)
+  const priorityIncidentsCount = allNotifications.filter((notif: any) => 
+    notif.priority_level === 'high' || notif.priority_level === 'critical' || notif.type === 'welfare'
+  ).length;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showNotifDropdown && !target.closest('.notification-dropdown') && !target.closest('.notification-button')) {
+        setShowNotifDropdown(false);
+      }
+    };
+
+    if (showNotifDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifDropdown]);
+
+  const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+  return (
+    <AdminAuthGuard>
+      <div className="h-screen bg-gray-50 flex">
+        {/* Desktop Sidebar */}
+        <div className={`hidden lg:flex transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+          <AdminSidebar collapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebar} />
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={toggleMobileMenu}></div>
+            <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-xl overflow-y-auto thin-scrollbar">
+              <AdminSidebar />
+            </div>
+          </div>
+        )}
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {/* Sticky Top Navigation Bar */}
+          <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={toggleMobileMenu}
+                  className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 mr-3"
+                >
+                  <i className="ri-menu-line text-xl"></i>
+                </button>
+
+                {/* Desktop Sidebar Toggle */}
+                <button
+                  onClick={toggleSidebar}
+                  className="hidden lg:block p-2 rounded-lg text-gray-600 hover:bg-gray-100 mr-3"
+                >
+                  <i className={`ri-${isSidebarCollapsed ? 'menu-unfold' : 'menu-fold'}-line text-xl`}></i>
+                </button>
+
+                <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
+              </div>
+
+              {/* Admin Info & Actions */}
+              <div className="flex items-center space-x-4">
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={toggleNotifDropdown}
+                  className="notification-button p-3 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-600 relative transition-all duration-200 group"
+                >
+                  <i className="ri-notification-3-line text-xl group-hover:scale-110 transition-transform"></i>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                  {newNotificationCount > 0 && (
+                    <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-bounce">
+                      <div className="w-full h-full bg-green-400 rounded-full animate-ping"></div>
+                    </div>
+                  )}
+                  {priorityIncidentsCount > 0 && (
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-white"></div>
+                  )}
+                </button>
+
+                {/* Notification Dropdown */}
+                {showNotifDropdown && (
+                  <div className="notification-dropdown absolute right-0 mt-2 w-[520px] h-[520px] max-w-[100vw] max-h-[80vh] overflow-hidden bg-white rounded-xl shadow-2xl border border-gray-200 z-50 backdrop-blur-sm">
+                    {/* Header with stats */}
+                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          <h3 className="font-bold text-gray-900 text-lg flex items-center">
+                            <i className="ri-notification-3-line mr-2 text-blue-600"></i>
+                            Incident Alerts
+                          </h3>
+                          {/* WebSocket Connection Status */}
+                          <div className="ml-3 flex items-center">
+                            {wsConnectionStatus === 'connected' && (
+                              <div className="flex items-center text-green-600 text-xs">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                <span className="font-medium">Live</span>
+                              </div>
+                            )}
+                            {wsConnectionStatus === 'connecting' && (
+                              <div className="flex items-center text-yellow-600 text-xs">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse mr-1"></div>
+                                <span className="font-medium">Connecting...</span>
+                              </div>
+                            )}
+                            {wsConnectionStatus === 'disconnected' && (
+                              <div className="flex items-center text-red-600 text-xs">
+                                <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                                <span className="font-medium">Offline</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={fetchNotifications}
+                            disabled={isLoadingNotifications}
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Refresh notifications"
+                          >
+                            <i className={`ri-refresh-line text-gray-500 ${isLoadingNotifications ? 'animate-spin' : ''}`}></i>
+                          </button>
+                          <button
+                            onClick={() => setShowNotifDropdown(false)}
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                          >
+                            <i className="ri-close-line text-gray-500"></i>
+                          </button>
+                        </div>
+                      </div>
+                      {unreadCount > 0 && (
+                        <div className="mt-3 flex justify-center">
+                          <button
+                            onClick={markAllAsRead}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-full hover:bg-blue-700 transition-colors flex items-center"
+                          >
+                            <i className="ri-check-double-line mr-1"></i>
+                            Mark All Read
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Notifications List */}
+                    <div className="h-[380px] max-h-[60vh] overflow-y-auto">
+                      {isLoadingNotifications ? (
+                        <div className="p-8 text-center text-gray-500">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                          <p className="text-sm font-medium">Loading notifications...</p>
+                          <p className="text-xs text-gray-400 mt-1">Fetching latest incidents and welfare reports</p>
+                        </div>
+                      ) : allNotifications.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">
+                          <i className="ri-notification-off-line text-4xl mb-3 block text-gray-300"></i>
+                          <p className="text-sm font-medium">No notifications</p>
+                          <p className="text-xs text-gray-400 mt-1">New incidents and welfare reports will appear here</p>
+                        </div>
+                      ) : (
+                        displayedNotifications.map((notif) => {
+                          const notificationId = notif.id || notif.incident_id;
+                          const idString = String(notificationId);
+                          const isRead = readNotifications.has(idString);
+                          const isPriority = notif.priority_level === 'high' || notif.priority_level === 'critical' || notif.type === 'welfare';
+                          const isWelfare = notif.type === 'welfare';
+                          
+                          const getPriorityColor = (priority: string) => {
+                            if (isWelfare) return 'bg-red-100 text-red-800 border-red-200';
+                            switch (priority) {
+                              case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+                              case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+                              case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                              case 'low': return 'bg-green-100 text-green-800 border-green-200';
+                              default: return 'bg-gray-100 text-gray-800 border-gray-200';
+                            }
+                          };
+                          
+                          return (
+                            <div
+                              key={notificationId}
+                              className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-all duration-200 relative group ${
+                                !isRead ? 'bg-blue-50/50 border-l-4 border-l-blue-500' : ''
+                              } ${isPriority ? 'ring-1 ring-red-200 bg-red-50/30' : ''}`}
+                              onClick={() => {
+                                if (!isRead) {
+                                  markAsRead(idString);
+                                }
+                                if (isWelfare) {
+                                  navigate('/admin/welfare');
+                                } else {
+                                  navigate('/admin/incidents/view');
+                                }
+                                setShowNotifDropdown(false);
+                              }}
+                            >
+                              {!isRead && (
+                                <div className="absolute left-3 top-4 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                              )}
+                              {isPriority && (
+                                <div className="absolute right-3 top-3">
+                                  <i className={`${isWelfare ? 'ri-heart-pulse-line' : 'ri-fire-line'} text-red-500 text-sm animate-pulse`}></i>
+                                </div>
+                              )}
+                              <div className={`${!isRead ? 'ml-4' : ''} ${isPriority ? 'pr-6' : ''}`}>
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center space-x-2 flex-1">
+                                    <p className={`text-sm font-semibold ${isRead ? 'text-gray-700' : 'text-gray-900'}`}>
+                                      {isWelfare ? 'Welfare Check - Needs Help' : notif.incident_type}
+                                    </p>
+                                    <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getPriorityColor(notif.priority_level)}`}>
+                                      {isWelfare ? 'WELFARE' : notif.priority_level?.toUpperCase()}
+                                    </span>
+                                    {isPriority && (
+                                      <span className="text-xs text-red-600 font-bold flex items-center">
+                                        <i className={`${isWelfare ? 'ri-heart-pulse-line' : 'ri-alarm-warning-line'} mr-1`}></i>
+                                        {isWelfare ? 'NEEDS HELP' : 'URGENT'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-gray-400 ml-2">
+                                    {new Date(notif.date_reported || notif.submitted_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className={`text-xs leading-relaxed mb-2 ${isRead ? 'text-gray-500' : 'text-gray-600'}`}>
+                                  {isWelfare ? (
+                                    <span>
+                                      <strong>{notif.user_name}</strong> needs assistance
+                                      {notif.description && ` - ${notif.description.length > 80 ? notif.description.substring(0, 80) + '...' : notif.description}`}
+                                    </span>
+                                  ) : (
+                                    notif.description?.length > 100 
+                                      ? `${notif.description.substring(0, 100)}...` 
+                                      : notif.description
+                                  )}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <span className="text-xs text-gray-400 flex items-center">
+                                      <i className="ri-time-line mr-1"></i>
+                                      {new Date(notif.date_reported || notif.submitted_at).toLocaleTimeString()}
+                                    </span>
+                                    {isWelfare ? (
+                                      <span className="text-xs text-gray-400 flex items-center">
+                                        <i className="ri-user-line mr-1"></i>
+                                        {notif.user_name}
+                                      </span>
+                                    ) : notif.location && (
+                                      <span className="text-xs text-gray-400 flex items-center">
+                                        <i className="ri-map-pin-line mr-1"></i>
+                                        {notif.location.length > 20 ? `${notif.location.substring(0, 20)}...` : notif.location}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center text-xs text-gray-500 group-hover:text-blue-600 transition-colors">
+                                    <span className="mr-1">{isWelfare ? 'View Welfare' : 'View'}</span>
+                                    <i className="ri-arrow-right-s-line group-hover:translate-x-1 transition-transform"></i>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* See More Button */}
+                    {allNotifications.length > 10 && !showAllNotifications && (
+                      <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                        <button
+                          onClick={() => setShowAllNotifications(true)}
+                          className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium"
+                        >
+                          <i className="ri-eye-line mr-2"></i>
+                          See More ({allNotifications.length - 10} more)
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Show Less Button */}
+                    {showAllNotifications && allNotifications.length > 10 && (
+                      <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                        <button
+                          onClick={() => setShowAllNotifications(false)}
+                          className="w-full py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center font-medium"
+                        >
+                          <i className="ri-eye-off-line mr-2"></i>
+                          Show Less
+                        </button>
+                      </div>
+                    )}
+
+                  </div>
+                )}
+              </div>
+
+                {/* Profile Dropdown */}
+                <div className="relative group">
+                  <button className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <i className="ri-user-line text-white text-sm"></i>
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <p className="text-sm font-medium text-gray-900">
+                        {adminInfo?.name || adminInfo?.first_name || adminInfo?.firstName || 'Admin'}
+                      </p>
+                      <p className="text-xs text-gray-500">{adminInfo?.email || 'admin@example.com'}</p>
+                    </div>
+                    <i className="ri-arrow-down-s-line text-gray-400"></i>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-2">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigate('/admin/profile');
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <i className="ri-user-line mr-3"></i>
+                    Profile Settings
+                  </button>
+                     
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <i className="ri-logout-box-line mr-3"></i>
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Scrollable Content Area */}
+          <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            {children || <Outlet />}
+          </main>
+        </div>
+      </div>
+    </AdminAuthGuard>
+  );
+};
+
+export default AdminLayout;
