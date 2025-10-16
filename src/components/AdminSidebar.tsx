@@ -15,7 +15,7 @@ interface AdminSidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false, onToggleCollapse }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false }) => {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(['dashboard']);
   const isCollapsed = collapsed;

@@ -58,7 +58,6 @@ export default function Input({
           name={name}
           value={value}
           onChange={onChange}
-          onBlur={onBlur}
           onFocus={() => setIsFocused(true)}
           onBlur={(e) => {
             setIsFocused(false);
