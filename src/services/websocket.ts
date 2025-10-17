@@ -32,10 +32,20 @@ class WebSocketService {
 
   // Get WebSocket URL based on current environment
   private getWebSocketURL(): string {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname;
-    const port = import.meta.env.VITE_WS_PORT || '5000';
-    return `${protocol}//${host}:${port}`;
+    const apiUrl = import.meta.env.VITE_API_URL || '/api';
+    
+    if (apiUrl.startsWith('http')) {
+      // Production: use Render backend WebSocket
+      const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
+      const protocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
+      return `${protocol}//${wsHost}`;
+    } else {
+      // Development: use localhost
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.hostname;
+      const port = import.meta.env.VITE_WS_PORT || '5000';
+      return `${protocol}//${host}:${port}`;
+    }
   }
 
   constructor() {

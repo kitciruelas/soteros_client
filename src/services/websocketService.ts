@@ -55,11 +55,22 @@ class WebSocketService {
       this.connectionState = 'connecting';
 
       try {
-        // Get the base URL from the current environment
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.hostname;
-        const port = import.meta.env.VITE_API_PORT || '5000';
-        const wsUrl = `${protocol}//${host}:${port}?token=${encodeURIComponent(token)}`;
+        // Get the WebSocket URL from environment or construct from API URL
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        let wsUrl;
+        
+        if (apiUrl.startsWith('http')) {
+          // Production: use Render backend WebSocket
+          const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
+          const protocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
+          wsUrl = `${protocol}//${wsHost}?token=${encodeURIComponent(token)}`;
+        } else {
+          // Development: use localhost
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const host = window.location.hostname;
+          const port = import.meta.env.VITE_API_PORT || '5000';
+          wsUrl = `${protocol}//${host}:${port}?token=${encodeURIComponent(token)}`;
+        }
 
         console.log('Connecting to WebSocket:', wsUrl);
 

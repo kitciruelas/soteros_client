@@ -5,6 +5,9 @@ import { resolve } from 'node:path'
 const base = process.env.BASE_PATH || '/'
 const isPreview = process.env.IS_PREVIEW ? true : false;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Environment variables for API configuration
+const apiUrl = process.env.VITE_API_URL || '/api';
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -12,7 +15,7 @@ export default defineConfig({
    __IS_PREVIEW__: JSON.stringify(isPreview)
   },
   plugins: [react()],
-  base,
+  base, 
   build: {
     sourcemap: false,
     outDir: 'dist',
@@ -45,19 +48,22 @@ export default defineConfig({
       port: 24678, // Use a different port for HMR WebSocket
       overlay: false, // Disable error overlay
     },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
-      },
-      '/uploads': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/uploads/, '/uploads')
+    // Only use proxy in development when API_URL is relative
+    ...(apiUrl.startsWith('/') && {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, '/api')
+        },
+        '/uploads': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/uploads/, '/uploads')
+        }
       }
-    }
+    })
   }
 })
