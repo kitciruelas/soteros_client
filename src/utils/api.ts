@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
 
 // Types for API responses
 export interface ApiResponse<T = any> {

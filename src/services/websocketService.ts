@@ -56,12 +56,12 @@ class WebSocketService {
 
       try {
         // Get the WebSocket URL from environment or construct from API URL
-        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
         let wsUrl;
         
         if (apiUrl.startsWith('http')) {
           // Production: use Render backend WebSocket
-          const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
+          const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/api$/, '');
           const protocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
           wsUrl = `${protocol}//${wsHost}?token=${encodeURIComponent(token)}`;
         } else {

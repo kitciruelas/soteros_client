@@ -3,7 +3,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "env": {
-    "VITE_API_URL": "https://soteros-backend.onrender.com/api"
+    "VITE_API_URL": "https://soteros-backend.onrender.com/api",
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://soteros-backend.onrender.com/api"
+    }
   },
   "rewrites": [
     {
