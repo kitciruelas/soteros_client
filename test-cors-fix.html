@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 CORS Fix Test</h1>
+    <p>Testing the specific endpoints that were failing:</p>
+    
+    <div>
+        <button onclick="testTestimonials()">Test Testimonials Endpoint</button>
+        <button onclick="testStats()">Test Stats Endpoint</button>
+        <button onclick="testCorsTest()">Test CORS Test Endpoint</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testTestimonials() {
+            addResult('🔍 Testing testimonials endpoint...', 'info');
+            
+            try {
+                const response = await fetch('https://soteros-backend.onrender.com/api/public/testimonials?limit=3');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Testimonials endpoint successful:<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ Testimonials endpoint failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Testimonials endpoint failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStats() {
+            addResult('🔍 Testing stats endpoint...', 'info');
+            
+            try {
+                const response = await fetch('https://soteros-backend.onrender.com/api/public/stats');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Stats endpoint successful:<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ Stats endpoint failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Stats endpoint failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCorsTest() {
+            addResult('🔍 Testing CORS test endpoint...', 'info');
+            
+            try {
+                const response = await fetch('https://soteros-backend.onrender.com/api/cors-test');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ CORS test endpoint successful:<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ CORS test endpoint failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ CORS test endpoint failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests on load
+        window.onload = function() {
+            setTimeout(() => {
+                addResult('🚀 Starting CORS tests...', 'info');
+                testCorsTest();
+                setTimeout(testTestimonials, 1000);
+                setTimeout(testStats, 2000);
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
