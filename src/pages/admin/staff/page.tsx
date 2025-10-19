@@ -58,6 +58,7 @@ interface Team {
   id: number;
   name: string;
   description: string;
+  member_count?: number;
 }
 
 // Department to Team mapping
@@ -278,9 +279,9 @@ const StaffManagement: React.FC = () => {
     }
 
     try {
-      const url = selectedStaff 
-        ? `/api/staff/${selectedStaff.id}`
-        : '/api/staff';
+      const endpoint = selectedStaff 
+        ? `/staff/${selectedStaff.id}`
+        : '/staff';
       
       const method = selectedStaff ? 'PUT' : 'POST';
       
@@ -293,16 +294,10 @@ const StaffManagement: React.FC = () => {
       
       console.log('Sending staff data:', requestData);
       
-      const response = await fetch(url, {
+      const data = await apiRequest(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).token : ''}`
-        },
         body: JSON.stringify(requestData),
       });
-      
-      const data = await response.json();
       
       if (data.success) {
         setShowStaffModal(false);
