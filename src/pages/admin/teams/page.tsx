@@ -4,6 +4,7 @@ import { useToast } from '../../../components/base/Toast';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import type { ExportColumn } from '../../../utils/exportUtils';
 import ExportUtils from '../../../utils/exportUtils';
+import { apiRequest } from '../../../utils/api';
 
 interface Team {
   id: number;
@@ -128,8 +129,7 @@ const TeamsManagement: React.FC = () => {
       });
 
       console.log('Fetching teams with params:', params.toString());
-      const response = await fetch(`/api/teams?${params}`);
-      const data = await response.json();
+      const data = await apiRequest(`/teams?${params}`);
       
       console.log('Teams API response:', data);
       
@@ -280,10 +280,9 @@ const TeamsManagement: React.FC = () => {
   const confirmDeleteTeam = async () => {
     if (teamIdToDelete == null) return;
     try {
-      const response = await fetch(`/api/teams/${teamIdToDelete}`, {
+      const data = await apiRequest(`/teams/${teamIdToDelete}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
       if (data.success) {
         fetchTeams();
         showToast({ type: 'success', message: 'Team deleted successfully' });
@@ -314,15 +313,10 @@ const TeamsManagement: React.FC = () => {
       }
 
       // Update the team's member count in the database
-      const response = await fetch(`/api/teams/${teamId}/member-count`, {
+      const data = await apiRequest(`/teams/${teamId}/member-count`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ member_count: newCount }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         // Update the local state

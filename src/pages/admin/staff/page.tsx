@@ -5,6 +5,7 @@ import type { ExportColumn } from '../../../utils/exportUtils';
 import { useToast } from '../../../components/base/Toast';
 import PhoneInput, { formatPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { apiRequest } from '../../../utils/api';
 
 // Philippine mobile number validation function
 const validatePhilippineMobile = (value: string): boolean => {
@@ -143,8 +144,7 @@ const StaffManagement: React.FC = () => {
   const fetchTeams = async () => {
     try {
       console.log('Fetching teams...');
-      const response = await fetch('/api/teams');
-      const data = await response.json();
+      const data = await apiRequest('/teams');
       
       console.log('Teams API response:', data);
       
@@ -355,8 +355,7 @@ const StaffManagement: React.FC = () => {
     if (teamId !== '') {
       try {
         // Fetch current team members count
-        const teamResponse = await fetch(`/api/teams/${teamId}`);
-        const teamData = await teamResponse.json();
+        const teamData = await apiRequest(`/teams/${teamId}`);
         
         if (teamData.success && teamData.team) {
           const currentMemberCount = teamData.team.member_count || 0;
