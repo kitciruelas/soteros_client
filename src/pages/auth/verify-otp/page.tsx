@@ -81,7 +81,8 @@ export default function VerifyOTPPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const response = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

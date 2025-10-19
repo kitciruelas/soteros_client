@@ -64,7 +64,8 @@ export default function ResetPasswordPage() {
     try {
       console.log('Reset password data:', { email: emailFromState, otp: otpFromState });
 
-      const response = await fetch('/api/auth/reset-password', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const response = await fetch(`${apiUrl}/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
