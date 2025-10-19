@@ -217,8 +217,7 @@ const TeamsManagement: React.FC = () => {
     
     // Fetch all staff members
     try {
-      const response = await fetch('/api/staff');
-      const data = await response.json();
+      const data = await apiRequest('/staff');
       if (data.success) {
         setAllStaff(data.staff || []);
       }
@@ -240,24 +239,18 @@ const TeamsManagement: React.FC = () => {
     }
     
     try {
-      const response = await fetch(`/api/staff/${staffId}`, {
+      const data = await apiRequest(`/staff/${staffId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           team_id: assign ? selectedTeam.id : null
         }),
       });
       
-      const data = await response.json();
-      
       if (data.success) {
         // Refresh the teams list to update member counts
         fetchTeams();
         // Refresh the staff list
-        const staffResponse = await fetch('/api/staff');
-        const staffData = await staffResponse.json();
+        const staffData = await apiRequest('/staff');
         if (staffData.success) {
           setAllStaff(staffData.staff || []);
         }

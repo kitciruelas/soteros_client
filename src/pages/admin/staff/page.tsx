@@ -119,8 +119,7 @@ const StaffManagement: React.FC = () => {
       });
 
       console.log('Fetching staff with params:', params.toString());
-      const response = await fetch(`/api/staff?${params}`);
-      const data = await response.json();
+      const data = await apiRequest(`/staff?${params}`);
       
       console.log('Staff API response:', data);
       
@@ -183,16 +182,10 @@ const StaffManagement: React.FC = () => {
 
   const handleStatusChange = async (staffId: number, newStatus: Staff['status']) => {
     try {
-      const response = await fetch(`/api/staff/${staffId}/status`, {
+      const data = await apiRequest(`/staff/${staffId}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).token : ''}`
-        },
         body: JSON.stringify({ status: newStatus }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setStaff(prev => prev.map(member =>
@@ -211,16 +204,10 @@ const StaffManagement: React.FC = () => {
 
   const handleAvailabilityChange = async (staffId: number, newAvailability: Staff['availability']) => {
     try {
-      const response = await fetch(`/api/staff/${staffId}/availability`, {
+      const data = await apiRequest(`/staff/${staffId}/availability`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).token : ''}`
-        },
         body: JSON.stringify({ availability: newAvailability }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setStaff(prev => prev.map(member =>
@@ -372,19 +359,13 @@ const StaffManagement: React.FC = () => {
     }
     
     try {
-      const response = await fetch(`/api/staff/${selectedStaff.id}`, {
+      const data = await apiRequest(`/staff/${selectedStaff.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).token : ''}`
-        },
         body: JSON.stringify({
           ...selectedStaff,
           team_id: teamId === '' ? null : parseInt(teamId)
         }),
       });
-      
-      const data = await response.json();
       
       if (data.success) {
         setShowTeamAssignmentModal(false);
