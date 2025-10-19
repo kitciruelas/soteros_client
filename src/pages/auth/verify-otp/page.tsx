@@ -42,7 +42,8 @@ export default function VerifyOTPPage() {
 
     try {
       // Verify OTP with backend
-      const response = await fetch('/api/auth/verify-otp', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const response = await fetch(`${apiUrl}/auth/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
