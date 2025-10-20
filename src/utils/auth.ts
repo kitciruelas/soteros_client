@@ -178,7 +178,7 @@ export function updateUserData(userData: UserData): void {
   }
 
   const storageKey = authState.userType;
-  const storage = sessionStorage; // Always use sessionStorage for auth data
+  const storage = localStorage; // Use localStorage for persistent auth data
 
   // Save to both the legacy key (for backward compatibility) and the new userInfo key
   storage.setItem(storageKey, JSON.stringify(userData));

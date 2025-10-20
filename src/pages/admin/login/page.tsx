@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { adminAuthApi } from "../../../utils/api"
 
@@ -9,16 +9,29 @@ const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    rememberMe: false,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
+  // Load remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberedEmail")
+    if (rememberedEmail) {
+      setFormData(prev => ({
+        ...prev,
+        email: rememberedEmail,
+        rememberMe: true
+      }))
+    }
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }))
     // Clear error when user starts typing
     if (error) setError(null)
@@ -48,6 +61,13 @@ const AdminLogin: React.FC = () => {
 
         localStorage.setItem("userInfo", JSON.stringify(adminData))
         localStorage.setItem("adminToken", response.token)
+
+        // If remember me is checked, store email for auto-fill
+        if (formData.rememberMe) {
+          localStorage.setItem("rememberedEmail", formData.email)
+        } else {
+          localStorage.removeItem("rememberedEmail")
+        }
 
         // Dispatch auth state change event
         window.dispatchEvent(new Event("authStateChanged"))
@@ -169,6 +189,23 @@ const AdminLogin: React.FC = () => {
                   required
                 />
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-focus-within:from-blue-500/10 group-focus-within:via-transparent group-focus-within:to-indigo-500/10 transition-all duration-300 pointer-events-none"></div>
+              </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors"
+                />
+                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 font-medium">
+                  Remember me
+                </label>
               </div>
             </div>
 

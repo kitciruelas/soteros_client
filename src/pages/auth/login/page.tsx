@@ -129,8 +129,8 @@ export default function LoginPage() {
         setShowSuccessMessage(true)
         console.log(`Login successful for ${userType} user:`, userData)
 
-        // Always store user data in sessionStorage for auto-logout on window close
-        sessionStorage.setItem("userInfo", JSON.stringify(userData))
+        // Store user data in localStorage for persistent login across browser tabs
+        localStorage.setItem("userInfo", JSON.stringify(userData))
 
         // If remember me is checked, store email for auto-fill
         if (formData.rememberMe) {
