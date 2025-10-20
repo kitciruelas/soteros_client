@@ -640,7 +640,7 @@ export default function HistoryReportPage() {
                       <i className="ri-file-list-3-line text-2xl"></i>
                     </div>
                     <div>
-                      <h1 className="text-3xl lg:text-4xl font-bold">History Report</h1>
+                      <h1 className="text-3xl lg:text-4xl font-bold">Report History</h1>
                       <p className="text-blue-100 text-lg">
                         Track and manage your incident reports
                       </p>

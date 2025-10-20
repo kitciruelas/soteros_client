@@ -562,7 +562,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                             <i className="ri-file-list-line text-gray-600 group-hover:text-blue-600"></i>
                           </div>
                           <div>
-                            <p className="font-medium text-sm">History Report</p>
+                            <p className="font-medium text-sm">Report History</p>
                             <p className="text-xs text-gray-500">View your incident reports</p>
                           </div>
                         </button>

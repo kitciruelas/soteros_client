@@ -437,8 +437,8 @@ export default function SignupPage() {
               )}
             </div>
 
-            {/* Location Information Display */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-sm">
+            {/* Location Information Display - Hidden */}
+            {/* <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <i className="ri-map-pin-2-line text-blue-600"></i>
                 <span className="text-sm font-semibold text-blue-800">Location Information</span>
@@ -461,7 +461,7 @@ export default function SignupPage() {
                 <i className="ri-information-line"></i>
                 <span>All users are automatically registered under Rosario, Batangas</span>
               </div>
-            </div>
+            </div> */}
 
             <div className="space-y-4">
               <div>

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://soteros-backend.onrender.com/api');
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
 
 // Types for API responses
 export interface ApiResponse<T = any> {
@@ -234,6 +234,7 @@ export const apiRequest = async <T = any>(
   try {
     const response = await fetch(url, config);
     
+    
     // Handle 401 Unauthorized and 403 Forbidden responses (token issues)
     // Don't treat 403 as auth error for routing endpoints since they may return 403 from external APIs
     // Don't clear auth data for login endpoints since user is trying to log in
@@ -284,6 +285,7 @@ export const apiRequest = async <T = any>(
       } catch (parseError) {
         // If JSON parsing fails, use the status text
         errorMessage = response.statusText || errorMessage;
+        
       }
 
       // Log detailed error information
