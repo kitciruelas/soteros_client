@@ -764,32 +764,70 @@ export default function ProfilePage() {
                         <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
-                        <Input
-                          label="First Name"
-                          type="text"
-                          name="firstName"
-                          id="firstName"
-                          value={fields.firstName.value}
-                          onChange={(e) => handleFieldChange("firstName", e.target.value)}
-                          error={fields.firstName.touched ? fields.firstName.error : ""}
-                          placeholder="Enter your first name"
-                          required
-                          disabled={!isEditing}
-                          icon={<i className="ri-user-line"></i>}
-                        />
-                        <Input
-                          label="Last Name"
-                          type="text"
-                          name="lastName"
-                          id="lastName"
-                          value={fields.lastName.value}
-                          onChange={(e) => handleFieldChange("lastName", e.target.value)}
-                          error={fields.lastName.touched ? fields.lastName.error : ""}
-                          placeholder="Enter your last name"
-                          required
-                          disabled={!isEditing}
-                          icon={<i className="ri-user-line"></i>}
-                        />
+                        <div>
+                          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                            <i className="ri-user-line mr-2 text-blue-600"></i>
+                            First Name <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <i className="ri-user-line text-gray-400"></i>
+                            </div>
+                            <input
+                              id="firstName"
+                              type="text"
+                              name="firstName"
+                              value={fields.firstName.value}
+                              onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                              className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                                fields.firstName.error ? 'border-red-300' : 'border-gray-300'
+                              } ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                              placeholder="Enter your first name"
+                              required
+                              disabled={!isEditing}
+                              style={{
+                                height: '56px',
+                                fontSize: '16px',
+                                lineHeight: '24px'
+                              }}
+                            />
+                          </div>
+                          {fields.firstName.touched && fields.firstName.error && (
+                            <p className="text-red-600 text-sm mt-2">{fields.firstName.error}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                            <i className="ri-user-line mr-2 text-blue-600"></i>
+                            Last Name <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <i className="ri-user-line text-gray-400"></i>
+                            </div>
+                            <input
+                              id="lastName"
+                              type="text"
+                              name="lastName"
+                              value={fields.lastName.value}
+                              onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                              className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                                fields.lastName.error ? 'border-red-300' : 'border-gray-300'
+                              } ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                              placeholder="Enter your last name"
+                              required
+                              disabled={!isEditing}
+                              style={{
+                                height: '56px',
+                                fontSize: '16px',
+                                lineHeight: '24px'
+                              }}
+                            />
+                          </div>
+                          {fields.lastName.touched && fields.lastName.error && (
+                            <p className="text-red-600 text-sm mt-2">{fields.lastName.error}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -802,39 +840,60 @@ export default function ProfilePage() {
                         <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
-                        <Input
-                          label="Email Address"
-                          type="email"
-                          name="email"
-                          id="email"
-                          value={fields.email.value}
-                          onChange={(e) => handleFieldChange("email", e.target.value)}
-                          error={fields.email.touched ? fields.email.error : ""}
-                          placeholder="Enter your email"
-                          required
-                          disabled={!isEditing}
-                          icon={<i className="ri-mail-line"></i>}
-                        />
+                        <div>
+                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                            <i className="ri-mail-line mr-2 text-green-600"></i>
+                            Email Address <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <i className="ri-mail-line text-gray-400"></i>
+                            </div>
+                            <input
+                              id="email"
+                              type="email"
+                              name="email"
+                              value={fields.email.value}
+                              onChange={(e) => handleFieldChange("email", e.target.value)}
+                              className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
+                                fields.email.error ? 'border-red-300' : 'border-gray-300'
+                              } ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                              placeholder="Enter your email"
+                              required
+                              disabled={!isEditing}
+                              style={{
+                                height: '56px',
+                                fontSize: '16px',
+                                lineHeight: '24px'
+                              }}
+                            />
+                          </div>
+                          {fields.email.touched && fields.email.error && (
+                            <p className="text-red-600 text-sm mt-2">{fields.email.error}</p>
+                          )}
+                        </div>
                         <div>
                           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                             <i className="ri-phone-line mr-2 text-green-600"></i>
                             Phone Number
                           </label>
                           <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <i className="ri-phone-line text-gray-400"></i>
-                            </div>
                             <PhoneInput
                               id="phone"
                               international
                               defaultCountry="PH"
                               value={fields.phone.value}
                               onChange={(value) => handleFieldChange("phone", value || "")}
-                              className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
+                              className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
                                 fields.phone.error ? 'border-red-300' : 'border-gray-300'
-                              }`}
+                              } ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
                               placeholder="Enter your phone number"
                               disabled={!isEditing}
+                              style={{
+                                height: '56px',
+                                fontSize: '16px',
+                                lineHeight: '24px'
+                              }}
                             />
                           </div>
                           {fields.phone.touched && fields.phone.error && (

@@ -869,25 +869,17 @@ export default function HistoryReportPage() {
                 <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">
                   {searchTerm || filterStatus !== "all"
                     ? "No incident reports match your current search and filter criteria. Try adjusting your filters or search terms."
-                    : "You haven't created any incident reports yet. Start by reporting your first incident to track its progress."}
+                    : "You haven't created any incident reports yet."}
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  {searchTerm || filterStatus !== "all" ? (
+                  {searchTerm || filterStatus !== "all" && (
                     <Button
                       onClick={clearFilters}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg"
                     >
                       <i className="ri-refresh-line mr-2"></i>
                       Clear Filters
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleNewReport}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg"
-                    >
-                      <i className="ri-add-line mr-2"></i>
-                      Create First Report
                     </Button>
                   )}
                 </div>

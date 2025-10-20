@@ -27,28 +27,38 @@ export default function LogoutModal({
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div 
-          className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100 overflow-hidden"
+          className="relative bg-white rounded-xl shadow-xl w-full max-w-sm transform transition-all duration-300 scale-100"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-red-500 to-pink-600 px-6 py-8 text-center">
-            <h3 className="text-xl font-bold text-white mb-1">Are You Sure?</h3>
-          </div>
-
           {/* Content */}
           <div className="p-6">
-            <p className="text-center text-gray-700 mb-6">
-              Are you sure you want to sign out?
-            </p>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="ri-logout-box-line text-xl text-red-600"></i>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign Out</h3>
+              <p className="text-gray-600 text-sm">
+                Are you sure you want to sign out?
+              </p>
+            </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
               <Button
-                variant="secondary"
-                size="lg"
+                variant="outline"
+                size="md"
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
                 onClick={onConfirm}
                 disabled={isLoading}
-                fullWidth
+                className="flex-1 bg-red-600 hover:bg-red-700"
               >
                 {isLoading ? (
                   <>
@@ -56,21 +66,8 @@ export default function LogoutModal({
                     Signing out...
                   </>
                 ) : (
-                  <>
-                    <i className="ri-logout-box-line mr-2"></i>
-                    Yes
-                  </>
+                  'Sign Out'
                 )}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={onClose}
-                disabled={isLoading}
-                fullWidth
-              >
-                <i className="ri-arrow-left-line mr-2"></i>
-                Cancel
               </Button>
             </div>
           </div>
