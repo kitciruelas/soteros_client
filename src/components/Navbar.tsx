@@ -882,7 +882,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeMobileMenu}></div>
-          <div className="fixed top-14 sm:top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-200 max-h-[calc(100vh-3.5rem)] sm:max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="fixed top-14 sm:top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-200 rounded-t-2xl max-h-[calc(100dvh-3.5rem)] sm:max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
             <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-2">
               <button
                 onClick={() => {
@@ -905,37 +905,50 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                 <span className="text-sm sm:text-base">Home</span>
               </button>
               
-              {/* Mobile Services collapsible */}
-              <div className="rounded-lg border border-gray-200">
+              {/* Mobile Services dropdown (card style) */}
+              <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <button
                   onClick={() => setIsMobileServicesOpen(!isMobileServicesOpen)}
-                  className="flex items-center justify-between w-full px-3 sm:px-4 py-2.5 sm:py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                  aria-expanded={isMobileServicesOpen}
+                  className="w-full px-4 sm:px-5 py-3 flex items-center justify-between text-gray-800"
                 >
-                  <span className="flex items-center"><i className="ri-briefcase-line text-lg mr-3 flex-shrink-0"></i> <span className="text-sm sm:text-base">Services</span></span>
-                  <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${isMobileServicesOpen ? "rotate-180" : ""}`}></i>
+                  <span className="flex items-center">
+                    <span className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mr-3">
+                      <i className="ri-briefcase-line"></i>
+                    </span>
+                    <span className="text-sm sm:text-base font-medium">Services</span>
+                  </span>
+                  <span className={`w-8 h-8 flex items-center justify-center rounded-lg ${isMobileServicesOpen ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-500'}`}>
+                    <i className={`ri-arrow-down-s-line transition-transform duration-200 ${isMobileServicesOpen ? 'rotate-180' : ''}`}></i>
+                  </span>
                 </button>
-                {isMobileServicesOpen && (
-                  <div className="pb-2">
-                    <button
-                      onClick={() => handleNavigation("/evacuation-center")}
-                      className="flex items-center w-full px-10 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                    >
-                      Evacuation Centers
-                    </button>
-                    <button
-                      onClick={() => handleNavigation("/safety-protocols")}
-                      className="flex items-center w-full px-10 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                    >
-                      Safety Protocols
-                    </button>
-                    <button
-                      onClick={() => handleNavigation("/welfare-check")}
-                      className="flex items-center w-full px-10 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                    >
-                      Welfare Check
-                    </button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isMobileServicesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'} `}>
+                  <div className="overflow-hidden">
+                    <div className="pb-2">
+                      <button
+                        onClick={() => handleNavigation('/evacuation-center')}
+                        className="w-full px-5 py-3 flex items-center text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        <i className="ri-building-2-line text-lg mr-3"></i>
+                        <span className="text-sm">Evacuation Centers</span>
+                      </button>
+                      <button
+                        onClick={() => handleNavigation('/safety-protocols')}
+                        className="w-full px-5 py-3 flex items-center text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        <i className="ri-shield-check-line text-lg mr-3"></i>
+                        <span className="text-sm">Safety Protocols</span>
+                      </button>
+                      <button
+                        onClick={() => handleNavigation('/welfare-check')}
+                        className="w-full px-5 py-3 flex items-center text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        <i className="ri-heart-pulse-line text-lg mr-3"></i>
+                        <span className="text-sm">Welfare Check</span>
+                      </button>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
               <button
                 onClick={() => handleNavigation("/incident-report")}
