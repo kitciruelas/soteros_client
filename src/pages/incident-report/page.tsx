@@ -431,7 +431,7 @@ export default function IncidentReportPage() {
     }
 
     // Determine submission endpoint based on authentication status
-    const endpoint = isAuthenticated ? '/api/incidents/report' : '/api/incidents/report-guest';
+    const endpoint = isAuthenticated ? '/incidents/report' : '/incidents/report-guest';
 
     setIsSubmitting(true);
 
