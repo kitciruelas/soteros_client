@@ -281,14 +281,14 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
   return (
     <>
       <nav className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-gray-200 sticky top-0 z-50 transition-all duration-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <div className="flex items-center min-w-0 flex-shrink-0">
               <img
                 src="/images/soterblue.png"
                 alt="Logo"
-                className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] lg:w-[200px] lg:h-[200px] object-contain flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity duration-200"
+                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 object-contain flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity duration-200"
                 onClick={() => {
                   if (window.location.pathname === "/") {
                     // If already on home page, scroll to hero section
@@ -306,7 +306,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
+            <div className="hidden lg:flex items-center space-x-3 xl:space-x-4 2xl:space-x-6">
               <button
                 onClick={() => {
                   if (window.location.pathname === "/") {
@@ -320,19 +320,19 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     handleNavigation("/")
                   }
                 }}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm xl:text-base whitespace-nowrap"
+                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
               >
                 Home
               </button>
               <button
                 onClick={() => handleNavigation("/evacuation-center")}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm xl:text-base whitespace-nowrap"
+                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
               >
                Evacuation Centers
               </button>
               <button
                 onClick={() => handleNavigation("/incident-report")}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm xl:text-base whitespace-nowrap"
+                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
               >
                 Report
               </button>
@@ -349,7 +349,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     window.location.href = "/#faq-section"
                   }
                 }}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm xl:text-base whitespace-nowrap"
+                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
               >
                 FAQs
               </button>
@@ -357,7 +357,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
             </div>
 
             {/* Desktop Auth - Profile Section with Notifications */}
-            <div className="hidden md:flex items-center space-x-2 lg:space-x-4 min-w-0">
+            <div className="hidden md:flex items-center space-x-1 lg:space-x-2 xl:space-x-3 min-w-0">
               {isAuthenticated ? (
                 <>
                   {/* Notification Icon */}
@@ -377,7 +377,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     {/* Notification Dropdown */}
                     {showNotifDropdown && (
                       <div 
-                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer"
+                        className="absolute right-0 mt-2 w-72 sm:w-80 md:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
                         onClick={() => {
                           closeNotificationDropdown()
                           handleNavigation("/notifications")
@@ -474,7 +474,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                 <div className="relative profile-dropdown">
                   <button
                     onClick={toggleProfileDropdown}
-                    className="flex items-center space-x-2 lg:space-x-3 px-2 lg:px-3 py-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium focus:outline-none group min-w-0"
+                    className="flex items-center space-x-1 lg:space-x-2 xl:space-x-3 px-1 lg:px-2 xl:px-3 py-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium focus:outline-none group min-w-0"
                   >
                     <Avatar
                       name={
@@ -489,13 +489,13 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                       size="md"
                       className="flex-shrink-0"
                     />
-                    <div className="hidden lg:block text-left min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 truncate max-w-32">
+                    <div className="hidden xl:block text-left min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 truncate max-w-24 2xl:max-w-32">
                         {(userData?.firstName || userData?.first_name) && (userData?.lastName || userData?.last_name)
                           ? `${userData.firstName || userData.first_name} ${userData.lastName || userData.last_name}`
                           : userData?.email?.split("@")[0] || "User"}
                       </p>
-                      <p className="text-xs text-gray-500 truncate max-w-32" title={userData?.email || "No email"}>
+                      <p className="text-xs text-gray-500 truncate max-w-24 2xl:max-w-32" title={userData?.email || "No email"}>
                         {userData?.email || "No email"}
                       </p>
                     </div>
@@ -504,7 +504,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     ></i>
                   </button>
                   {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute right-0 mt-2 w-64 sm:w-72 md:w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[calc(100vw-2rem)]">
                       {/* User Info Header */}
                       <div className="px-4 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
                         <div className="flex items-center space-x-3">
@@ -619,7 +619,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
             </div>
 
             {/* Mobile Menu Button and Notifications */}
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="md:hidden flex items-center space-x-1">
               {isAuthenticated && (
                 <div className="relative notification-dropdown">
                   <button
@@ -637,7 +637,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   {/* Mobile Notification Dropdown */}
                   {showNotifDropdown && (
                     <div 
-                      className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer"
+                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
                       onClick={() => {
                         closeNotificationDropdown()
                         handleNavigation("/notifications")
@@ -736,7 +736,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
               onClick={toggleMobileMenu}
               aria-label="Toggle mobile menu"
             >
-              <i className={`ri-${isMobileMenuOpen ? "close" : "menu"}-line text-xl text-gray-700`}></i>
+              <i className={`ri-${isMobileMenuOpen ? "close" : "menu"}-line text-lg sm:text-xl text-gray-700`}></i>
             </button>
             </div>
           </div>
@@ -747,8 +747,8 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeMobileMenu}></div>
-          <div className="fixed top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-200 max-h-[calc(100vh-4rem)] overflow-y-auto">
-            <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-2">
+          <div className="fixed top-14 sm:top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-200 max-h-[calc(100vh-3.5rem)] sm:max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-2">
               <button
                 onClick={() => {
                   if (window.location.pathname === "/") {
@@ -764,21 +764,21 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     handleNavigation("/")
                   }
                 }}
-                className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <i className="ri-home-line text-lg mr-3 flex-shrink-0"></i>
                 <span className="text-sm sm:text-base">Home</span>
               </button>
               <button
                 onClick={() => handleNavigation("/evacuation-center")}
-                className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <i className="ri-building-2-line text-lg mr-3 flex-shrink-0"></i>
                 <span className="text-sm sm:text-base">Centers</span>
               </button>
               <button
                 onClick={() => handleNavigation("/incident-report")}
-                className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <i className="ri-error-warning-line text-lg mr-3 flex-shrink-0"></i>
                 <span className="text-sm sm:text-base">Report</span>
@@ -798,7 +798,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   // Close mobile menu
                   closeMobileMenu()
                 }}
-                className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
               >
                 <i className="ri-question-line text-lg mr-3 flex-shrink-0"></i>
                 <span className="text-sm sm:text-base">FAQ</span>
@@ -810,7 +810,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
               {isAuthenticated ? (
                 <div className="space-y-3">
                   {/* Mobile User Info Card */}
-                  <div className="px-3 sm:px-4 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                  <div className="px-3 sm:px-4 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
                     <div className="flex items-center space-x-3">
                       <Avatar
                         name={
@@ -845,7 +845,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   {/* Mobile Menu Items */}
                   <button
                     onClick={() => handleNavigation("/profile")}
-                    className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
+                    className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
                   >
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors flex-shrink-0">
                       <i className="ri-settings-line text-gray-600 group-hover:text-blue-600"></i>
@@ -858,7 +858,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
 
                   <button
                     onClick={() => handleNavigation("/history-report")}
-                    className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
+                    className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
                   >
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors flex-shrink-0">
                       <i className="ri-file-list-line text-gray-600 group-hover:text-blue-600"></i>
@@ -871,7 +871,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
 
                   <button
                     onClick={() => handleNavigation("/feedback")}
-                    className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
+                    className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
                   >
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors flex-shrink-0">
                       <i className="ri-feedback-line text-gray-600 group-hover:text-blue-600"></i>
@@ -884,7 +884,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
 
                   <button
                     onClick={handleLogoutClick}
-                    className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group"
+                    className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group"
                   >
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-red-100 transition-colors flex-shrink-0">
                       <i className="ri-logout-box-line text-gray-600 group-hover:text-red-600"></i>
@@ -899,14 +899,14 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                 <div className="space-y-2">
                   <button
                     onClick={() => handleNavigation("/auth/login")}
-                    className="flex items-center w-full px-3 sm:px-4 py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                    className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
                   >
                     <i className="ri-login-box-line text-lg mr-3 flex-shrink-0"></i>
                     <span className="text-sm sm:text-base">Sign In</span>
                   </button>
                   <button
                     onClick={() => handleNavigation("/auth/signup")}
-                    className="flex items-center justify-center w-full px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg"
+                    className="flex items-center justify-center w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg"
                   >
                     <i className="ri-user-add-line text-lg mr-2 flex-shrink-0"></i>
                     <span className="text-sm sm:text-base">Get Started</span>
