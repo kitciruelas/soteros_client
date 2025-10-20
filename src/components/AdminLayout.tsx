@@ -60,7 +60,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   useEffect(() => {
     const initializeWebSocket = async () => {
       const authState = getAuthState();
-      if (authState.isAuthenticated && authState.userType === 'admin' && (authState as any).token && !wsInitialized.current) {
+      console.log('🔍 Initial WebSocket Auth Check:', {
+        isAuthenticated: authState.isAuthenticated,
+        userType: authState.userType,
+        hasToken: !!(authState as any).token,
+        tokenLength: (authState as any).token?.length || 0,
+        wsInitialized: wsInitialized.current
+      });
+      
+      // Get token from localStorage directly if not in userData
+      const token = (authState as any).token || localStorage.getItem('adminToken');
+      
+      if (authState.isAuthenticated && authState.userType === 'admin' && token && !wsInitialized.current) {
         wsInitialized.current = true;
         
         // Request browser notification permission
@@ -70,7 +81,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         
         try {
           setWsConnectionStatus('connecting');
-          await websocketService.connect((authState as any).token);
+          await websocketService.connect(token);
           setWsConnectionStatus('connected');
           
           // Set up real-time notification handlers
@@ -84,14 +95,43 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           console.error('Failed to connect WebSocket:', error);
           setWsConnectionStatus('disconnected');
         }
+      } else {
+        console.log('❌ WebSocket initialization skipped:', {
+          reason: !authState.isAuthenticated ? 'Not authenticated' :
+                  authState.userType !== 'admin' ? 'Not admin user' :
+                  !token ? 'No token' :
+                  wsInitialized.current ? 'Already initialized' : 'Unknown reason'
+        });
+        setWsConnectionStatus('disconnected');
       }
     };
 
     initializeWebSocket();
     fetchNotifications();
 
+    // Retry WebSocket connection if it fails initially
+    const retryConnection = () => {
+      setTimeout(() => {
+        if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
+          console.log('🔄 Retrying WebSocket connection...');
+          initializeWebSocket();
+        }
+      }, 3000); // Retry after 3 seconds
+    };
+    
+    retryConnection();
+
+    // Periodic connection health check
+    const healthCheckInterval = setInterval(() => {
+      if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
+        console.log('🔄 Periodic WebSocket health check - attempting reconnection...');
+        initializeWebSocket();
+      }
+    }, 10000); // Check every 10 seconds
+
     // Cleanup WebSocket on unmount
     return () => {
+      clearInterval(healthCheckInterval);
       websocketService.off('new_incident', handleNewIncident);
       websocketService.off('new_welfare_report', handleNewWelfareReport);
       websocketService.off('incident_updated', handleIncidentUpdate);
@@ -103,6 +143,71 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('readNotifications', JSON.stringify([...readNotifications]));
   }, [readNotifications]);
+
+  // Listen for WebSocket disconnection events and auto-reconnect
+  useEffect(() => {
+    const handleWebSocketDisconnect = () => {
+      console.log('🔄 WebSocket disconnected, attempting auto-reconnect...');
+      setWsConnectionStatus('disconnected');
+      wsInitialized.current = false;
+      
+      // Attempt to reconnect after a short delay
+      setTimeout(() => {
+        const authState = getAuthState();
+        const token = (authState as any).token || localStorage.getItem('adminToken');
+        
+        if (authState.isAuthenticated && authState.userType === 'admin' && token) {
+          console.log('🔄 Auto-reconnecting WebSocket...');
+          setWsConnectionStatus('connecting');
+          websocketService.connect(token)
+            .then(() => {
+              setWsConnectionStatus('connected');
+              console.log('✅ WebSocket auto-reconnected successfully');
+            })
+            .catch((error) => {
+              console.error('❌ WebSocket auto-reconnection failed:', error);
+              setWsConnectionStatus('disconnected');
+            });
+        }
+      }, 2000);
+    };
+
+    // Handle tab visibility changes to maintain WebSocket connection
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ Tab became visible, checking WebSocket connection...');
+        // When tab becomes visible, check if WebSocket is still connected
+        if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
+          const authState = getAuthState();
+          const token = (authState as any).token || localStorage.getItem('adminToken');
+          
+          if (authState.isAuthenticated && authState.userType === 'admin' && token) {
+            console.log('🔄 Reconnecting WebSocket after tab became visible...');
+            setWsConnectionStatus('connecting');
+            websocketService.connect(token)
+              .then(() => {
+                setWsConnectionStatus('connected');
+                console.log('✅ WebSocket reconnected after tab became visible');
+              })
+              .catch((error) => {
+                console.error('❌ WebSocket reconnection failed after tab became visible:', error);
+                setWsConnectionStatus('disconnected');
+              });
+          }
+        }
+      } else {
+        console.log('👁️ Tab became hidden');
+      }
+    };
+
+    window.addEventListener('websocketDisconnected', handleWebSocketDisconnect);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('websocketDisconnected', handleWebSocketDisconnect);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [wsConnectionStatus]);
 
   const handleLogout = async () => {
     try {
@@ -118,7 +223,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // WebSocket event handlers for real-time notifications
   const handleNewIncident = (incidentData: NotificationData) => {
-    console.log('New incident received via WebSocket:', incidentData);
+    console.log('🚨 New incident received via WebSocket:', incidentData);
     
     // Increment new notification counter
     setNewNotificationCount(prev => prev + 1);
@@ -143,6 +248,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     });
 
     // Add floating notification
+    console.log('🎯 Adding floating notification for incident');
     addFloatingNotification({
       id: `incident-${incidentData.id || (incidentData as any).incident_id}`,
       type: 'incident',
@@ -162,7 +268,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   const handleNewWelfareReport = (welfareData: NotificationData) => {
-    console.log('New welfare report received via WebSocket:', welfareData);
+    console.log('❤️ New welfare report received via WebSocket:', welfareData);
     
     // Increment new notification counter
     setNewNotificationCount(prev => prev + 1);
@@ -193,6 +299,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     });
 
     // Add floating notification
+    console.log('🎯 Adding floating notification for welfare');
     addFloatingNotification({
       id: `welfare-${welfareData.report_id || welfareData.id}`,
       type: 'welfare',
@@ -371,6 +478,73 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     setFloatingNotifications(prev => prev.filter(notif => notif.id !== id));
   };
 
+  // Test function to manually trigger floating notifications
+  const testFloatingNotification = (type: 'incident' | 'welfare' = 'incident') => {
+    if (type === 'incident') {
+      addFloatingNotification({
+        id: `test-incident-${Date.now()}`,
+        type: 'incident',
+        title: 'Test Incident Report',
+        message: 'Fire incident reported at Test Location - This is a test notification',
+        priority: 'high'
+      });
+    } else {
+      addFloatingNotification({
+        id: `test-welfare-${Date.now()}`,
+        type: 'welfare',
+        title: 'Test Welfare Check - Needs Help',
+        message: 'Test User needs assistance - This is a test notification',
+        priority: 'high'
+      });
+    }
+  };
+
+  // Manual WebSocket reconnection function
+  const reconnectWebSocket = async () => {
+    const authState = getAuthState();
+    
+    // Debug localStorage contents
+    console.log('🔍 LocalStorage Debug:', {
+      userInfo: localStorage.getItem('userInfo'),
+      admin: localStorage.getItem('admin'),
+      adminToken: localStorage.getItem('adminToken'),
+      user: localStorage.getItem('user'),
+      token: localStorage.getItem('token'),
+      userToken: localStorage.getItem('userToken'),
+      staff: localStorage.getItem('staff'),
+      staffToken: localStorage.getItem('staffToken')
+    });
+    
+    // Get token from localStorage directly if not in userData
+    const token = (authState as any).token || localStorage.getItem('adminToken');
+    
+    console.log('🔍 Auth State Debug:', {
+      isAuthenticated: authState.isAuthenticated,
+      userType: authState.userType,
+      hasTokenInUserData: !!(authState as any).token,
+      hasTokenInLocalStorage: !!localStorage.getItem('adminToken'),
+      finalToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token?.substring(0, 20) + '...' || 'No token'
+    });
+    
+    if (authState.isAuthenticated && authState.userType === 'admin' && token) {
+      console.log('🔄 Manually reconnecting WebSocket...');
+      setWsConnectionStatus('connecting');
+      try {
+        await websocketService.connect(token);
+        setWsConnectionStatus('connected');
+        console.log('✅ WebSocket reconnected successfully');
+      } catch (error) {
+        console.error('❌ WebSocket reconnection failed:', error);
+        setWsConnectionStatus('disconnected');
+      }
+    } else {
+      console.error('❌ Cannot reconnect: No valid auth token');
+      console.error('❌ Auth state details:', authState);
+    }
+  };
+
   return (
     <AdminAuthGuard>
       <div className="h-screen bg-gray-50 flex">
@@ -461,6 +635,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                               <div className="flex items-center text-yellow-600 text-xs">
                                 <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse mr-1"></div>
                                 <span className="font-medium">Connecting...</span>
+                              </div>
+                            )}
+                            {wsConnectionStatus === 'disconnected' && (
+                              <div className="flex items-center text-red-600 text-xs">
+                                <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                                <span className="font-medium">Off</span>
                               </div>
                             )}
                           </div>
