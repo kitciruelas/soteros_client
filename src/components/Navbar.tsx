@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAuthState, clearAuthData, type UserData } from "../utils/auth"
 import { userAuthApi } from "../utils/api"
@@ -19,6 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(propIsAuthenticated || false)
   const [userData, setUserData] = useState<UserData | null>(propUserData || null)
   const [userType, setUserType] = useState<'user' | 'admin' | 'staff' | null>(null)
@@ -26,6 +27,10 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [showAlertModal, setShowAlertModal] = useState(false)
   const [selectedAlert, setSelectedAlert] = useState<any>(null)
+  const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false)
+  const isPathActive = (path: string) => typeof window !== 'undefined' && window.location.pathname === path
+  const [isScrolled, setIsScrolled] = useState(false)
+  const servicesHoverTimeoutRef = useRef<number | null>(null)
   
   // Notification states (like AdminLayout)
   const [notifications, setNotifications] = useState<any[]>([])
@@ -105,6 +110,9 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
       if (showNotifDropdown && !target.closest(".notification-dropdown")) {
         setShowNotifDropdown(false)
       }
+      if (isServicesDropdownOpen && !target.closest(".services-dropdown")) {
+        setIsServicesDropdownOpen(false)
+      }
     }
 
     if (isMobileMenuOpen) {
@@ -114,7 +122,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
       document.body.style.overflow = "unset"
     }
 
-    if (isProfileDropdownOpen || showNotifDropdown) {
+    if (isProfileDropdownOpen || showNotifDropdown || isServicesDropdownOpen) {
       document.addEventListener("keydown", handleKeyDown)
       document.addEventListener("click", handleClickOutside)
     }
@@ -124,7 +132,17 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
       document.removeEventListener("click", handleClickOutside)
       document.body.style.overflow = "unset"
     }
-  }, [isMobileMenuOpen, isProfileDropdownOpen, showNotifDropdown])
+  }, [isMobileMenuOpen, isProfileDropdownOpen, showNotifDropdown, isServicesDropdownOpen])
+
+  // Detect scroll to toggle rounded pill style
+  useEffect(() => {
+    const onScroll = () => {
+      setIsScrolled(window.scrollY > 8)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Fetch notifications (like AdminLayout)
   const fetchNotifications = async () => {
@@ -204,6 +222,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
     setIsMobileMenuOpen(!isMobileMenuOpen)
     setIsProfileDropdownOpen(false) // Close profile dropdown when opening mobile menu
     setShowNotifDropdown(false) // Close notification dropdown when opening mobile menu
+    setIsServicesDropdownOpen(false) // Close services dropdown when opening mobile menu
   }
 
   const closeMobileMenu = () => {
@@ -223,6 +242,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
     // Close all menus first
     closeProfileDropdown()
     closeMobileMenu()
+    setIsServicesDropdownOpen(false)
 
     // If we're on the profile page, use window.location.href for reliable navigation
     if (window.location.pathname === "/profile") {
@@ -280,15 +300,21 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
 
   return (
     <>
-      <nav className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-gray-200 sticky top-0 z-50 transition-all duration-200">
+      <nav className="bg-transparent sticky top-2 sm:top-3 z-50 transition-all duration-200">
         <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          {/* Inner bar (rounded only after scroll) */}
+          <div className={`mb-3 transition-all duration-300 max-w-6xl mx-auto ${
+            isScrolled
+              ? 'mt-4 sm:mt-5 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl rounded-full px-3 sm:px-4 md:px-6'
+              : 'mt-2 px-0'
+          }`}>
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <div className="flex items-center min-w-0 flex-shrink-0">
               <img
                 src="/images/soterblue.png"
                 alt="Logo"
-                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 object-contain flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity duration-200"
+                className="w-28 h-28 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 ..."
                 onClick={() => {
                   if (window.location.pathname === "/") {
                     // If already on home page, scroll to hero section
@@ -320,19 +346,120 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     handleNavigation("/")
                   }
                 }}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
+                className={`text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap px-2 py-2 rounded-lg hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isPathActive('/') ? 'text-blue-600' : ''}`}
               >
                 Home
               </button>
-              <button
-                onClick={() => handleNavigation("/evacuation-center")}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
+              {/* Services Dropdown */}
+              <div
+                className="relative services-dropdown"
+                onMouseEnter={() => {
+                  if (servicesHoverTimeoutRef.current) {
+                    window.clearTimeout(servicesHoverTimeoutRef.current)
+                    servicesHoverTimeoutRef.current = null
+                  }
+                  setIsServicesDropdownOpen(true)
+                }}
+                onMouseLeave={() => {
+                  if (servicesHoverTimeoutRef.current) {
+                    window.clearTimeout(servicesHoverTimeoutRef.current)
+                  }
+                  servicesHoverTimeoutRef.current = window.setTimeout(() => {
+                    setIsServicesDropdownOpen(false)
+                  }, 150)
+                }}
               >
-               Evacuation Centers
-              </button>
+                <button
+                  onClick={() => setIsServicesDropdownOpen(!isServicesDropdownOpen)}
+                className={`flex items-center text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap px-2 py-2 rounded-lg hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isPathActive('/evacuation-center') || isPathActive('/safety-protocols') || isPathActive('/welfare-check') ? 'text-blue-600' : ''}`}
+                >
+                  Services
+                  <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${isServicesDropdownOpen ? "rotate-180" : ""}`}></i>
+                </button>
+                {isServicesDropdownOpen && (
+                  <div
+                    className="absolute left-0 mt-2 w-[22rem] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95"
+                    onMouseEnter={() => {
+                      if (servicesHoverTimeoutRef.current) {
+                        window.clearTimeout(servicesHoverTimeoutRef.current)
+                        servicesHoverTimeoutRef.current = null
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (servicesHoverTimeoutRef.current) {
+                        window.clearTimeout(servicesHoverTimeoutRef.current)
+                      }
+                      servicesHoverTimeoutRef.current = window.setTimeout(() => {
+                        setIsServicesDropdownOpen(false)
+                      }, 150)
+                    }}
+                  >
+                    {/* Arrow indicator */}
+                    <div className="absolute left-8 -top-1.5 w-3 h-3 bg-white border-l border-t border-gray-200 rotate-45"></div>
+                    <div className="p-3">
+                      <div className="px-3 py-2 mb-2 border-b border-gray-100">
+                        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Services</p>
+                      </div>
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => handleNavigation("/evacuation-center")}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors group"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200">
+                              <i className="ri-building-2-line"></i>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-gray-900">Evacuation Centers</p>
+                                <i className="ri-arrow-right-s-line text-gray-400 group-hover:text-blue-600"></i>
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">Find nearby shelters and resources</p>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleNavigation("/safety-protocols")}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors group"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-200">
+                              <i className="ri-shield-check-line"></i>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-gray-900">Safety Protocols</p>
+                                <i className="ri-arrow-right-s-line text-gray-400 group-hover:text-blue-600"></i>
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">Official guides and preparedness tips</p>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleNavigation("/welfare-check")}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors group"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-200">
+                              <i className="ri-heart-pulse-line"></i>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-gray-900">Welfare Check</p>
+                                <i className="ri-arrow-right-s-line text-gray-400 group-hover:text-blue-600"></i>
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">Check on residents' safety and needs</p>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => handleNavigation("/incident-report")}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
+                className={`text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap px-2 py-2 rounded-lg hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isPathActive('/incident-report') ? 'text-blue-600' : ''}`}
               >
                 Report
               </button>
@@ -349,9 +476,15 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     window.location.href = "/#faq-section"
                   }
                 }}
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap"
+                className={`text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap px-2 py-2 rounded-lg hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400`}
               >
                 FAQs
+              </button>
+              <button
+                onClick={() => handleNavigation("/about")}
+                className={`text-gray-700 hover:text-blue-600 transition-colors font-medium text-sm lg:text-sm xl:text-base whitespace-nowrap px-2 py-2 rounded-lg hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isPathActive('/about') ? 'text-blue-600' : ''}`}
+              >
+                About
               </button>
           
             </div>
@@ -609,10 +742,11 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   </button>
                   <button
                     onClick={() => handleNavigation("/auth/signup")}
-                    className="bg-blue-600 text-white px-3 lg:px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm lg:text-base whitespace-nowrap"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 lg:px-6 py-2 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium text-sm lg:text-base whitespace-nowrap shadow-md flex items-center gap-2"
                   >
                     <span className="hidden lg:inline">Get Started</span>
                     <span className="lg:hidden">Join</span>
+                    <i className="ri-arrow-right-line"></i>
                   </button>
                 </div>
               )}
@@ -637,14 +771,14 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   {/* Mobile Notification Dropdown */}
                   {showNotifDropdown && (
                     <div 
-                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
+                      className="absolute left-2 right-2 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer"
                       onClick={() => {
                         closeNotificationDropdown()
                         handleNavigation("/notifications")
                       }}
                     >
                       {/* Header */}
-                      <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
+                      <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-xl">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold text-gray-900">Notifications</h3>
                           {unreadCount > 0 && (
@@ -662,7 +796,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                       </div>
 
                       {/* Notifications List */}
-                      <div className="max-h-96 overflow-y-auto">
+                      <div className="max-h-[70vh] overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="text-center py-8">
                             <i className="ri-notification-off-line text-4xl text-gray-300"></i>
@@ -740,6 +874,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
             </button>
             </div>
           </div>
+          </div>
         </div>
       </nav>
 
@@ -769,13 +904,39 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                 <i className="ri-home-line text-lg mr-3 flex-shrink-0"></i>
                 <span className="text-sm sm:text-base">Home</span>
               </button>
-              <button
-                onClick={() => handleNavigation("/evacuation-center")}
-                className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
-              >
-                <i className="ri-building-2-line text-lg mr-3 flex-shrink-0"></i>
-                <span className="text-sm sm:text-base">Centers</span>
-              </button>
+              
+              {/* Mobile Services collapsible */}
+              <div className="rounded-lg border border-gray-200">
+                <button
+                  onClick={() => setIsMobileServicesOpen(!isMobileServicesOpen)}
+                  className="flex items-center justify-between w-full px-3 sm:px-4 py-2.5 sm:py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+                >
+                  <span className="flex items-center"><i className="ri-briefcase-line text-lg mr-3 flex-shrink-0"></i> <span className="text-sm sm:text-base">Services</span></span>
+                  <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${isMobileServicesOpen ? "rotate-180" : ""}`}></i>
+                </button>
+                {isMobileServicesOpen && (
+                  <div className="pb-2">
+                    <button
+                      onClick={() => handleNavigation("/evacuation-center")}
+                      className="flex items-center w-full px-10 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                    >
+                      Evacuation Centers
+                    </button>
+                    <button
+                      onClick={() => handleNavigation("/safety-protocols")}
+                      className="flex items-center w-full px-10 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                    >
+                      Safety Protocols
+                    </button>
+                    <button
+                      onClick={() => handleNavigation("/welfare-check")}
+                      className="flex items-center w-full px-10 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                    >
+                      Welfare Check
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => handleNavigation("/incident-report")}
                 className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
@@ -802,6 +963,13 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
               >
                 <i className="ri-question-line text-lg mr-3 flex-shrink-0"></i>
                 <span className="text-sm sm:text-base">FAQ</span>
+              </button>
+              <button
+                onClick={() => handleNavigation("/about")}
+                className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium"
+              >
+                <i className="ri-information-line text-lg mr-3 flex-shrink-0"></i>
+                <span className="text-sm sm:text-base">About</span>
               </button>
 
 

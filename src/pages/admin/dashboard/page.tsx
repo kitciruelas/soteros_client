@@ -8,6 +8,7 @@ import LineChart from '../../../components/charts/LineChart';
 import { useToast } from '../../../components/base/Toast';
 import ExportUtils, { type ExportColumn } from '../../../utils/exportUtils';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
+import PrivacyNotice from '../../../components/PrivacyNotice';
 
 interface DashboardStats {
   totalIncidents: number;
@@ -668,11 +669,20 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Privacy Notice */}
+      <PrivacyNotice variant="banner" />
+      
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Analytics</h1>
-          <p className="text-gray-600 mt-1">Overview of emergency management system</p>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard Analytics</h1>
+            <div className="flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+              <i className="ri-shield-check-line mr-1"></i>
+              Secure Access
+            </div>
+          </div>
+          <p className="text-gray-600 mt-1">Overview of emergency management system - All data is encrypted and access-controlled</p>
         </div>
         <div className="flex items-center space-x-3">
           <div className="relative group">

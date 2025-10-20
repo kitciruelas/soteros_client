@@ -37,6 +37,7 @@ export default function WelfareCheck() {
   const [latestReport, setLatestReport] = useState<WelfareReport | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [showAnnouncement, setShowAnnouncement] = useState(true)
   
   const [formData, setFormData] = useState<WelfareCheckData>({
     status: 'safe',
@@ -284,15 +285,46 @@ export default function WelfareCheck() {
               </div>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight">
-              {systemStatus?.title || 'Welfare Check'}
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-3 leading-tight">
+            Welfare Check Status
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-              Emergency Welfare Status Reporting
-              <span className="block text-lg text-gray-500 mt-2">
-                {systemStatus?.description || 'Let us know your current status so we can ensure your safety during emergencies'}
-              </span>
-            </p>
+            {systemStatus?.isActive && (
+              <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 rounded-full px-3 py-1 mb-5">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span className="text-sm font-medium">System Active</span>
+              </div>
+            )}
+
+            {systemStatus?.isActive && showAnnouncement && (
+              <div className="relative max-w-3xl mx-auto mb-8">
+                <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 shadow-lg">
+                  <div className="px-5 py-4 flex items-start gap-3">
+                    <div className="mt-0.5 w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <i className="ri-megaphone-line text-amber-600"></i>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-amber-800">Welfare Announcement</div>
+                      <div className="mt-1">
+                        <p className="text-amber-900 font-medium leading-snug">
+                          {systemStatus?.title || 'Welfare Check'}
+                        </p>
+                        <p className="text-amber-700 text-sm leading-relaxed">
+                          {systemStatus?.description || 'Welfare check is currently active. Please submit your status to help responders.'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAnnouncement(false)}
+                      className="ml-auto text-amber-700 hover:text-amber-900 rounded-lg p-1 hover:bg-amber-100 transition-colors"
+                      aria-label="Dismiss announcement"
+                    >
+                      <i className="ri-close-line text-xl"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
               <div className="flex items-center justify-center text-blue-800">
@@ -306,6 +338,14 @@ export default function WelfareCheck() {
               <p className="text-blue-600 text-sm mt-2 opacity-80">
                 All welfare reports are treated with urgency and confidentiality
               </p>
+              {systemStatus?.isActive && (
+                <div className="mt-4 flex items-center justify-center text-green-700">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-2">
+                    <i className="ri-checkbox-circle-line text-green-600 text-sm"></i>
+                  </div>
+                  <span className="text-sm font-medium">Welfare check submissions are currently open</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
