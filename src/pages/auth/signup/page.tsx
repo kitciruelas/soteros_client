@@ -437,6 +437,32 @@ export default function SignupPage() {
               )}
             </div>
 
+            {/* Location Information Display */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <i className="ri-map-pin-2-line text-blue-600"></i>
+                <span className="text-sm font-semibold text-blue-800">Location Information</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 text-sm text-blue-700">
+                <div className="flex justify-between">
+                  <span className="font-medium">State/Province:</span>
+                  <span className="text-blue-800">Batangas</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">City/Municipality:</span>
+                  <span className="text-blue-800">Rosario</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">ZIP Code:</span>
+                  <span className="text-blue-800">4225</span>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                <i className="ri-information-line"></i>
+                <span>All users are automatically registered under Rosario, Batangas</span>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <input type="hidden" id="userType" name="userType" value="CITIZEN" />
