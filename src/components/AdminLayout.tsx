@@ -148,7 +148,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       type: 'incident',
       title: 'New Incident Report',
       message: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
-      priority: incidentData.priority_level || 'medium'
+      priority: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium'
     });
 
     // Show browser notification if permission granted
