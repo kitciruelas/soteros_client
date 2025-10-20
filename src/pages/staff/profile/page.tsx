@@ -614,27 +614,27 @@ const StaffProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-5xl mx-auto">
           {/* Alert Messages */}
           {showSuccessAlert && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-3 text-green-800">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <i className="ri-check-circle-line text-green-600"></i>
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2 sm:gap-3 text-green-800">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <i className="ri-check-circle-line text-green-600 text-sm sm:text-base"></i>
                 </div>
-                <span className="font-medium">{successMessage}</span>
+                <span className="font-medium text-sm sm:text-base">{successMessage}</span>
               </div>
             </div>
           )}
 
           {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Profile Summary Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-xl p-6 sticky top-8">
-                <div className="text-center mb-6">
-                  <div className="mb-4">
+            <div className="lg:col-span-1 order-1">
+              <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 sticky top-4 sm:top-8">
+                <div className="text-center mb-4 sm:mb-6">
+                  <div className="mb-3 sm:mb-4">
                     <Avatar
                       name={profile?.name}
                       email={profile?.email}
@@ -642,24 +642,16 @@ const StaffProfilePage: React.FC = () => {
                       className="mx-auto"
                     />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
                     {profile?.name || "User Profile"}
                   </h3>
-                  <p className="text-gray-600 mb-4">{profile?.email || "No email provided"}</p>
-
-                  {!isEditing && (
-                    <Button variant="primary" size="md" onClick={handleEdit} fullWidth>
-                      <i className="ri-edit-line mr-2"></i>
-                      Edit Profile
-                    </Button>
-                  )}
-
+                  <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 break-words">{profile?.email || "No email provided"}</p>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">Profile Completion</span>
+                    <span className="text-xs sm:text-sm text-gray-600">
                       {profileCompletion}%
                     </span>
                   </div>
@@ -674,8 +666,8 @@ const StaffProfilePage: React.FC = () => {
                 </div>
 
                 {/* Logout Button */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <Button variant="outline" size="md" onClick={handleLogoutClick} fullWidth>
+                <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                  <Button variant="outline" size="sm" className="sm:size-md" onClick={handleLogoutClick} fullWidth>
                     <i className="ri-logout-box-line mr-2"></i>
                     Sign Out
                   </Button>
@@ -684,61 +676,61 @@ const StaffProfilePage: React.FC = () => {
             </div>
 
             {/* Main Form Section */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2">
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6">
-                  <div className="flex justify-between items-center">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
                     <div>
-                      <h2 className="text-2xl font-bold text-white">Personal Information</h2>
-                      <p className="text-blue-100 mt-1">Keep your information up to date</p>
+                      <h2 className="text-xl sm:text-2xl font-bold text-white">Personal Information</h2>
+                      <p className="text-blue-100 mt-1 text-sm sm:text-base">Keep your information up to date</p>
                     </div>
                     {isEditing && (
                       <div className="flex items-center gap-2 text-blue-100">
-                        <i className="ri-edit-line"></i>
-                        <span className="text-sm font-medium">Editing Mode</span>
+                        <i className="ri-edit-line text-sm sm:text-base"></i>
+                        <span className="text-xs sm:text-sm font-medium">Editing Mode</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Form Content */}
-                <div className="p-8">
-                  <form onSubmit={handleSave} className="space-y-8">
+                <div className="p-4 sm:p-6 lg:p-8">
+                  <form onSubmit={handleSave} className="space-y-6 sm:space-y-8">
                     {/* Basic Information Section */}
                     <div>
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <i className="ri-user-line text-blue-600"></i>
+                      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="ri-user-line text-blue-600 text-sm sm:text-base"></i>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">Basic Information</h3>
                       </div>
 
                       {/* Display Mode - Show when not editing */}
                       {!isEditing && (
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                            <p className="text-gray-900 font-medium">{profile?.name?.split(' ')[0] || 'Not provided'}</p>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base">{profile?.name?.split(' ')[0] || 'Not provided'}</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                            <p className="text-gray-900 font-medium">{profile?.name?.split(' ').slice(1).join(' ') || 'Not provided'}</p>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base">{profile?.name?.split(' ').slice(1).join(' ') || 'Not provided'}</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                            <p className="text-gray-900 font-medium">{profile?.position || 'Not provided'}</p>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base">{profile?.position || 'Not provided'}</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                            <p className="text-gray-900 font-medium">{profile?.department || 'Not provided'}</p>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base">{profile?.department || 'Not provided'}</p>
                           </div>
                         </div>
                       )}
 
                       {/* Edit Mode - Show when editing */}
                       {isEditing && (
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <Input
                             label="First Name"
                             type="text"
@@ -804,29 +796,29 @@ const StaffProfilePage: React.FC = () => {
                     </div>
 
                     {/* Contact Information Section */}
-                    <div className="border-t border-gray-100 pt-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                          <i className="ri-phone-line text-green-600"></i>
+                    <div className="border-t border-gray-100 pt-6 sm:pt-8">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="ri-phone-line text-green-600 text-sm sm:text-base"></i>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">Contact Information</h3>
                       </div>
 
                       {/* Display Mode - Show when not editing */}
                       {!isEditing && (
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                            <p className="text-gray-900 font-medium">{profile?.email || 'Not provided'}</p>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base break-words">{profile?.email || 'Not provided'}</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                            <p className="text-gray-900 font-medium">{formatPhoneNumber(profile?.phone) || 'Not provided'}</p>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base">{formatPhoneNumber(profile?.phone) || 'Not provided'}</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
                             <div className="flex items-center gap-2">
-                              <i className={`${getAvailabilityIcon(profile?.availability || 'available')} text-lg`}></i>
+                              <i className={`${getAvailabilityIcon(profile?.availability || 'available')} text-sm sm:text-base`}></i>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getAvailabilityColor(profile?.availability || 'available')}`}>
                                 {profile?.availability || 'Not set'}
                               </span>
@@ -837,7 +829,7 @@ const StaffProfilePage: React.FC = () => {
 
                       {/* Edit Mode - Show when editing */}
                       {isEditing && (
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <Input
                             label="Email Address"
                             type="email"
@@ -889,29 +881,30 @@ const StaffProfilePage: React.FC = () => {
                     </div>
 
                     {/* Security Section */}
-                    <div className="border-t border-gray-100 pt-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                          <i className="ri-lock-line text-red-600"></i>
+                    <div className="border-t border-gray-100 pt-6 sm:pt-8">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="ri-lock-line text-red-600 text-sm sm:text-base"></i>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">Security</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">Security</h3>
                       </div>
 
-                      <div className="bg-gray-50 rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-4">
+                      <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
                           <div>
-                            <h4 className="font-medium text-gray-900">Change Password</h4>
-                            <p className="text-sm text-gray-600">Update your password to keep your account secure</p>
+                            <h4 className="font-medium text-gray-900 text-sm sm:text-base">Change Password</h4>
+                            <p className="text-xs sm:text-sm text-gray-600">Update your password to keep your account secure</p>
                           </div>
                           <Button
                             type="button"
                             variant="outline"
-                            size="md"
+                            size="sm"
+                            className="sm:size-md border-red-200 text-red-600 hover:bg-red-50"
                             onClick={() => setShowPasswordModal(true)}
-                            className="border-red-200 text-red-600 hover:bg-red-50"
                           >
                             <i className="ri-key-line mr-2"></i>
-                            Change Password
+                            <span className="hidden sm:inline">Change Password</span>
+                            <span className="sm:hidden">Change</span>
                           </Button>
                         </div>
                       </div>
@@ -919,25 +912,28 @@ const StaffProfilePage: React.FC = () => {
 
                     {/* Action Buttons */}
                     {isEditing && (
-                      <div className="border-t border-gray-100 pt-8">
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          <Button type="submit" variant="primary" size="lg" disabled={saving}>
+                      <div className="border-t border-gray-100 pt-6 sm:pt-8">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                          <Button type="submit" variant="primary" size="md" className="sm:size-lg" disabled={saving}>
                             {saving ? (
                               <>
                                 <i className="ri-loader-4-line animate-spin mr-2"></i>
-                                Saving Changes...
+                                <span className="hidden sm:inline">Saving Changes...</span>
+                                <span className="sm:hidden">Saving...</span>
                               </>
                             ) : (
                               <>
                                 <i className="ri-save-line mr-2"></i>
-                                Save Changes
+                                <span className="hidden sm:inline">Save Changes</span>
+                                <span className="sm:hidden">Save</span>
                               </>
                             )}
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
-                            size="lg"
+                            size="md"
+                            className="sm:size-lg"
                             onClick={handleCancel}
                             disabled={saving}
                           >
@@ -955,14 +951,14 @@ const StaffProfilePage: React.FC = () => {
 
           {/* Floating Action Button for Mobile */}
           {!isEditing && (
-            <div className="fixed bottom-6 right-6 lg:hidden">
+            <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 lg:hidden z-40">
               <Button
                 variant="primary"
                 size="lg"
                 onClick={handleEdit}
-                className="rounded-full w-14 h-14 shadow-2xl hover:shadow-3xl"
+                className="rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-2xl hover:shadow-3xl"
               >
-                <i className="ri-edit-line text-xl"></i>
+                <i className="ri-edit-line text-lg sm:text-xl"></i>
               </Button>
             </div>
           )}
@@ -974,9 +970,9 @@ const StaffProfilePage: React.FC = () => {
         isOpen={showPasswordModal}
         onClose={handlePasswordModalClose}
         title="Change Password"
-        size="md"
+        size="sm"
       >
-        <form onSubmit={handlePasswordSubmit} className="space-y-6">
+        <form onSubmit={handlePasswordSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <Input
               label="Current Password"
@@ -1025,11 +1021,12 @@ const StaffProfilePage: React.FC = () => {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
             <Button
               type="button"
               variant="outline"
-              size="md"
+              size="sm"
+              className="sm:size-md"
               onClick={handlePasswordModalClose}
               disabled={isChangingPassword}
             >
@@ -1038,18 +1035,21 @@ const StaffProfilePage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              size="md"
+              size="sm"
+              className="sm:size-md"
               disabled={isChangingPassword}
             >
               {isChangingPassword ? (
                 <>
                   <i className="ri-loader-4-line animate-spin mr-2"></i>
-                  Changing...
+                  <span className="hidden sm:inline">Changing...</span>
+                  <span className="sm:hidden">Changing</span>
                 </>
               ) : (
                 <>
                   <i className="ri-key-line mr-2"></i>
-                  Change Password
+                  <span className="hidden sm:inline">Change Password</span>
+                  <span className="sm:hidden">Change</span>
                 </>
               )}
             </Button>
