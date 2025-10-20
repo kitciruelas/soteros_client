@@ -11,11 +11,66 @@ import { apiRequest } from "../../../utils/api"
 import PrivacyPolicyModal from "../../../components/PrivacyPolicyModal"
 import TermsOfServiceModal from "../../../components/TermsOfServiceModal"
 import Navbar from "../../../components/Navbar"
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
+
+const rosarioBarangays = [
+  { name: "Alupay", lat: 13.8404, lng: 121.2922 },
+  { name: "Antipolo", lat: 13.708, lng: 121.3096 },
+  { name: "Bagong Pook", lat: 13.8402, lng: 121.2216 },
+  { name: "Balibago", lat: 13.8512, lng: 121.2855 },
+  { name: "Barangay A", lat: 13.8457, lng: 121.2104 },
+  { name: "Barangay B", lat: 13.8461, lng: 121.2065 },
+  { name: "Barangay C", lat: 13.8467, lng: 121.2032 },
+  { name: "Barangay D", lat: 13.844, lng: 121.2035 },
+  { name: "Barangay E", lat: 13.8415, lng: 121.2047 },
+  { name: "Bayawang", lat: 13.7944, lng: 121.2798 },
+  { name: "Baybayin", lat: 13.8277, lng: 121.2589 },
+  { name: "Bulihan", lat: 13.7967, lng: 121.2351 },
+  { name: "Cahigam", lat: 13.8021, lng: 121.2501 },
+  { name: "Calantas", lat: 13.734, lng: 121.3129 },
+  { name: "Colongan", lat: 13.8114, lng: 121.1762 },
+  { name: "Itlugan", lat: 13.819, lng: 121.2036 },
+  { name: "Leviste", lat: 13.7694, lng: 121.2868 },
+  { name: "Lumbangan", lat: 13.8122, lng: 121.2649 },
+  { name: "Maalas-as", lat: 13.8112, lng: 121.2122 },
+  { name: "Mabato", lat: 13.8144, lng: 121.2913 },
+  { name: "Mabunga", lat: 13.781, lng: 121.2924 },
+  { name: "Macalamcam A", lat: 13.8551, lng: 121.3046 },
+  { name: "Macalamcam B", lat: 13.8606, lng: 121.3265 },
+  { name: "Malaya", lat: 13.8535, lng: 121.172 },
+  { name: "Maligaya", lat: 13.8182, lng: 121.2742 },
+  { name: "Marilag", lat: 13.8562, lng: 121.1764 },
+  { name: "Masaya", lat: 13.8383, lng: 121.1852 },
+  { name: "Matamis", lat: 13.7216, lng: 121.3305 },
+  { name: "Mavalor", lat: 13.8177, lng: 121.2315 },
+  { name: "Mayuro", lat: 13.7944, lng: 121.2623 },
+  { name: "Namuco", lat: 13.8382, lng: 121.2036 },
+  { name: "Namunga", lat: 13.8431, lng: 121.1978 },
+  { name: "Nasi", lat: 13.7699, lng: 121.3127 },
+  { name: "Natu", lat: 13.842, lng: 121.2683 },
+  { name: "Palakpak", lat: 13.7079, lng: 121.332 },
+  { name: "Pinagsibaan", lat: 13.8438, lng: 121.3141 },
+  { name: "Putingkahoy", lat: 13.8349, lng: 121.3227 },
+  { name: "Quilib", lat: 13.8603, lng: 121.2002 },
+  { name: "Salao", lat: 13.8578, lng: 121.3455 },
+  { name: "San Carlos", lat: 13.8478, lng: 121.2475 },
+  { name: "San Ignacio", lat: 13.8335, lng: 121.1764 },
+  { name: "San Isidro", lat: 13.8074, lng: 121.3152 },
+  { name: "San Jose", lat: 13.8419, lng: 121.2329 },
+  { name: "San Roque", lat: 13.8518, lng: 121.2039 },
+  { name: "Santa Cruz", lat: 13.8599, lng: 121.1853 },
+  { name: "Timbugan", lat: 13.8095, lng: 121.1869 },
+  { name: "Tiquiwan", lat: 13.8284, lng: 121.2399 },
+  { name: "Tulos", lat: 13.7231, lng: 121.2971 },
+]
 
 interface SignupFormData {
   firstName: string
   lastName: string
   email: string
+  phoneNumber: string
+  address: string
   password: string
   confirmPassword: string
   userType: string
@@ -38,6 +93,8 @@ export default function SignupPage() {
       firstName: "",
       lastName: "",
       email: "",
+      phoneNumber: "",
+      address: "",
       password: "",
       confirmPassword: "",
       userType: "CITIZEN",
@@ -57,6 +114,40 @@ export default function SignupPage() {
       email: {
         required: true,
         pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      },
+      phoneNumber: {
+        required: true,
+        custom: (value: string) => {
+          if (!value) return "Phone number is required"
+          
+          // Handle E.164 format from PhoneInput (+639XXXXXXXXX)
+          if (value.startsWith('+63')) {
+            const cleanNumber = value.replace(/\D/g, '');
+            if (!/^639\d{9}$/.test(cleanNumber)) {
+              return "Please enter a valid Philippine mobile number"
+            }
+            return null
+          }
+          
+          // Handle local format (09123456789)
+          if (value.startsWith('0')) {
+            if (!/^09\d{9}$/.test(value)) {
+              return "Please enter a valid Philippine mobile number"
+            }
+            return null
+          }
+          
+          return "Please enter a valid Philippine phone number"
+        },
+      },
+      address: {
+        required: true,
+        custom: (value: string) => {
+          if (!value) {
+            return "Please select your barangay"
+          }
+          return null
+        },
       },
       password: {
         required: true,
@@ -110,6 +201,8 @@ export default function SignupPage() {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
+          phoneNumber: formData.phoneNumber,
+          address: formData.address,
           password: formData.password,
           userType: formData.userType,
           department: formData.department,
@@ -277,6 +370,72 @@ export default function SignupPage() {
               autoComplete="email"
               icon={<i className="ri-mail-line"></i>}
             />
+
+            <div className="space-y-2">
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <i className="ri-phone-line text-gray-400"></i>
+                </div>
+                <PhoneInput
+                  international
+                  defaultCountry="PH"
+                  value={fields.phoneNumber.value}
+                  onChange={(value) => {
+                    setValue("phoneNumber", value || "");
+                  }}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
+                    fields.phoneNumber.error ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter phone number"
+                />
+              </div>
+              {fields.phoneNumber.touched && fields.phoneNumber.error && (
+                <p className="text-sm text-red-600 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                  <i className="ri-error-warning-line"></i>
+                  {fields.phoneNumber.error}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                Barangay <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <i className="ri-map-pin-line text-gray-400"></i>
+                </div>
+                <select
+                  id="address"
+                  name="address"
+                  value={fields.address.value}
+                  onChange={(e) => setValue("address", e.target.value)}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all appearance-none bg-white ${
+                    fields.address.error ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  required
+                >
+                  <option value="">Select your barangay</option>
+                  {rosarioBarangays.map((barangay) => (
+                    <option key={barangay.name} value={barangay.name}>
+                      {barangay.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <i className="ri-arrow-down-s-line text-gray-400"></i>
+                </div>
+              </div>
+              {fields.address.touched && fields.address.error && (
+                <p className="text-sm text-red-600 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                  <i className="ri-error-warning-line"></i>
+                  {fields.address.error}
+                </p>
+              )}
+            </div>
 
             <div className="space-y-4">
               <div>
