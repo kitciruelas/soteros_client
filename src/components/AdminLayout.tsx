@@ -121,13 +121,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     
     retryConnection();
 
-    // Periodic connection health check
+    // Periodic connection health check (less frequent)
     const healthCheckInterval = setInterval(() => {
       if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
         console.log('🔄 Periodic WebSocket health check - attempting reconnection...');
         initializeWebSocket();
       }
-    }, 10000); // Check every 10 seconds
+    }, 30000); // Check every 30 seconds (less aggressive)
 
     // Cleanup WebSocket on unmount
     return () => {
@@ -176,13 +176,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         console.log('👁️ Tab became visible, checking WebSocket connection...');
-        // When tab becomes visible, check if WebSocket is still connected
+        // Only reconnect if WebSocket is actually disconnected, not just because tab was hidden
         if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
           const authState = getAuthState();
           const token = (authState as any).token || localStorage.getItem('adminToken');
           
           if (authState.isAuthenticated && authState.userType === 'admin' && token) {
-            console.log('🔄 Reconnecting WebSocket after tab became visible...');
+            console.log('🔄 Reconnecting WebSocket after tab became visible (connection was lost)...');
             setWsConnectionStatus('connecting');
             websocketService.connect(token)
               .then(() => {
@@ -194,9 +194,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 setWsConnectionStatus('disconnected');
               });
           }
+        } else if (wsConnectionStatus === 'connected') {
+          console.log('👁️ Tab became visible - WebSocket still connected, no need to reconnect');
         }
       } else {
-        console.log('👁️ Tab became hidden');
+        console.log('👁️ Tab became hidden - WebSocket will continue running in background');
       }
     };
 

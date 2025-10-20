@@ -242,18 +242,18 @@ class WebSocketService {
     
     this.keepAliveInterval = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        // Send ping every 30 seconds
+        // Send ping every 60 seconds (less frequent to avoid unnecessary reconnections)
         this.send('ping', { timestamp: Date.now() });
         
-        // Check if we got a pong response within 10 seconds
+        // Check if we got a pong response within 15 seconds (more lenient)
         setTimeout(() => {
-          if (Date.now() - this.lastPongTime > 10000 && this.ws) {
+          if (Date.now() - this.lastPongTime > 15000 && this.ws) {
             console.log('⚠️ WebSocket keep-alive timeout, reconnecting...');
             this.ws.close(1006, 'Keep-alive timeout');
           }
-        }, 10000);
+        }, 15000);
       }
-    }, 30000); // Send ping every 30 seconds
+    }, 60000); // Send ping every 60 seconds (less aggressive)
   }
 
   private stopKeepAlive() {

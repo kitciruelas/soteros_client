@@ -7,6 +7,7 @@ import Navbar from '../../components/Navbar';
 import { useToast } from '../../components/base/Toast';
 import { getAuthState, type UserData } from '../../utils/auth';
 import { reverseGeocode } from '../../utils/geocoding';
+import { apiFormRequest } from '../../utils/api';
 import ReCAPTCHA from 'react-google-recaptcha';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -477,52 +478,43 @@ export default function IncidentReportPage() {
         }
       }
 
-      // Real API call to save to database
-      const response = await fetch(`${endpoint}`, {
-        method: 'POST',
-        ...(isAuthenticated && userData?.token ? { headers: { 'Authorization': `Bearer ${userData.token}` } } : {}),
-        body: formData
+      // Real API call to save to database using proper API utility
+      const responseData = await apiFormRequest(endpoint, formData, {
+        ...(isAuthenticated && userData?.token ? { headers: { 'Authorization': `Bearer ${userData.token}` } } : {})
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+      console.log('SUCCESS: Incident report saved to database:', responseData);
+      showToast({
+        type: 'success',
+        title: 'Report Submitted Successfully!',
+        message: 'Emergency responders have been notified and will respond as soon as possible.',
+        durationMs: 5000
+      });
+      // Redirect to home page after successful submission
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
 
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('SUCCESS: Incident report saved to database:', responseData);
-        showToast({
-          type: 'success',
-          title: 'Report Submitted Successfully!',
-          message: 'Emergency responders have been notified and will respond as soon as possible.',
-          durationMs: 5000
-        });
-        // Redirect to home page after successful submission
-        setTimeout(() => {
-          navigate('/');
-        }, 3000);
-      } else {
-        const data = await response.json();
-        console.error('ERROR: Database save failed');
-        console.error('Status:', response.status);
-        console.error('Response data:', data);
-        const errorMsg = data.message || (data.missingFields?.length
-          ? `Missing: ${data.missingFields.join(', ')}`
-          : 'Failed to submit incident report. Please try again.');
-        
-        showToast({
-          type: 'error',
-          title: 'Submission Failed',
-          message: errorMsg,
-          durationMs: 5000
-        });
-      }
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Incident report submission failed:', error);
+      
+      // Handle different types of errors
+      let errorMessage = 'Network error. Please check your connection and try again.';
+      
+      if (error.message) {
+        if (error.message.includes('Missing required fields')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Authentication failed')) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       showToast({
         type: 'error',
-        title: 'Network Error',
-        message: 'Network error. Please check your connection and try again.',
+        title: 'Submission Failed',
+        message: errorMessage,
         durationMs: 5000
       });
     } finally {
