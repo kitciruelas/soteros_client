@@ -28,6 +28,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const wsInitialized = useRef(false);
   const [newNotificationCount, setNewNotificationCount] = useState(0);
+  const [floatingNotifications, setFloatingNotifications] = useState<Array<{
+    id: string;
+    type: 'incident' | 'welfare';
+    title: string;
+    message: string;
+    timestamp: number;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+  }>>([]);
 
   useEffect(() => {
     const authState = getAuthState();
@@ -134,6 +142,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       return prev;
     });
 
+    // Add floating notification
+    addFloatingNotification({
+      id: `incident-${incidentData.id || (incidentData as any).incident_id}`,
+      type: 'incident',
+      title: 'New Incident Report',
+      message: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
+      priority: incidentData.priority_level || 'medium'
+    });
+
     // Show browser notification if permission granted
     if (Notification.permission === 'granted') {
       new Notification('New Incident Report', {
@@ -173,6 +190,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         return [newWelfareReport, ...prev].slice(0, 5); // Keep only latest 5
       }
       return prev;
+    });
+
+    // Add floating notification
+    addFloatingNotification({
+      id: `welfare-${welfareData.report_id || welfareData.id}`,
+      type: 'welfare',
+      title: 'Welfare Check - Needs Help',
+      message: `${welfareData.user_name || 'User'} needs assistance`,
+      priority: 'high'
     });
 
     // Show browser notification if permission granted
@@ -320,6 +346,31 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  // Floating notification functions
+  const addFloatingNotification = (notification: {
+    id: string;
+    type: 'incident' | 'welfare';
+    title: string;
+    message: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+  }) => {
+    const newFloatingNotif = {
+      ...notification,
+      timestamp: Date.now()
+    };
+    
+    setFloatingNotifications(prev => [...prev, newFloatingNotif]);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      removeFloatingNotification(newFloatingNotif.id);
+    }, 5000);
+  };
+
+  const removeFloatingNotification = (id: string) => {
+    setFloatingNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
   return (
     <AdminAuthGuard>
       <div className="h-screen bg-gray-50 flex">
@@ -410,12 +461,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                               <div className="flex items-center text-yellow-600 text-xs">
                                 <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse mr-1"></div>
                                 <span className="font-medium">Connecting...</span>
-                              </div>
-                            )}
-                            {wsConnectionStatus === 'disconnected' && (
-                              <div className="flex items-center text-red-600 text-xs">
-                                <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
-                                <span className="font-medium">Offline</span>
                               </div>
                             )}
                           </div>
@@ -650,6 +695,100 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
             {children || <Outlet />}
           </main>
+        </div>
+
+        {/* Floating Notifications */}
+        <div className="fixed top-4 right-4 z-[9999] space-y-3">
+          {floatingNotifications.map((notification, index) => {
+            const getPriorityStyles = (priority: string) => {
+              switch (priority) {
+                case 'critical':
+                  return 'bg-red-500 border-red-600 text-white';
+                case 'high':
+                  return 'bg-orange-500 border-orange-600 text-white';
+                case 'medium':
+                  return 'bg-blue-500 border-blue-600 text-white';
+                case 'low':
+                  return 'bg-green-500 border-green-600 text-white';
+                default:
+                  return 'bg-gray-500 border-gray-600 text-white';
+              }
+            };
+
+            const getIcon = (type: string, priority: string) => {
+              if (type === 'welfare') return 'ri-heart-pulse-line';
+              if (priority === 'critical') return 'ri-alarm-warning-line';
+              if (priority === 'high') return 'ri-fire-line';
+              return 'ri-notification-3-line';
+            };
+
+            return (
+              <div
+                key={notification.id}
+                className={`
+                  ${getPriorityStyles(notification.priority)}
+                  max-w-sm w-full rounded-lg shadow-2xl border-2 p-4 transform transition-all duration-500 ease-in-out
+                  animate-slide-in-right hover:scale-105 cursor-pointer
+                  ${notification.priority === 'critical' || notification.priority === 'high' ? 'animate-pulse' : ''}
+                `}
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  transform: `translateX(${index * 10}px)`
+                }}
+                onClick={() => {
+                  if (notification.type === 'welfare') {
+                    navigate('/admin/welfare');
+                  } else {
+                    navigate('/admin/incidents/view');
+                  }
+                  removeFloatingNotification(notification.id);
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className="flex-shrink-0">
+                      <i className={`${getIcon(notification.type, notification.priority)} text-xl`}></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm mb-1 truncate">
+                        {notification.title}
+                      </h4>
+                      <p className="text-xs opacity-90 leading-relaxed line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs opacity-75">
+                          {new Date(notification.timestamp).toLocaleTimeString()}
+                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wide">
+                          {notification.priority}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFloatingNotification(notification.id);
+                    }}
+                    className="flex-shrink-0 ml-2 p-1 rounded-full hover:bg-black hover:bg-opacity-20 transition-colors"
+                  >
+                    <i className="ri-close-line text-sm"></i>
+                  </button>
+                </div>
+                
+                {/* Progress bar for auto-dismiss */}
+                <div className="mt-3 h-1 bg-black bg-opacity-20 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white bg-opacity-50 rounded-full animate-progress-bar"
+                    style={{
+                      animation: 'progress-bar 5s linear forwards'
+                    }}
+                  ></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </AdminAuthGuard>
