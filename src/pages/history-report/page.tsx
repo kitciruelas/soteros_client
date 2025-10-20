@@ -232,7 +232,8 @@ export default function HistoryReportPage() {
 
       try {
         console.log("🔍 Checking backend health...")
-        const healthCheck = await fetch("/api/health", {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+        const healthCheck = await fetch(`${apiBaseUrl}/health`, {
           signal: healthController.signal,
         })
         clearTimeout(healthTimeout)
@@ -252,7 +253,14 @@ export default function HistoryReportPage() {
       const fetchTimeout = setTimeout(() => fetchController.abort(), 10000)
 
       console.log(`🔍 Fetching incidents for user ID: ${userId}`)
-      const response = await fetch(`/api/incidents/user/${userId}`, {
+      
+      // Get the correct API base URL
+      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+      const apiUrl = `${apiBaseUrl}/incidents/user/${userId}`;
+      
+      console.log(`🔍 API URL: ${apiUrl}`)
+      
+      const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -575,7 +583,8 @@ export default function HistoryReportPage() {
 
         // Fallback to backend proxy
         try {
-          const proxyResponse = await fetch(`/api/geocode?lat=${lat}&lon=${lng}`, {
+          const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+          const proxyResponse = await fetch(`${apiBaseUrl}/geocode?lat=${lat}&lon=${lng}`, {
             signal: AbortSignal.timeout(10000),
           })
           if (proxyResponse.ok) {
@@ -808,7 +817,7 @@ export default function HistoryReportPage() {
                     <div>
                       <span className="font-medium text-gray-600">API Endpoint:</span>
                       <p className="font-mono text-gray-800 break-all">
-                        /api/incidents/user/{userData?.userId || userData?.user_id || userData?.id || "unknown"}
+                        {import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api')}/incidents/user/{userData?.userId || userData?.user_id || userData?.id || "unknown"}
                       </p>
                     </div>
                     <div>
