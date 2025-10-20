@@ -1174,7 +1174,7 @@ export default function IncidentReportPage() {
               {/* reCAPTCHA widget - Only for guest users */}
               <div className="mt-6">
                 <ReCAPTCHA
-                  sitekey="6LfVgHUqAAAAAJtQJXShsLo2QbyGby2jquueTZYV"
+                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
                   onChange={onRecaptchaChange}
                   ref={recaptchaRef}
                 />
