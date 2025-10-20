@@ -73,15 +73,6 @@ const AdminDashboard: React.FC = () => {
   const [trendsLimit, setTrendsLimit] = useState<number>(7);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursData[]>([]);
   const [peakHoursDateRange, setPeakHoursDateRange] = useState<string>('');
-  const [seasonalData, setSeasonalData] = useState<Array<{
-    period: string;
-    floods?: number;
-    fires?: number;
-    accidents?: number;
-    otherIncidents?: number;
-    allIncidents?: number;
-    total: number;
-  }>>([]);
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -339,27 +330,6 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
-  const exportSeasonalData = () => {
-    if (seasonalData.length === 0) {
-      showToast({ message: 'No seasonal data available to export', type: 'warning' });
-      return;
-    }
-
-    const columns: ExportColumn[] = [
-      { key: 'period', label: 'Period' },
-      { key: 'floods', label: 'Floods' },
-      { key: 'fires', label: 'Fires' },
-      { key: 'accidents', label: 'Accidents' },
-      { key: 'otherIncidents', label: 'Other Incidents' },
-      { key: 'allIncidents', label: 'All Incidents' },
-      { key: 'total', label: 'Total' }
-    ];
-
-    setExportData(seasonalData);
-    setExportColumns(columns);
-    setExportTitle('Seasonal Incident Patterns');
-    setShowExportModal(true);
-  };
 
   const exportRecentActivity = () => {
     if (recentActivity.length === 0) {
@@ -477,15 +447,6 @@ const AdminDashboard: React.FC = () => {
       });
     });
 
-    // Add seasonal data
-    seasonalData.forEach(item => {
-      allData.push({
-        section: 'Seasonal Patterns',
-        metric: item.period,
-        value: item.total,
-        details: `Total incidents in ${item.period}`
-      });
-    });
 
     // Add recent activity
     recentActivity.forEach(item => {
@@ -565,15 +526,6 @@ const AdminDashboard: React.FC = () => {
         locationResponse = { success: true, locationIncidents: [] };
       }
 
-      // Try to fetch seasonal patterns data, but don't fail if it doesn't work
-      let seasonalResponse = null;
-      try {
-        seasonalResponse = await adminDashboardApi.getSeasonalPatterns();
-      } catch (error) {
-        console.warn('Seasonal patterns endpoint not available, using fallback data:', error);
-        // Set empty data as fallback
-        seasonalResponse = { success: true, seasonalData: [] };
-      }
 
       if (statsResponse.success) {
         setStats({
@@ -652,13 +604,6 @@ const AdminDashboard: React.FC = () => {
         setLocationIncidents([]);
       }
 
-      // Set seasonal patterns data from seasonal response
-      if (seasonalResponse && seasonalResponse.success) {
-        setSeasonalData(seasonalResponse.seasonalData || []);
-      } else {
-        // Set empty data if seasonal response failed
-        setSeasonalData([]);
-      }
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch dashboard statistics');
@@ -787,13 +732,6 @@ const AdminDashboard: React.FC = () => {
                 >
                   <i className="ri-map-pin-line mr-3 text-purple-500"></i>
                   Location Data
-                </button>
-                <button
-                  onClick={exportSeasonalData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-calendar-line mr-3 text-indigo-500"></i>
-                  Seasonal Patterns
                 </button>
                 <button
                   onClick={exportRecentActivity}
@@ -1053,79 +991,7 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Seasonal Patterns Analysis Chart */}
-      <div className="grid grid-cols-1 gap-6">
-        <BarChart
-          data={seasonalData.map(item => ({
-            name: item.period,
-            floods: item.floods || 0,
-            fires: item.fires || 0,
-            accidents: item.accidents || 0,
-            otherIncidents: item.otherIncidents || 0,
-            allIncidents: item.allIncidents || 0
-          }))}
-          title="Seasonal Incident Patterns"
-          stacked={true}
-          stackKeys={['floods', 'fires', 'accidents', 'otherIncidents', 'allIncidents']}
-          height={400}
-        />
-        {seasonalData.length === 0 && (
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <i className="ri-information-line text-purple-500 text-lg mr-3"></i>
-              <div>
-                <h4 className="text-purple-800 font-medium">Seasonal Patterns Analysis</h4>
-                <p className="text-purple-600 text-sm mt-1">
-                  This clustered column chart compares incident patterns across different seasons:
-                  floods during rainy season (June-November), fires during summer (March-May),
-                  and accidents during holiday periods. Data covers the last 2 years.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Incidents */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Incidents</h3>
-            <a href="/admin/incidents/view" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All
-            </a>
-          </div>
-          <div className="space-y-3">
-            {recentActivity.length > 0 ? (
-              recentActivity.slice(0, 5).map((activity, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className={`w-3 h-3 rounded-full mr-3 ${
-                      activity.action.includes('incident') ? 'bg-red-500' :
-                      activity.action.includes('alert') ? 'bg-orange-500' : 'bg-blue-500'
-                    }`}></div>
-                    <div>
-                      <p className="font-medium text-gray-900 capitalize">{activity.action.replace('_', ' ')}</p>
-                      <p className="text-sm text-gray-600">{activity.details}</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {new Date(activity.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <i className="ri-inbox-line text-3xl mb-2"></i>
-                <p>No recent activity</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        
-      </div>
 
       {/* Export Preview Modal */}
       <ExportPreviewModal

@@ -384,7 +384,7 @@ export default function IncidentReportPage() {
   // Debounced location search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (fields.location.value && locationMethod === 'manual') {
+      if (fields.location.value && locationMethod === 'manual' && !fields.location.value.includes('Barangay')) {
         searchLocation(fields.location.value);
       }
     }, 500);
@@ -647,11 +647,13 @@ export default function IncidentReportPage() {
                 onChange={e => {
                   const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
                   if (selected) {
-                    setValue('location', `Barangay ${selected.name}, Rosario, Batangas`);
+                    const locationText = `Barangay ${selected.name}, Rosario, Batangas`;
+                    setValue('location', locationText);
                     setValue('latitude', selected.lat);
                     setValue('longitude', selected.lng);
                     setShowSuggestions(false);
                     setLocationMethod('manual');
+                    console.log('Barangay selected:', locationText, 'Coordinates:', selected.lat, selected.lng);
                   } else {
                     setValue('location', '');
                     setValue('latitude', null);
@@ -683,22 +685,27 @@ export default function IncidentReportPage() {
                 id="location"
                 value={fields.location.value}
                 onChange={(e) => {
-                  setValue('location', e.target.value);
-                  if (locationMethod === 'auto') {
-                    setLocationMethod('manual');
+                  // Don't allow editing if a barangay is selected
+                  if (!fields.location.value.includes('Barangay')) {
+                    setValue('location', e.target.value);
+                    if (locationMethod === 'auto') {
+                      setLocationMethod('manual');
+                    }
                   }
                 }}
-                onFocus={() => {
-                  if (locationSuggestions.length > 0) {
-                    setShowSuggestions(true);
-                  }
-                }}
-                onBlur={() => {
-                  // Delay hiding suggestions to allow clicking
-                  setTimeout(() => setShowSuggestions(false), 200);
-                }}
-                className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                placeholder={locationMethod === 'auto' ? 'Auto-detected location will appear here...' : 'Search for location'}
+                className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                  fields.location.value && fields.location.value.includes('Barangay') 
+                    ? 'border-green-300 bg-green-50 cursor-not-allowed' 
+                    : 'border-gray-300'
+                }`}
+                placeholder={
+                  fields.location.value && fields.location.value.includes('Barangay')
+                    ? 'Barangay selected - location is set'
+                    : locationMethod === 'auto' 
+                      ? 'Auto-detected location will appear here...' 
+                      : 'Enter location description or select a barangay above'
+                }
+                readOnly={fields.location.value && fields.location.value.includes('Barangay')}
                 required
               />
 
@@ -710,35 +717,6 @@ export default function IncidentReportPage() {
               )}
             </div>
 
-            {/* Location Suggestions Dropdown */}
-            {showSuggestions && locationSuggestions.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                {locationSuggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleLocationSelect(suggestion)}
-                    className="w-full px-4 py-3 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-b border-gray-100 last:border-b-0 transition-colors"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <i className="ri-map-pin-line text-blue-600 text-sm"></i>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {suggestion.display_name}
-                        </p>
-                        {suggestion.address && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {suggestion.address.city || suggestion.address.town || suggestion.address.municipality}, {suggestion.address.province || suggestion.address.state}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Error Messages */}
             {fields.location.touched && fields.location.error && (
