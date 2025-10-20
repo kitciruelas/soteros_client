@@ -1,10 +1,10 @@
 # reCAPTCHA Setup Instructions
 
 ## Issue
-The incident report page is showing "Invalid domain for site key in reCAPTCHA" error because the reCAPTCHA site key is hardcoded and configured for a different domain.
+The incident report page is showing "Missing required parameters: sitekey" error because the reCAPTCHA site key environment variable is not configured.
 
 ## Solution
-The reCAPTCHA site key is now configurable through environment variables.
+The reCAPTCHA site key is now configurable through environment variables. The app will show a helpful message if the site key is missing.
 
 ## Setup Steps
 
