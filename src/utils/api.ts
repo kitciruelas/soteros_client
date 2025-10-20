@@ -1,5 +1,29 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
 
+// Ensure we always use the full URL in production
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5000/api';
+  }
+  
+  // In production, always use the full URL
+  return 'https://soteros-backend.onrender.com/api';
+};
+
+const FINAL_API_BASE_URL = getApiBaseUrl();
+
+// Debug: Log the API URL being used
+console.log('🔧 API Configuration:', {
+  mode: import.meta.env.MODE,
+  dev: import.meta.env.DEV,
+  viteApiUrl: import.meta.env.VITE_API_URL,
+  finalApiBaseUrl: FINAL_API_BASE_URL
+});
+
 // Types for API responses
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -144,7 +168,7 @@ export const apiFormRequest = async <T = any>(
   formData: FormData,
   options: RequestInit = {}
 ): Promise<T> => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${FINAL_API_BASE_URL}${endpoint}`;
   const headers: HeadersInit = {};
   const token = getAuthToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -218,7 +242,7 @@ export const apiRequest = async <T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${FINAL_API_BASE_URL}${endpoint}`;
   const headers = createHeaders();
   
   const config: RequestInit = {
@@ -229,6 +253,8 @@ export const apiRequest = async <T = any>(
   // Suppress API request log for login endpoints to avoid cluttering console
   if (!endpoint.includes('/auth/login/')) {
     console.log(`API Request: ${config.method || 'GET'} ${url}`);
+    console.log('Environment:', import.meta.env.MODE);
+    console.log('API Base URL:', FINAL_API_BASE_URL);
   }
   
   try {
