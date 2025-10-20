@@ -681,7 +681,7 @@ export default function ProfilePage() {
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Profile Summary Card */}
-            <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="lg:col-span-1 order-1">
               <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 sticky top-4 sm:top-8">
                 <div className="text-center mb-4 sm:mb-6">
                   <div className="mb-3 sm:mb-4">
@@ -705,14 +705,6 @@ export default function ProfilePage() {
                   </h3>
                   <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 break-words">{userData?.email || "No email provided"}</p>
 
-                  {!isEditing && (
-                    <Button variant="primary" size="sm" className="sm:size-md" onClick={handleEdit} fullWidth>
-                      <i className="ri-edit-line mr-2"></i>
-                      <span className="hidden sm:inline">Edit Profile</span>
-                      <span className="sm:hidden">Edit</span>
-                    </Button>
-                  )}
-
                   {isEditing && hasUnsavedChanges && (
                     <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <div className="flex items-center gap-2 text-amber-800">
@@ -735,7 +727,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Main Form Section */}
-            <div className="lg:col-span-2 order-1 lg:order-2">
+            <div className="lg:col-span-2 order-2">
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
