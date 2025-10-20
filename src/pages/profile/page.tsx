@@ -722,49 +722,6 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-                    <span className="text-sm text-gray-600">
-                      {Math.round(
-                        (Object.values({
-                          firstName: userData?.firstName,
-                          lastName: userData?.lastName,
-                          email: userData?.email,
-                          phone: userData?.phone,
-                          address: userData?.address,
-                          city: userData?.city,
-                          state: userData?.state,
-                          zipCode: userData?.zipCode,
-                        }).filter(Boolean).length /
-                          8) *
-                          100,
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.round(
-                          (Object.values({
-                            firstName: userData?.firstName,
-                            lastName: userData?.lastName,
-                            email: userData?.email,
-                            phone: userData?.phone,
-                            address: userData?.address,
-                            city: userData?.city,
-                            state: userData?.state,
-                            zipCode: userData?.zipCode,
-                          }).filter(Boolean).length /
-                            8) *
-                            100,
-                        )}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
 
                 {/* Logout Button */}
                 <div className="mt-6 pt-6 border-t border-gray-200">
