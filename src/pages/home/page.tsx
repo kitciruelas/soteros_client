@@ -241,26 +241,26 @@ export default function Home() {
   // Show loading screen while authentication is being checked
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <i className="ri-shield-check-line text-3xl md:text-4xl text-blue-600"></i>
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <i className="ri-shield-check-line text-3xl md:text-4xl text-white"></i>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Loading...</h2>
-          <p className="text-gray-600">Please wait while we verify your access</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-4">Loading...</h2>
+          <p className="text-gray-600 font-light">Please wait while we verify your access</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen">
       <Navbar isAuthenticated={isLoggedIn} userData={userData} />
 
       {/* Hero Section */}
-      <div id="hero-section" className="relative overflow-hidden">
+      <div id="hero-section" className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         {/* Hero Background with Image */}
-        <div className="relative h-[500px] md:h-[700px] lg:h-[800px] bg-gradient-to-r from-blue-900/90 to-blue-800/80">
+        <div className="relative min-h-[600px] md:min-h-[700px] lg:min-h-[750px]">
           {/* Background Image */}
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -268,9 +268,11 @@ export default function Home() {
               backgroundImage: "url('/images/rosario-hero.png')",
             }}
           ></div>
-          {/* Enhanced Overlay with subtle pattern */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-blue-800/85"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+          {/* Modern Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/80 via-blue-800/85 to-indigo-800/80"></div>
+          {/* Decorative Elements */}
+          <div className="absolute top-20 right-10 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl"></div>
         </div>
 
         <div className="absolute inset-0 flex items-center">
@@ -280,20 +282,20 @@ export default function Home() {
                 // Authenticated user hero
                 <div className="text-left">
                   {/* Logo/Icon */}
-                  <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-white/95 backdrop-blur-sm rounded-2xl mb-6 md:mb-8 shadow-2xl border border-white/20">
+                  <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 bg-white rounded-2xl mb-6 md:mb-8 shadow-lg">
                     <i className="ri-shield-check-line text-2xl md:text-3xl lg:text-4xl text-blue-600"></i>
                   </div>
 
                   {/* Main Title */}
-                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight text-balance">
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 md:mb-8 leading-tight tracking-tight">
                     Welcome back to
-                    <span className="block text-yellow-300 bg-gradient-to-r from-yellow-300 to-yellow-400 bg-clip-text text-transparent">
+                    <span className="block mt-2 bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-100 bg-clip-text text-transparent">
                       SoteROS Emergency Hub
                     </span>
                   </h1>
 
                   {/* Description */}
-                  <p className="text-lg md:text-xl lg:text-2xl text-blue-100 max-w-3xl mb-8 md:mb-10 leading-relaxed text-pretty">
+                  <p className="text-xl md:text-2xl lg:text-3xl text-blue-50 max-w-3xl mb-10 md:mb-12 leading-relaxed font-light">
                     Your comprehensive emergency management dashboard is ready. Access real-time incident tracking,
                     evacuation routing, and safety protocols.
                   </p>
@@ -302,26 +304,29 @@ export default function Home() {
                 // Non-authenticated user hero
                 <div className="text-left">
                   {/* MDRRMO Title */}
-                  <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-white mb-3 md:mb-4 leading-tight text-balance">
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white mb-4 md:mb-6 leading-tight tracking-tight">
                     Municipal Disaster Risk Reduction
-                    <span className="block text-yellow-300 bg-gradient-to-r from-yellow-300 to-yellow-400 bg-clip-text text-transparent">
+                    <span className="block mt-2 bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-100 bg-clip-text text-transparent">
                       & Management Office
                     </span>
                   </h1>
 
                   {/* Location */}
-                  <h2 className="text-xl md:text-3xl lg:text-4xl font-semibold text-blue-200 mb-6 md:mb-8">
-                    Rosario, Batangas
-                  </h2>
+                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full mb-8 md:mb-10">
+                    <i className="ri-map-pin-line text-yellow-300"></i>
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-white">
+                      Rosario, Batangas
+                    </h2>
+                  </div>
 
                   {/* Description */}
-                  <p className="text-lg md:text-xl lg:text-2xl text-blue-100 max-w-4xl mb-8 md:mb-12 leading-relaxed text-pretty">
+                  <p className="text-xl md:text-2xl lg:text-3xl text-blue-50 max-w-4xl mb-10 md:mb-14 leading-relaxed font-light">
                     Committed to protecting and serving our community through comprehensive disaster preparedness, rapid
                     emergency response, and proactive public safety management.
                   </p>
 
                   {/* Call to Action */}
-                  <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
+                  <div className="flex flex-col sm:flex-row gap-4 md:gap-5">
                     <a
                       href="#services"
                       onClick={(e) => {
@@ -331,15 +336,21 @@ export default function Home() {
                           servicesSection.scrollIntoView({ behavior: 'smooth' });
                         }
                       }}
-                      className="bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-blue-900 px-8 py-4 md:px-10 md:py-5 rounded-xl font-bold text-lg md:text-xl transition-all duration-300 shadow-2xl hover:shadow-yellow-500/25 hover:-translate-y-1 text-center"
+                      className="group bg-white hover:bg-gray-50 text-blue-700 px-8 py-4 md:px-10 md:py-5 rounded-2xl font-bold text-base md:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 text-center"
                     >
-                      Emergency Services
+                      <span className="flex items-center justify-center gap-2">
+                        Emergency Services
+                        <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
+                      </span>
                     </a>
                     <button
                       onClick={() => setShowHotlineModal(true)}
-                      className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white px-8 py-4 md:px-10 md:py-5 rounded-xl font-bold text-lg md:text-xl transition-all duration-300 shadow-2xl hover:shadow-red-500/25 hover:-translate-y-1 text-center"
+                      className="group bg-red-500 hover:bg-red-600 text-white px-8 py-4 md:px-10 md:py-5 rounded-2xl font-bold text-base md:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 text-center"
                     >
-                      Emergency Hotline
+                      <span className="flex items-center justify-center gap-2">
+                        <i className="ri-phone-line"></i>
+                        Emergency Hotline
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -350,14 +361,18 @@ export default function Home() {
       </div>
 
       {/* Services Section */}
-      <div id="services" className="bg-white py-20 md:py-28">
+      <div id="services" className="bg-gradient-to-b from-gray-50 to-white py-24 md:py-32">
         <div className="container mx-auto px-4 lg:px-8">
           {/* Section Header */}
-          <div className="text-center mb-16 md:mb-20">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6 text-balance">
+          <div className="text-center mb-20 md:mb-24">
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-5 py-2 rounded-full font-semibold text-sm mb-6">
+              <i className="ri-service-line"></i>
+              <span>{isLoggedIn ? "Your Dashboard" : "Our Services"}</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 md:mb-8 tracking-tight">
               {isLoggedIn ? `Welcome back, ${userData?.firstName || "User"}!` : "Emergency Services"}
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 md:mb-16 max-w-4xl mx-auto text-pretty">
+            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto font-light leading-relaxed">
               {isLoggedIn
                 ? "Access your emergency management tools"
                 : `Comprehensive disaster risk reduction and emergency response services for Rosario, Batangas`}
@@ -389,69 +404,81 @@ export default function Home() {
 
                 <Link
                   to="/incident-report"
-                  className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-red-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                  className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                    <i className="ri-error-warning-line text-3xl md:text-4xl text-red-600"></i>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Report Incident</h3>
-                  <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                    Submit emergency incidents and safety concerns with real-time tracking
-                  </p>
-                  <div className="flex items-center text-red-600 group-hover:text-red-700 mt-auto">
-                    <span className="font-semibold text-lg">Report Now</span>
-                    <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-red-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <i className="ri-error-warning-line text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Report Incident</h3>
+                    <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                      Submit emergency incidents and safety concerns with real-time tracking
+                    </p>
+                    <div className="flex items-center text-red-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                      <span>Report Now</span>
+                      <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                    </div>
                   </div>
                 </Link>
 
                 <Link
                   to="/evacuation-center"
-                  className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                  className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                    <i className="ri-building-2-line text-3xl md:text-4xl text-blue-600"></i>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Evacuation Centers</h3>
-                  <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                    Find nearby evacuation centers with real-time capacity and status updates
-                  </p>
-                  <div className="flex items-center text-blue-600 group-hover:text-blue-700 mt-auto">
-                    <span className="font-semibold text-lg">View Centers</span>
-                    <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <i className="ri-building-2-line text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Evacuation Centers</h3>
+                    <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                      Find nearby evacuation centers with real-time capacity and status updates
+                    </p>
+                    <div className="flex items-center text-blue-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                      <span>View Centers</span>
+                      <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                    </div>
                   </div>
                 </Link>
 
                 <Link
                   to="/safety-protocols"
-                  className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-green-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                  className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                    <i className="ri-shield-check-line text-3xl md:text-4xl text-green-600"></i>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Safety Protocols</h3>
-                  <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                    Access comprehensive emergency procedures and safety guidelines
-                  </p>
-                  <div className="flex items-center text-green-600 group-hover:text-green-700 mt-auto">
-                    <span className="font-semibold text-lg">View Protocols</span>
-                    <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-green-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <i className="ri-shield-check-line text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Safety Protocols</h3>
+                    <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                      Access comprehensive emergency procedures and safety guidelines
+                    </p>
+                    <div className="flex items-center text-green-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                      <span>View Protocols</span>
+                      <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                    </div>
                   </div>
                 </Link>
 
                 <Link
                   to="/welfare-check"
-                  className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-purple-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                  className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                    <i className="ri-heart-pulse-line text-3xl md:text-4xl text-purple-600"></i>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Welfare Check</h3>
-                  <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                    Report your status and location during emergencies for safety tracking
-                  </p>
-                  <div className="flex items-center text-purple-600 group-hover:text-purple-700 mt-auto">
-                    <span className="font-semibold text-lg">Check In</span>
-                    <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-purple-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <i className="ri-heart-pulse-line text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Welfare Check</h3>
+                    <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                      Report your status and location during emergencies for safety tracking
+                    </p>
+                    <div className="flex items-center text-purple-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                      <span>Check In</span>
+                      <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                    </div>
                   </div>
                 </Link>
               </div>
@@ -529,30 +556,39 @@ export default function Home() {
                 </div>
 
                 {/* Authentication CTA */}
-                <div className="text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-10 md:p-12 shadow-xl">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i className="ri-user-add-line text-3xl text-blue-600"></i>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">
-                    Join Our Emergency Response Network
-                  </h3>
-                  <p className="text-lg text-gray-600 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
-                    Sign up to access advanced features, submit reports, and receive real-time emergency alerts for
-                    Rosario, Batangas
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center">
-                    <Link
-                      to="/auth/signup"
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 md:px-10 rounded-xl transition-all duration-300 font-semibold shadow-xl hover:shadow-blue-500/25 hover:-translate-y-1 text-lg"
-                    >
-                      Create Account
-                    </Link>
-                    <Link
-                      to="/auth/login"
-                      className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 md:px-10 rounded-xl transition-all duration-300 font-semibold hover:-translate-y-1 text-lg"
-                    >
-                      Sign In
-                    </Link>
+                <div className="relative overflow-hidden text-center bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-12 md:p-16 shadow-2xl">
+                  {/* Decorative Elements */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <i className="ri-user-add-line text-3xl text-white"></i>
+                    </div>
+                    <h3 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-6 tracking-tight">
+                      Join Our Emergency Response Network
+                    </h3>
+                    <p className="text-lg md:text-xl text-blue-50 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+                      Sign up to access advanced features, submit reports, and receive real-time emergency alerts for
+                      Rosario, Batangas
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 md:gap-5 justify-center">
+                      <Link
+                        to="/auth/signup"
+                        className="group bg-white hover:bg-gray-50 text-blue-700 px-10 py-4 md:px-12 md:py-5 rounded-2xl transition-all duration-300 font-bold shadow-xl hover:shadow-2xl hover:scale-105 text-base md:text-lg"
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          Create Account
+                          <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
+                        </span>
+                      </Link>
+                      <Link
+                        to="/auth/login"
+                        className="group border-2 border-white/50 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 px-10 py-4 md:px-12 md:py-5 rounded-2xl transition-all duration-300 font-bold hover:scale-105 text-base md:text-lg"
+                      >
+                        Sign In
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </>
@@ -562,50 +598,64 @@ export default function Home() {
       </div>
 
       {/* Highlights */}
-      <section className="bg-gradient-to-b from-white to-slate-50 py-20 md:py-28">
+      <section className="bg-white py-24 md:py-32">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+          <div className="text-center mb-16 md:mb-20">
+            <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-5 py-2 rounded-full font-semibold text-sm mb-6">
+              <i className="ri-star-line"></i>
+              <span>Features</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight">
+              Why Choose Us
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light">
+              Comprehensive emergency management tools designed for your safety
+            </p>
+          </div>
+
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {[
               {
                 icon: "ri-timer-flash-line",
                 title: "Rapid Response",
                 desc: "Coordinated, time-critical incident handling",
-                color: "from-orange-100 to-orange-200",
-                iconColor: "text-orange-600",
+                color: "bg-orange-500",
+                bgColor: "bg-orange-50",
               },
               {
                 icon: "ri-hotel-line",
                 title: "Evacuation Centers",
                 desc: "Nearby designated safe shelters with capacity info",
-                color: "from-blue-100 to-blue-200",
-                iconColor: "text-blue-600",
+                color: "bg-blue-500",
+                bgColor: "bg-blue-50",
               },
               {
                 icon: "ri-shield-star-line",
                 title: "Safety Protocols",
                 desc: "Up-to-date, practical safety guidance",
-                color: "from-green-100 to-green-200",
-                iconColor: "text-green-600",
+                color: "bg-green-500",
+                bgColor: "bg-green-50",
               },
               {
                 icon: "ri-bar-chart-2-line",
                 title: "Live Insights",
                 desc: "Data-driven decisions and monitoring",
-                color: "from-purple-100 to-purple-200",
-                iconColor: "text-purple-600",
+                color: "bg-purple-500",
+                bgColor: "bg-purple-50",
               },
             ].map((f, i) => (
               <div
                 key={i}
-                className="bg-white/80 backdrop-blur-sm border-2 border-gray-100 rounded-2xl p-8 md:p-10 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group"
+                className={`relative ${f.bgColor} rounded-3xl p-8 md:p-10 hover:shadow-lg transition-all duration-300 group overflow-hidden`}
               >
-                <div
-                  className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br ${f.color} ${f.iconColor} flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300`}
-                >
-                  <i className={`${f.icon} text-2xl md:text-3xl`}></i>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <div className={`w-14 h-14 md:w-16 md:h-16 ${f.color} rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                    <i className={`${f.icon} text-2xl md:text-3xl text-white`}></i>
+                  </div>
+                  <h4 className="font-bold text-xl md:text-2xl text-gray-900 mb-3 md:mb-4">{f.title}</h4>
+                  <p className="text-gray-700 text-base md:text-lg leading-relaxed">{f.desc}</p>
                 </div>
-                <h4 className="font-bold text-xl md:text-2xl text-gray-900 mb-3 md:mb-4">{f.title}</h4>
-                <p className="text-gray-600 text-lg leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -613,8 +663,20 @@ export default function Home() {
       </section>
 
       {/* Stats */}
-      <section ref={statsRef} className="bg-gradient-to-br from-slate-50 to-blue-50 py-20 md:py-28">
+      <section ref={statsRef} className="bg-gradient-to-b from-gray-50 to-white py-24 md:py-32">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+          <div className="text-center mb-16 md:mb-20">
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-5 py-2 rounded-full font-semibold text-sm mb-6">
+              <i className="ri-bar-chart-line"></i>
+              <span>Statistics</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight">
+              Our Impact
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light">
+              Real-time data showing our commitment to community safety
+            </p>
+          </div>
           {loadingStats ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               {[1, 2, 3, 4].map((i) => (
@@ -654,47 +716,48 @@ export default function Home() {
                   label: "Responders",
                   value: `${stats.responders}+`,
                   icon: "ri-user-star-line",
-                  color: "text-blue-600",
+                  color: "bg-blue-500",
                   bgColor: "bg-blue-50",
-                  iconBg: "bg-blue-100"
+                  textColor: "text-blue-700"
                 },
                 {
                   label: "Evacuation Centers",
                   value: stats.evacuationCenters.toString(),
                   icon: "ri-building-2-line",
-                  color: "text-green-600",
+                  color: "bg-green-500",
                   bgColor: "bg-green-50",
-                  iconBg: "bg-green-100"
+                  textColor: "text-green-700"
                 },
                 {
                   label: "Residents Covered",
                   value: `${stats.residentsCovered}+`,
                   icon: "ri-shield-user-line",
-                  color: "text-purple-600",
+                  color: "bg-purple-500",
                   bgColor: "bg-purple-50",
-                  iconBg: "bg-purple-100"
+                  textColor: "text-purple-700"
                 },
                 {
                   label: "Total Incidents",
                   value: stats.totalIncidents.toString(),
                   icon: "ri-alert-line",
-                  color: "text-red-600",
-                  bgColor: "bg-red-50",
-                  iconBg: "bg-red-100"
+                  color: "bg-orange-500",
+                  bgColor: "bg-orange-50",
+                  textColor: "text-orange-700"
                 },
               ].map((s, i) => (
                 <div
                   key={i}
-                  className={`${s.bgColor} rounded-xl p-6 md:p-8 hover:shadow-lg transition-all duration-300 group`}
+                  className={`relative ${s.bgColor} rounded-3xl p-8 md:p-10 hover:shadow-lg transition-all duration-300 group overflow-hidden`}
                 >
-                  <div className="text-center">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10 text-center">
                     {/* Icon */}
-                    <div className={`w-16 h-16 ${s.iconBg} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <i className={`${s.icon} text-2xl ${s.color}`}></i>
+                    <div className={`w-14 h-14 md:w-16 md:h-16 ${s.color} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                      <i className={`${s.icon} text-2xl md:text-3xl text-white`}></i>
                     </div>
 
                     {/* Number */}
-                    <div className={`text-3xl md:text-4xl font-bold ${s.color} mb-2`}>
+                    <div className={`text-4xl md:text-5xl font-extrabold ${s.textColor} mb-3`}>
                       <AnimatedCounter
                         value={parseInt(s.value.replace(/[^\d]/g, ''))}
                         isVisible={true}
@@ -705,7 +768,7 @@ export default function Home() {
                     </div>
 
                     {/* Label */}
-                    <div className="text-gray-700 font-medium text-lg">{s.label}</div>
+                    <div className="text-gray-700 font-semibold text-base md:text-lg">{s.label}</div>
                   </div>
                 </div>
               ))}
@@ -717,11 +780,15 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-gradient-to-b from-blue-50 to-white py-20 md:py-28">
+      <section className="bg-white py-24 md:py-32">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <div className="text-center mb-12 md:mb-16">
-            <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">Community Voices</h3>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Real feedback from residents and responders</p>
+          <div className="text-center mb-16 md:mb-20">
+            <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-5 py-2 rounded-full font-semibold text-sm mb-6">
+              <i className="ri-chat-quote-line"></i>
+              <span>Testimonials</span>
+            </div>
+            <h3 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight">Community Voices</h3>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light">Real feedback from residents and responders</p>
           </div>
 
           {loadingTestimonials ? (
@@ -751,22 +818,29 @@ export default function Home() {
                 {testimonials.map((t) => (
                   <div
                     key={t.id}
-                    className="bg-white rounded-2xl border-2 border-gray-100 p-8 md:p-10 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                    className="relative bg-gradient-to-br from-gray-50 to-white rounded-3xl border border-gray-200 p-8 md:p-10 hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden group"
                   >
-                    <div className="flex items-center mb-4">
-                      <i className="ri-double-quotes-l text-2xl md:text-3xl text-blue-600"></i>
-                      <div className="ml-auto flex">
-                        {[...Array(5)].map((_, i) => (
-                          <i
-                            key={i}
-                            className={`ri-star-${i < t.rating ? "fill" : "line"} text-yellow-400 text-lg`}
-                          ></i>
-                        ))}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
+                          <i className="ri-double-quotes-l text-xl text-white"></i>
+                        </div>
+                        <div className="flex gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <i
+                              key={i}
+                              className={`ri-star-${i < t.rating ? "fill" : "line"} text-yellow-400 text-base`}
+                            ></i>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-gray-700 text-base md:text-lg mb-6 leading-relaxed">&quot;{t.quote}&quot;</p>
+                      <div className="pt-4 border-t border-gray-200">
+                        <div className="font-bold text-gray-900 text-lg">{t.name}</div>
+                        <div className="text-sm text-gray-500 mt-1">{t.type === "Staff" ? t.department : t.type}</div>
                       </div>
                     </div>
-                    <p className="text-gray-700 text-lg mb-6 leading-relaxed italic">{t.quote}</p>
-                    <div className="text-lg font-semibold text-gray-900">{t.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">{t.type === "Staff" ? t.department : t.type}</div>
                   </div>
                 ))}
               </div>
@@ -813,9 +887,16 @@ export default function Home() {
       </section>
 
       {/* Partners */}
-      <section className="bg-white py-16 md:py-20">
+      <section className="bg-gradient-to-b from-gray-50 to-white py-20 md:py-24">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <div className="text-center text-gray-600 mb-8 md:mb-12 font-semibold text-lg">In partnership with</div>
+          <div className="text-center mb-12 md:mb-16">
+            <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-5 py-2 rounded-full font-semibold text-sm mb-4">
+              <i className="ri-links-line"></i>
+              <span>Partners</span>
+            </div>
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Trusted By</h3>
+            <p className="text-lg text-gray-600">Working together for community safety</p>
+          </div>
           <div className="hidden sm:block">
             <Carousel
               items={[
@@ -914,35 +995,43 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section id="faq-section" className="bg-gradient-to-br from-slate-50 via-white to-blue-50 py-20 md:py-28">
+      <section id="faq-section" className="bg-white py-24 md:py-32">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-12 md:gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-12 md:gap-20 items-start">
             {/* Left Column - Support & Description */}
-            <div className="space-y-8">
+            <div className="lg:sticky lg:top-24">
               <div className="relative">
-                {/* Background decoration */}
-                <div className="absolute -top-4 -left-4 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-50"></div>
-                <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-gradient-to-br from-green-100 to-blue-100 rounded-full opacity-50"></div>
+                {/* Decorative Elements */}
+                <div className="absolute -top-4 -left-4 w-20 h-20 bg-blue-100 rounded-full opacity-40 blur-xl"></div>
+                <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-purple-100 rounded-full opacity-40 blur-xl"></div>
                 
-                <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-xl border border-white/20">
-                  <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-6">
-                    <i className="ri-customer-service-2-line text-blue-600 mr-2"></i>
-                    <span className="text-blue-700 font-semibold text-sm">Support</span>
+                <div className="relative">
+                  <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-5 py-2 rounded-full font-semibold text-sm mb-6">
+                    <i className="ri-question-line"></i>
+                    <span>Support</span>
                   </div>
                   
-                  <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                  <h3 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight tracking-tight">
                     Frequently Asked
-                    <span className="block text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
+                    <span className="block mt-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       Questions
                     </span>
                   </h3>
                   
-                  <p className="text-lg text-gray-600 leading-relaxed mb-8">
+                  <p className="text-xl text-gray-600 leading-relaxed mb-8 font-light">
                     Everything you need to know about emergency services and disaster preparedness. 
                     Get instant answers to common questions about our emergency management platform.
                   </p>
                   
-                  
+                  <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <i className="ri-customer-service-2-line text-white text-xl"></i>
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900">Still have questions?</div>
+                      <div className="text-gray-600 text-sm">Contact our support team 24/7</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1001,28 +1090,28 @@ export default function Home() {
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="group bg-white rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden"
+                  className="group bg-white rounded-2xl border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-300 overflow-hidden"
                 >
                   <button
-                    className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50/50 transition-colors duration-200"
+                    className="w-full flex items-center justify-between p-6 md:p-7 text-left transition-colors duration-200"
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                     aria-expanded={openFaq === idx}
                   >
-                    <div className="flex items-center space-x-4 flex-1">
-                      <div className={`w-12 h-12 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
-                        <i className={`${item.icon} text-white text-lg`}></i>
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className={`w-11 h-11 md:w-12 md:h-12 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200`}>
+                        <i className={`${item.icon} text-white text-base md:text-lg`}></i>
                       </div>
-                      <span className="font-semibold text-gray-900 text-lg pr-4 leading-tight">{item.q}</span>
+                      <span className="font-bold text-gray-900 text-base md:text-lg pr-2 leading-snug">{item.q}</span>
                     </div>
-                    <div className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 group-hover:scale-110">
+                    <div className={`w-9 h-9 md:w-10 md:h-10 ${openFaq === idx ? 'bg-blue-500' : 'bg-gray-100'} rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0`}>
                       <i
-                        className={`ri-${openFaq === idx ? "subtract" : "add"}-line text-gray-600 text-lg transition-transform duration-200`}
+                        className={`ri-${openFaq === idx ? "subtract" : "add"}-line ${openFaq === idx ? 'text-white' : 'text-gray-600'} text-base md:text-lg transition-all duration-200`}
                       ></i>
                     </div>
                   </button>
                   {openFaq === idx && (
-                    <div className="px-6 pb-6">
-                      <div className="ml-16 border-l-2 border-gray-100 pl-6">
+                    <div className="px-6 md:px-7 pb-6 md:pb-7 animate-in slide-in-from-top-2 duration-300">
+                      <div className="ml-0 md:ml-16 pt-4 border-t border-gray-100">
                         <p className="text-gray-600 text-base leading-relaxed">{item.a}</p>
                       </div>
                     </div>
@@ -1200,9 +1289,9 @@ export default function Home() {
       )}
 
       {/* Enhanced Footer */}
-      <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <footer className="bg-gray-900 text-white">
         {/* Main Footer Content */}
-        <div className="py-16 md:py-20">
+        <div className="py-20 md:py-24">
           <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
               {/* Organization Info */}
@@ -1220,22 +1309,22 @@ export default function Home() {
                   Municipal Disaster Risk Reduction & Management Office committed to protecting and serving our
                   community through comprehensive disaster preparedness and emergency response.
                 </p>
-                <div className="flex space-x-4">
+                <div className="flex gap-3">
                   <a
                     href="https://www.facebook.com/RosarioMDRRMO"
-                    className="w-10 h-10 bg-gray-700 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors duration-300"
+                    className="w-11 h-11 bg-gray-800 hover:bg-blue-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
                   >
                     <i className="ri-facebook-fill text-lg"></i>
                   </a>
                   <a
                     href="#"
-                    className="w-10 h-10 bg-gray-700 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors duration-300"
+                    className="w-11 h-11 bg-gray-800 hover:bg-blue-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
                   >
                     <i className="ri-twitter-fill text-lg"></i>
                   </a>
                   <a
                     href="#"
-                    className="w-10 h-10 bg-gray-700 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors duration-300"
+                    className="w-11 h-11 bg-gray-800 hover:bg-pink-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
                   >
                     <i className="ri-instagram-line text-lg"></i>
                   </a>
@@ -1338,30 +1427,31 @@ export default function Home() {
         </div>
 
         {/* Footer Bottom */}
-        <div className="border-t border-gray-700 py-8">
+        <div className="border-t border-gray-800 py-8">
           <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="text-gray-400 text-sm mb-4 md:mb-0">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-gray-400 text-sm">
                 © 2024 MDRRMO Rosario, Batangas. All rights reserved.
               </div>
               <div className="flex flex-wrap gap-6 text-sm">
                 <button 
                   onClick={() => setShowPrivacyModal(true)}
-                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                  className="text-gray-400 hover:text-white transition-colors duration-300 font-medium"
                 >
                   Privacy Policy
                 </button>
+                <span className="text-gray-700">•</span>
                 <button 
                   onClick={() => setShowTermsModal(true)}
-                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                  className="text-gray-400 hover:text-white transition-colors duration-300 font-medium"
                 >
                   Terms of Service
                 </button>
               </div>
             </div>
-            <div className="mt-4 text-center">
-              <p className="text-gray-500 text-sm">
-                Made with <span className="text-red-500">❤️</span> in the Philippines
+            <div className="mt-6 text-center">
+              <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
+                Made with <span className="text-red-500 text-base">❤️</span> in the Philippines
               </p>
             </div>
           </div>

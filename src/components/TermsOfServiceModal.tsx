@@ -38,7 +38,7 @@ export default function TermsOfServiceModal({ isOpen, onClose }: TermsOfServiceM
             <div className="prose prose-lg max-w-none">
             <div className="mb-6">
               <p className="text-gray-600 text-lg leading-relaxed">
-                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              Last updated: October 01, 2025
               </p>
             </div>
 

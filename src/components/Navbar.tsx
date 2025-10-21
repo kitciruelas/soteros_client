@@ -300,13 +300,13 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
 
   return (
     <>
-      <nav className="bg-transparent sticky top-2 sm:top-3 z-50 transition-all duration-200">
+      <nav className="sticky top-2 sm:top-3 z-50 transition-all duration-200">
         <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           {/* Inner bar (rounded only after scroll) */}
           <div className={`mb-3 transition-all duration-300 max-w-6xl mx-auto ${
             isScrolled
               ? 'mt-4 sm:mt-5 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl rounded-full px-3 sm:px-4 md:px-6'
-              : 'mt-2 px-0'
+              : 'mt-2 px-0 bg-transparent'
           }`}>
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}

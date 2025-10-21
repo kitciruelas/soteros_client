@@ -358,6 +358,7 @@ export default function SignupPage() {
             </div>
 
             <Input
+            
               label="Email address"
               type="email"
               name="email"
@@ -372,12 +373,14 @@ export default function SignupPage() {
             />
 
             <div className="space-y-2">
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                  <i className="ri-phone-line text-gray-400"></i>
+                  <div className="w-5 h-5 text-gray-400">
+                    <i className="ri-phone-line"></i>
+                  </div>
                 </div>
                 <PhoneInput
                   international
@@ -386,35 +389,37 @@ export default function SignupPage() {
                   onChange={(value) => {
                     setValue("phoneNumber", value || "");
                   }}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
-                    fields.phoneNumber.error ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:outline-none transition-all duration-200 pl-10 ${
+                    fields.phoneNumber.error ? 'border-red-300 focus:border-red-500 focus:ring-red-100' : 'border-gray-300 hover:border-gray-400'
+                  } bg-white`}
                   placeholder="Enter phone number"
                 />
               </div>
               {fields.phoneNumber.touched && fields.phoneNumber.error && (
-                <p className="text-sm text-red-600 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <i className="ri-error-warning-line"></i>
                   {fields.phoneNumber.error}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+            <div className="w-full">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                 Barangay <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                  <i className="ri-map-pin-line text-gray-400"></i>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="w-5 h-5 text-gray-400">
+                    <i className="ri-map-pin-line"></i>
+                  </div>
                 </div>
                 <select
                   id="address"
                   name="address"
                   value={fields.address.value}
                   onChange={(e) => setValue("address", e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all appearance-none bg-white ${
-                    fields.address.error ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:outline-none transition-all duration-200 pl-10 pr-10 appearance-none bg-white ${
+                    fields.address.error ? 'border-red-300 focus:border-red-500 focus:ring-red-100' : 'border-gray-300 hover:border-gray-400'
                   }`}
                   required
                 >
@@ -426,11 +431,13 @@ export default function SignupPage() {
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <i className="ri-arrow-down-s-line text-gray-400"></i>
+                  <div className="w-5 h-5 text-gray-400">
+                    <i className="ri-arrow-down-s-line"></i>
+                  </div>
                 </div>
               </div>
               {fields.address.touched && fields.address.error && (
-                <p className="text-sm text-red-600 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <i className="ri-error-warning-line"></i>
                   {fields.address.error}
                 </p>
