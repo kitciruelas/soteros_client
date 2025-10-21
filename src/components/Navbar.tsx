@@ -771,7 +771,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   {/* Mobile Notification Dropdown */}
                   {showNotifDropdown && (
                     <div 
-                      className="absolute left-2 right-2 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer"
+                      className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer"
                       onClick={() => {
                         closeNotificationDropdown()
                         handleNavigation("/notifications")

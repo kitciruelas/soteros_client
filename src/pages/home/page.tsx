@@ -260,7 +260,7 @@ export default function Home() {
       {/* Hero Section */}
       <div id="hero-section" className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         {/* Hero Background with Image */}
-        <div className="relative min-h-[600px] md:min-h-[700px] lg:min-h-[750px]">
+        <div className="relative min-h-[500px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-[750px]">
           {/* Background Image */}
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -276,26 +276,26 @@ export default function Home() {
         </div>
 
         <div className="absolute inset-0 flex items-center">
-          <div className="container mx-auto px-4 lg:px-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-5xl">
               {isLoggedIn ? (
                 // Authenticated user hero
                 <div className="text-left">
                   {/* Logo/Icon */}
-                  <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 bg-white rounded-2xl mb-6 md:mb-8 shadow-lg">
-                    <i className="ri-shield-check-line text-2xl md:text-3xl lg:text-4xl text-blue-600"></i>
+                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 bg-white rounded-xl sm:rounded-2xl mb-4 sm:mb-6 md:mb-8 shadow-lg">
+                    <i className="ri-shield-check-line text-xl sm:text-2xl md:text-3xl lg:text-4xl text-blue-600"></i>
                   </div>
 
                   {/* Main Title */}
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 md:mb-8 leading-tight tracking-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8 leading-tight tracking-tight">
                     Welcome back to
-                    <span className="block mt-2 bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-100 bg-clip-text text-transparent">
+                    <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-100 bg-clip-text text-transparent">
                       SoteROS Emergency Hub
                     </span>
                   </h1>
 
                   {/* Description */}
-                  <p className="text-xl md:text-2xl lg:text-3xl text-blue-50 max-w-3xl mb-10 md:mb-12 leading-relaxed font-light">
+                  <p className="text-base sm:text-lg md:text-2xl lg:text-3xl text-blue-50 max-w-3xl mb-6 sm:mb-10 md:mb-12 leading-relaxed font-light">
                     Your comprehensive emergency management dashboard is ready. Access real-time incident tracking,
                     evacuation routing, and safety protocols.
                   </p>
@@ -304,29 +304,29 @@ export default function Home() {
                 // Non-authenticated user hero
                 <div className="text-left">
                   {/* MDRRMO Title */}
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white mb-4 md:mb-6 leading-tight tracking-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-extrabold text-white mb-3 sm:mb-4 md:mb-6 leading-tight tracking-tight">
                     Municipal Disaster Risk Reduction
-                    <span className="block mt-2 bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-100 bg-clip-text text-transparent">
+                    <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-100 bg-clip-text text-transparent">
                       & Management Office
                     </span>
                   </h1>
 
                   {/* Location */}
-                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full mb-8 md:mb-10">
-                    <i className="ri-map-pin-line text-yellow-300"></i>
-                    <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-white">
+                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 sm:px-6 sm:py-3 rounded-full mb-6 sm:mb-8 md:mb-10">
+                    <i className="ri-map-pin-line text-yellow-300 text-sm sm:text-base"></i>
+                    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-white">
                       Rosario, Batangas
                     </h2>
                   </div>
 
                   {/* Description */}
-                  <p className="text-xl md:text-2xl lg:text-3xl text-blue-50 max-w-4xl mb-10 md:mb-14 leading-relaxed font-light">
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-blue-50 max-w-4xl mb-6 sm:mb-10 md:mb-14 leading-relaxed font-light">
                     Committed to protecting and serving our community through comprehensive disaster preparedness, rapid
                     emergency response, and proactive public safety management.
                   </p>
 
                   {/* Call to Action */}
-                  <div className="flex flex-col sm:flex-row gap-4 md:gap-5">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-5">
                     <a
                       href="#services"
                       onClick={(e) => {
@@ -336,7 +336,7 @@ export default function Home() {
                           servicesSection.scrollIntoView({ behavior: 'smooth' });
                         }
                       }}
-                      className="group bg-white hover:bg-gray-50 text-blue-700 px-8 py-4 md:px-10 md:py-5 rounded-2xl font-bold text-base md:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 text-center"
+                      className="group bg-white hover:bg-gray-50 text-blue-700 px-6 py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 text-center"
                     >
                       <span className="flex items-center justify-center gap-2">
                         Emergency Services
@@ -345,7 +345,7 @@ export default function Home() {
                     </a>
                     <button
                       onClick={() => setShowHotlineModal(true)}
-                      className="group bg-red-500 hover:bg-red-600 text-white px-8 py-4 md:px-10 md:py-5 rounded-2xl font-bold text-base md:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 text-center"
+                      className="group bg-red-500 hover:bg-red-600 text-white px-6 py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 text-center"
                     >
                       <span className="flex items-center justify-center gap-2">
                         <i className="ri-phone-line"></i>
