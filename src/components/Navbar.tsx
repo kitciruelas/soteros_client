@@ -312,7 +312,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
             {/* Logo */}
             <div className="flex items-center min-w-0 flex-shrink-0">
               <img
-                src="/images/soterblue.png"
+                src="/images/soteros_logo.png"
                 alt="Logo"
                 className="w-28 h-28 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 ..."
                 onClick={() => {
