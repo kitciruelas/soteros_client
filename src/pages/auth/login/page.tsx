@@ -1,7 +1,8 @@
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import ReCAPTCHA from 'react-google-recaptcha'
 import Button from "../../../components/base/Button"
 import Input from "../../../components/base/Input"
 import Checkbox from "../../../components/base/Checkbox"
@@ -20,6 +21,11 @@ export default function LoginPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [showErrorMessage, setShowErrorMessage] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  
+  // reCAPTCHA state
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null)
+  const [recaptchaError, setRecaptchaError] = useState("")
 
   const { fields, setValue, validateAll, getValues, isSubmitting, setIsSubmitting } = useForm<LoginFormData>(
     {
@@ -39,14 +45,29 @@ export default function LoginPage() {
     },
   )
 
+  // Handle reCAPTCHA change
+  const onRecaptchaChange = (value: string | null) => {
+    setRecaptchaValue(value)
+    if (value) {
+      setRecaptchaError("")
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateAll()) return
 
+    // Validate reCAPTCHA
+    if (!recaptchaValue) {
+      setRecaptchaError("Please complete the reCAPTCHA verification.")
+      return
+    }
+
     setIsSubmitting(true)
     setShowErrorMessage(false)
     setShowSuccessMessage(false)
+    setRecaptchaError("")
 
     try {
       const formData = getValues()
@@ -164,10 +185,22 @@ export default function LoginPage() {
       // Handle specific error cases
       setErrorMessage("Email or password is incorrect. Please try again.")
       setShowErrorMessage(true)
+      
+      // Reset reCAPTCHA on failed login
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset()
+      }
+      setRecaptchaValue(null)
     } catch (error) {
       console.error("Login failed:", error)
       setErrorMessage("Login failed: " + (error instanceof Error ? error.message : "Unknown error"))
       setShowErrorMessage(true)
+      
+      // Reset reCAPTCHA on error
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset()
+      }
+      setRecaptchaValue(null)
     } finally {
       setIsSubmitting(false)
       setTimeout(() => setShowErrorMessage(false), 5000)
@@ -270,6 +303,23 @@ export default function LoginPage() {
               autoComplete="current-password"
               icon={<i className="ri-lock-line"></i>}
             />
+
+            {/* reCAPTCHA widget */}
+            <div className="flex flex-col items-center w-full">
+              <div className="transform scale-90 origin-center">
+                <ReCAPTCHA
+                  sitekey="6LfVgHUqAAAAAJtQJXShsLo2QbyGby2jquueTZYV"
+                  onChange={onRecaptchaChange}
+                  ref={recaptchaRef}
+                />
+              </div>
+              {recaptchaError && (
+                <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
+                  <i className="ri-error-warning-line"></i>
+                  {recaptchaError}
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center justify-between">
               <Checkbox

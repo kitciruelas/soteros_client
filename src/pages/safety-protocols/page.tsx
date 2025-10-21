@@ -458,9 +458,9 @@ const SafetyProtocolsPage: React.FC = () => {
                             // Image preview
                             <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
                               <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between px-4 z-10">
-                                <div className="flex items-center">
-                                  <i className="ri-image-line text-xl text-white mr-2"></i>
-                                  <span className="text-white font-medium truncate">
+                                <div className="flex items-center min-w-0">
+                                  <i className="ri-image-line text-xl text-white mr-2 flex-shrink-0"></i>
+                                  <span className="text-white font-medium truncate text-sm">
                                     {protocol.file_attachment.split('/').pop()}
                                   </span>
                                 </div>
@@ -468,17 +468,17 @@ const SafetyProtocolsPage: React.FC = () => {
                                   href={`/uploads/${protocol.file_attachment}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-white/80 hover:text-white transition-colors"
+                                  className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <i className="ri-download-line text-xl"></i>
                                 </a>
                               </div>
-                              <div className="pt-12 aspect-[16/10]">
+                              <div className="pt-12 aspect-[4/3] bg-gray-100">
                                 <img
                                   src={`/uploads/${protocol.file_attachment}`}
                                   alt={protocol.title}
-                                  className="w-full h-full object-contain"
+                                  className="w-full h-full object-cover"
                                 />
                               </div>
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -494,9 +494,9 @@ const SafetyProtocolsPage: React.FC = () => {
                             // PDF preview with embedded viewer
                             <div className="relative rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm group">
                               <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-red-600 to-red-700 flex items-center justify-between px-4 z-10">
-                                <div className="flex items-center">
-                                  <i className="ri-file-pdf-line text-xl text-white mr-2"></i>
-                                  <span className="text-white font-medium truncate">
+                                <div className="flex items-center min-w-0">
+                                  <i className="ri-file-pdf-line text-xl text-white mr-2 flex-shrink-0"></i>
+                                  <span className="text-white font-medium truncate text-sm">
                                     {protocol.file_attachment.split('/').pop()}
                                   </span>
                                 </div>
@@ -504,17 +504,17 @@ const SafetyProtocolsPage: React.FC = () => {
                                   href={`/uploads/${protocol.file_attachment}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-white/80 hover:text-white transition-colors"
+                                  className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <i className="ri-download-line text-xl"></i>
                                 </a>
                               </div>
                               {/* PDF Embed Preview */}
-                              <div className="pt-12 aspect-[4/3]">
+                              <div className="pt-12 aspect-[4/3] bg-gray-50">
                                 <iframe
                                   src={`/uploads/${protocol.file_attachment}#toolbar=0&view=FitH`}
-                                  className="w-full h-full bg-gray-50"
+                                  className="w-full h-full"
                                   title={protocol.title}
                                 />
                               </div>
