@@ -1010,8 +1010,8 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                          {( userData?.first_name) && (userData?.last_name)
-                            ? `${ userData.first_name} ${userData.last_name}`
+                          {(userData?.firstName || userData?.first_name) && (userData?.lastName || userData?.last_name)
+                            ? `${userData.firstName || userData.first_name} ${userData.lastName || userData.last_name}`
                             : userData?.email?.split("@")[0] || "User"}
                         </p>
                         <p className="text-gray-600 text-xs sm:text-sm truncate" title={userData?.email || "No email"}>
