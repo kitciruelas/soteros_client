@@ -510,36 +510,37 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                     {/* Notification Dropdown */}
                     {showNotifDropdown && (
                       <div 
-                        className="absolute right-0 mt-2 w-72 sm:w-80 md:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
+                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
                         onClick={() => {
                           closeNotificationDropdown()
                           handleNavigation("/notifications")
                         }}
                       >
                         {/* Header */}
-                        <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-900">Notifications</h3>
+                        <div className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h3>
                             {unreadCount > 0 && (
                               <button
                                 onClick={async (e) => {
                                   e.stopPropagation(); // Prevent dropdown click
                                   await markAllAsRead();
                                 }}
-                                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
                               >
-                                Mark all as read
+                                <span className="hidden xs:inline">Mark all as read</span>
+                                <span className="xs:hidden">Mark all</span>
                               </button>
                             )}
                           </div>
                         </div>
 
                         {/* Notifications List */}
-                        <div className="max-h-96 overflow-y-auto">
+                        <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto">
                           {notifications.length === 0 ? (
-                            <div className="text-center py-8">
-                              <i className="ri-notification-off-line text-4xl text-gray-300"></i>
-                              <p className="text-gray-500 mt-2">No notifications</p>
+                            <div className="text-center py-6 sm:py-8">
+                              <i className="ri-notification-off-line text-3xl sm:text-4xl text-gray-300"></i>
+                              <p className="text-gray-500 mt-2 text-xs sm:text-sm">No notifications</p>
                             </div>
                           ) : (
                             <div className="divide-y divide-gray-100">
@@ -570,24 +571,24 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                                       handleNavigation("/history-report");
                                     }
                                   }}
-                                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                  className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                                     !isRead ? 'bg-blue-50' : ''
                                   }`}
                                 >
-                                    <div className="flex items-start space-x-3">
+                                    <div className="flex items-start space-x-2 sm:space-x-3">
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2">
-                                          <p className="text-sm font-medium text-gray-900 truncate">
+                                          <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                                             {notification.title}
                                           </p>
                                           {!isRead && (
                                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                                           )}
                                         </div>
-                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                        <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">
                                           {notification.message}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                                           {new Date(notification.created_at).toLocaleString()}
                                         </p>
                                       </div>
@@ -771,36 +772,37 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                   {/* Mobile Notification Dropdown */}
                   {showNotifDropdown && (
                     <div 
-                      className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer"
+                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
                       onClick={() => {
                         closeNotificationDropdown()
                         handleNavigation("/notifications")
                       }}
                     >
                       {/* Header */}
-                      <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-xl">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      <div className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-xl">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h3>
                           {unreadCount > 0 && (
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation(); // Prevent dropdown click
-                                markAllAsRead();
+                                await markAllAsRead();
                               }}
-                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                              className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
                             >
-                              Mark all as read
+                              <span className="hidden xs:inline">Mark all as read</span>
+                              <span className="xs:hidden">Mark all</span>
                             </button>
                           )}
                         </div>
                       </div>
 
                       {/* Notifications List */}
-                      <div className="max-h-[70vh] overflow-y-auto">
+                      <div className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
                         {notifications.length === 0 ? (
-                          <div className="text-center py-8">
-                            <i className="ri-notification-off-line text-4xl text-gray-300"></i>
-                            <p className="text-gray-500 mt-2">No notifications</p>
+                          <div className="text-center py-6 sm:py-8">
+                            <i className="ri-notification-off-line text-3xl sm:text-4xl text-gray-300"></i>
+                            <p className="text-gray-500 mt-2 text-xs sm:text-sm">No notifications</p>
                           </div>
                         ) : (
                           <div className="divide-y divide-gray-100">
@@ -831,24 +833,24 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                                       handleNavigation("/history-report");
                                     }
                                   }}
-                                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                  className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                                     !isRead ? 'bg-blue-50' : ''
                                   }`}
                                 >
-                                  <div className="flex items-start space-x-3">
+                                  <div className="flex items-start space-x-2 sm:space-x-3">
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center space-x-2">
-                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                                           {notification.title}
                                         </p>
                                         {!isRead && (
                                           <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                                         )}
                                       </div>
-                                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                      <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">
                                         {notification.message}
                                       </p>
-                                      <p className="text-xs text-gray-500 mt-1">
+                                      <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                                         {new Date(notification.created_at).toLocaleString()}
                                       </p>
                                     </div>
