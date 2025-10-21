@@ -363,7 +363,7 @@ const SafetyProtocolsPage: React.FC = () => {
               <div
                 key={protocol.protocol_id}
                 className={`bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ${
-                  viewMode === 'grid' ? 'p-6' : 'p-6 flex items-center space-x-6'
+                  viewMode === 'grid' ? 'p-6 flex flex-col h-full' : 'p-6 flex items-center space-x-6'
                 }`}
               >
                 {/* Protocol Icon and Type */}
@@ -398,38 +398,16 @@ const SafetyProtocolsPage: React.FC = () => {
                 </div>
 
                 {/* Protocol Content */}
-                <div className={`${viewMode === 'list' ? 'flex-1' : ''}`}>
+                <div className={`${viewMode === 'list' ? 'flex-1' : 'flex-1 flex flex-col'}`}>
                   <div className={`${viewMode === 'list' ? 'flex items-start justify-between' : ''}`}>
                     <div className={`${viewMode === 'list' ? 'flex-1 pr-4' : ''}`}>
                       <h3 className={`font-bold text-gray-900 mb-2 ${viewMode === 'list' ? 'text-xl' : 'text-lg'}`}>
                         {protocol.title}
                       </h3>
-                      <div className="relative">
-                        <p className={`text-gray-600 mb-1 ${viewMode === 'list' ? 'text-base' : 'text-sm'} ${
-                          protocol.description.length > 150 ? 'line-clamp-3' : ''
-                        }`}>
+                      <div className={`relative ${viewMode === 'grid' ? 'mb-4' : ''}`}>
+                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-base mb-1' : 'text-sm line-clamp-3'}`}>
                           {protocol.description}
                         </p>
-                        {protocol.description.length > 150 && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const target = e.currentTarget.previousElementSibling as HTMLParagraphElement;
-                              if (target.classList.contains('line-clamp-3')) {
-                                target.classList.remove('line-clamp-3');
-                                e.currentTarget.innerHTML = '<i class="ri-arrow-up-s-line mr-1"></i>See Less';
-                              } else {
-                                target.classList.add('line-clamp-3');
-                                e.currentTarget.innerHTML = '<i class="ri-arrow-down-s-line mr-1"></i>See More';
-                              }
-                            }}
-                            className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center mb-4"
-                          >
-                            <i className="ri-arrow-down-s-line mr-1"></i>
-                            See More
-                          </button>
-                        )}
                       </div>
                     </div>
 
@@ -569,7 +547,7 @@ const SafetyProtocolsPage: React.FC = () => {
                   )}
 
                   {/* Footer */}
-                  <div className={`pt-4 mt-4 border-t border-gray-200 ${viewMode === 'list' ? 'flex items-center justify-between' : ''}`}>
+                  <div className={`pt-4 border-t border-gray-200 ${viewMode === 'list' ? 'flex items-center justify-between mt-4' : 'mt-auto'}`}>
                     <p className="text-xs text-gray-500">
                       <i className="ri-time-line mr-1"></i>
                       Updated: {new Date(protocol.updated_at).toLocaleDateString()}
