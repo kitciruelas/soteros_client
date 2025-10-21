@@ -6,6 +6,7 @@ import Button from "../../components/base/Button"
 import Card from "../../components/base/Card"
 import Navbar from "../../components/Navbar"
 import { getAuthState, type UserData } from "../../utils/auth"
+import { getAuthToken } from "../../utils/api"
 
 interface TimelineEvent {
   id: string
@@ -262,10 +263,10 @@ export default function HistoryReportPage() {
       
       const response = await fetch(apiUrl, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAuthToken()}`,
+          },
         signal: fetchController.signal,
       })
 

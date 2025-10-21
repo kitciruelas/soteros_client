@@ -56,7 +56,7 @@ export interface PaginatedResponse<T> {
 }
 
 // Get auth token from localStorage with enhanced error handling
-const getAuthToken = (): string | null => {
+export const getAuthToken = (): string | null => {
   console.log('Getting auth token from storage...');
   
   // Check localStorage first
