@@ -648,23 +648,6 @@ const StaffProfilePage: React.FC = () => {
                   <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 break-words">{profile?.email || "No email provided"}</p>
                 </div>
 
-                <div className="mb-4 sm:mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs sm:text-sm font-medium text-gray-700">Profile Completion</span>
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      {profileCompletion}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${profileCompletion}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
                 {/* Logout Button */}
                 <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
                   <Button variant="outline" size="sm" className="sm:size-md" onClick={handleLogoutClick} fullWidth>
