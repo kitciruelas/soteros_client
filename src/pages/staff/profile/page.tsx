@@ -680,12 +680,20 @@ const StaffProfilePage: React.FC = () => {
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
                     <div>
                       <h2 className="text-xl sm:text-2xl font-bold text-white">Personal Information</h2>
                       <p className="text-blue-100 mt-1 text-sm sm:text-base">Keep your information up to date</p>
                     </div>
-                    {isEditing && (
+                    {!isEditing ? (
+                      <button
+                        onClick={handleEdit}
+                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-lg transition-all duration-200 backdrop-blur-sm"
+                      >
+                        <i className="ri-edit-line"></i>
+                        <span className="font-medium">Edit Profile</span>
+                      </button>
+                    ) : (
                       <div className="flex items-center gap-2 text-blue-100">
                         <i className="ri-edit-line text-sm sm:text-base"></i>
                         <span className="text-xs sm:text-sm font-medium">Editing Mode</span>
