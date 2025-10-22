@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminAuthGuard from './AdminAuthGuard';
 import { getAuthState, clearAuthData } from '../utils/auth';
-import { adminAuthApi, incidentsApi } from '../utils/api';
+import { adminAuthApi, incidentsApi, adminNotificationsApi } from '../utils/api';
 import { apiRequest } from '../utils/api';
 import websocketService, { type NotificationData } from '../services/websocketService';
 
@@ -346,51 +346,98 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   };
 
-  // Fetch notifications (incidents and welfare reports) for admin
+  // Fetch notifications from unified admin notifications API
   const fetchNotifications = async () => {
     setIsLoadingNotifications(true);
     
     try {
-      // Fetch incidents and welfare reports in parallel for better performance
-      const [incidentsResponse, welfareResponse] = await Promise.allSettled([
-        incidentsApi.getIncidents(),
-        apiRequest('/admin/welfare/reports?status=needs_help&limit=5')
-      ]);
-
-      // Process incidents asynchronously
-      let latestIncidents = [];
-      if (incidentsResponse.status === 'fulfilled' && incidentsResponse.value.success && Array.isArray(incidentsResponse.value.incidents)) {
-        latestIncidents = incidentsResponse.value.incidents.slice(0, 10); // Show up to 10 incidents
-        // Update incidents immediately when available
-        setNotifications(latestIncidents);
-      }
-
-      // Process welfare reports asynchronously
-      let latestWelfareReports = [];
-      if (welfareResponse.status === 'fulfilled' && welfareResponse.value.success && Array.isArray(welfareResponse.value.reports)) {
-        latestWelfareReports = welfareResponse.value.reports.map((report: any) => ({
-          ...report,
-          type: 'welfare',
-          id: `welfare_${report.report_id}`,
-          title: 'Welfare Check - Needs Help',
-          description: report.additional_info || 'User needs assistance',
-          date_reported: report.submitted_at,
-          priority_level: 'high',
-          user_name: `${report.first_name || ''} ${report.last_name || ''}`.trim() || report.user_name || 'Unknown User'
-        }));
-        // Update welfare reports immediately when available
-        setWelfareReports(latestWelfareReports);
-      }
-
-      // Clean up read notifications that are no longer in the list
-      const allNotifications = [...latestIncidents, ...latestWelfareReports];
-      const currentIds = new Set(allNotifications.map((notif: any) => String(notif.id || notif.incident_id)));
-      setReadNotifications(prev => {
-        const cleaned = new Set([...prev].filter(id => currentIds.has(id)));
-        return cleaned;
+      // Fetch from the new admin notifications API
+      const response = await adminNotificationsApi.getNotifications({ 
+        limit: 50 
       });
+
+      if (response.success && Array.isArray(response.notifications)) {
+        // Separate notifications by type for backwards compatibility
+        const incidents = response.notifications.filter((n: any) => n.type === 'incident');
+        const welfareReports = response.notifications
+          .filter((n: any) => n.type === 'welfare')
+          .map((notif: any) => {
+            // Parse metadata if it exists
+            const metadata = notif.metadata || {};
+            return {
+              ...notif,
+              id: `welfare_${notif.related_id || notif.id}`,
+              report_id: notif.related_id,
+              title: notif.title,
+              description: notif.message,
+              date_reported: notif.created_at,
+              submitted_at: notif.created_at,
+              user_name: metadata.user_name || 'Unknown User',
+              status: metadata.status || 'needs_help'
+            };
+          });
+
+        // Transform incidents to match expected format
+        const transformedIncidents = incidents.map((notif: any) => {
+          const metadata = notif.metadata || {};
+          return {
+            ...notif,
+            id: notif.related_id || notif.id,
+            incident_id: notif.related_id,
+            incident_type: metadata.incident_type || notif.title.replace(/^[^\s]+\s+/, ''),
+            description: notif.message,
+            location: metadata.location || 'Unknown',
+            latitude: metadata.latitude,
+            longitude: metadata.longitude,
+            priority_level: notif.priority_level,
+            date_reported: notif.created_at,
+            status: 'pending'
+          };
+        });
+
+        setNotifications(transformedIncidents);
+        setWelfareReports(welfareReports);
+
+        // Clean up read notifications that are no longer in the list
+        const currentIds = new Set(response.notifications.map((notif: any) => String(notif.id)));
+        setReadNotifications(prev => {
+          const cleaned = new Set([...prev].filter(id => currentIds.has(id)));
+          return cleaned;
+        });
+      }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error('Failed to fetch admin notifications:', error);
+      // Fallback to old method if new API fails
+      console.log('Falling back to legacy notification fetching...');
+      try {
+        const [incidentsResponse, welfareResponse] = await Promise.allSettled([
+          incidentsApi.getIncidents(),
+          apiRequest('/admin/welfare/reports?status=needs_help&limit=5')
+        ]);
+
+        let latestIncidents = [];
+        if (incidentsResponse.status === 'fulfilled' && incidentsResponse.value.success) {
+          latestIncidents = incidentsResponse.value.incidents.slice(0, 10);
+          setNotifications(latestIncidents);
+        }
+
+        let latestWelfareReports = [];
+        if (welfareResponse.status === 'fulfilled' && welfareResponse.value.success) {
+          latestWelfareReports = welfareResponse.value.reports.map((report: any) => ({
+            ...report,
+            type: 'welfare',
+            id: `welfare_${report.report_id}`,
+            title: 'Welfare Check - Needs Help',
+            description: report.additional_info || 'User needs assistance',
+            date_reported: report.submitted_at,
+            priority_level: 'high',
+            user_name: `${report.first_name || ''} ${report.last_name || ''}`.trim() || 'Unknown User'
+          }));
+          setWelfareReports(latestWelfareReports);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback notification fetch also failed:', fallbackError);
+      }
     } finally {
       setIsLoadingNotifications(false);
     }
@@ -408,15 +455,33 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   // Mark notification as read
-  const markAsRead = (notificationId: string | number) => {
+  const markAsRead = async (notificationId: string | number) => {
     const idString = String(notificationId);
     setReadNotifications(prev => new Set([...prev, idString]));
+    
+    // Also mark as read in the database
+    try {
+      await adminNotificationsApi.markAsRead(Number(notificationId));
+      console.log('✅ Notification marked as read in database');
+    } catch (error) {
+      console.error('❌ Failed to mark notification as read in database:', error);
+      // Keep local state updated even if API call fails
+    }
   };
 
   // Mark all notifications as read
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     const allIds = [...notifications, ...welfareReports].map((notif: any) => String(notif.id || notif.incident_id));
     setReadNotifications(new Set(allIds));
+    
+    // Also mark all as read in the database
+    try {
+      await adminNotificationsApi.markAllAsRead();
+      console.log('✅ All notifications marked as read in database');
+    } catch (error) {
+      console.error('❌ Failed to mark all notifications as read in database:', error);
+      // Keep local state updated even if API call fails
+    }
   };
 
   // Get all notifications combined

@@ -1374,6 +1374,48 @@ export const routingApi = {
   }
 };
 
+// Admin Notifications API
+export const adminNotificationsApi = {
+  getNotifications: async (params?: { 
+    page?: number; 
+    limit?: number; 
+    unread_only?: boolean; 
+    type?: string; 
+    severity?: string 
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.unread_only) queryParams.append('unread_only', 'true');
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.severity) queryParams.append('severity', params.severity);
+    
+    const queryString = queryParams.toString();
+    return apiRequest(`/admin/notifications${queryString ? '?' + queryString : ''}`);
+  },
+  
+  getUnreadCount: async () => 
+    apiRequest('/admin/notifications/unread-count'),
+  
+  getPriorityCount: async () => 
+    apiRequest('/admin/notifications/priority-count'),
+  
+  markAsRead: async (id: number) => 
+    apiRequest(`/admin/notifications/${id}/read`, { method: 'PUT' }),
+  
+  markAllAsRead: async () => 
+    apiRequest('/admin/notifications/read-all', { method: 'PUT' }),
+  
+  deleteNotification: async (id: number) => 
+    apiRequest(`/admin/notifications/${id}`, { method: 'DELETE' }),
+  
+  createTestNotification: async (data: { type?: string; title?: string; message?: string }) =>
+    apiRequest('/admin/notifications/test', { 
+      method: 'POST', 
+      body: JSON.stringify(data) 
+    })
+};
+
 export default {
   adminAuthApi,
   userAuthApi,
@@ -1391,4 +1433,5 @@ export default {
   profileApi,
   feedbackApi,
   routingApi,
+  adminNotificationsApi,
 };

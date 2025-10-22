@@ -736,10 +736,22 @@ export default function ProfilePage() {
                       <h2 className="text-xl sm:text-2xl font-bold text-white">Personal Information</h2>
                       <p className="text-blue-100 mt-1 text-sm sm:text-base">Keep your information up to date</p>
                     </div>
-                    {isEditing && (
+                    {isEditing ? (
                       <div className="flex items-center gap-2 text-blue-100">
                         <i className="ri-edit-line text-sm sm:text-base"></i>
                         <span className="text-xs sm:text-sm font-medium">Editing Mode</span>
+                      </div>
+                    ) : (
+                      <div className="hidden lg:block">
+                        <Button
+                          variant="outline"
+                          size="md"
+                          onClick={handleEdit}
+                          className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                        >
+                          <i className="ri-edit-line mr-2"></i>
+                          Edit Profile
+                        </Button>
                       </div>
                     )}
                   </div>
