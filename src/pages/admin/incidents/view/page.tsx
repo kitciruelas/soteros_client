@@ -628,21 +628,21 @@ const ViewIncidents: React.FC = () => {
     
     // Custom validation priority based on assignment status
     // Workflow: Report → Validate → Assign → Process
-    // 1. Unvalidated + walang assignment (PINAKA-PRIORITY - bagong report, need validation muna)
-    // 2. Validated + walang assignment (validated na, ready to assign)
+    // 1. Validated + walang assignment (PINAKA-PRIORITY - ready to assign, need immediate action)
+    // 2. Unvalidated + walang assignment (bagong report, need validation)
     // 3. Validated + may assignment (validated + assigned, ongoing na)
     // 4. Unvalidated + may assignment (edge case - need validation pa rin)
     // 5. Rejected (lowest priority)
     const getValidationPriority = (incident: Incident) => {
-      if (incident.validationStatus === 'unvalidated' && !hasAssignment(incident)) return 1; // PINAKA-UNA - validate muna
-      if (incident.validationStatus === 'validated' && !hasAssignment(incident)) return 2; // ready to assign
+      if (incident.validationStatus === 'validated' && !hasAssignment(incident)) return 1; // PINAKA-UNA - ready to assign
+      if (incident.validationStatus === 'unvalidated' && !hasAssignment(incident)) return 2; // validate muna
       if (incident.validationStatus === 'validated' && hasAssignment(incident)) return 3; // ongoing
       if (incident.validationStatus === 'unvalidated' && hasAssignment(incident)) return 4; // edge case
       if (incident.validationStatus === 'rejected') return 5;
       return 6;
     };
     
-    // First sort by custom validation priority (unvalidated + walang assignment nasa una para ma-validate muna)
+    // First sort by custom validation priority (validated + walang assignment nasa una para ma-assign agad)
     const validationDiff = getValidationPriority(a) - getValidationPriority(b);
     if (validationDiff !== 0) return validationDiff;
     
