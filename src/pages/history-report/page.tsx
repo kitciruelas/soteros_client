@@ -951,7 +951,7 @@ export default function HistoryReportPage() {
                               </div>
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-800 text-sm mb-1">Location</h4>
-                                <p className="text-gray-700 text-base">
+                                <div className="text-gray-700 text-base">
                                   {report.location && report.location.trim() !== "" ? (
                                     report.location
                                   ) : report.latitude && report.longitude ? (
@@ -967,7 +967,7 @@ export default function HistoryReportPage() {
                                   ) : (
                                     "Location not specified"
                                   )}
-                                </p>
+                                </div>
                                 {report.latitude && report.longitude && (
                                   <div className="text-xs text-gray-500 mt-2 font-mono bg-white px-2 py-1 rounded border">
                                     Lat: {Number(report.latitude).toFixed(6)}, Lng: {Number(report.longitude).toFixed(6)}
