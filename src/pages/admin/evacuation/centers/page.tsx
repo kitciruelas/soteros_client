@@ -604,26 +604,29 @@ const EvacuationCentersManagement: React.FC = () => {
 
         {/* Create/Edit Modal */}
         {(showCreateModal || showEditModal) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl max-w-4xl w-full my-8 shadow-2xl">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {showCreateModal ? 'Create New Evacuation Center' : 'Edit Evacuation Center'}
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setShowEditModal(false);
-                      setFormData({});
-                      setErrors({});
-                    }}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <XIcon className="w-5 h-5" />
-                  </button>
-                </div>
-                
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] shadow-2xl flex flex-col">
+              {/* Fixed Header */}
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {showCreateModal ? 'Create New Evacuation Center' : 'Edit Evacuation Center'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setShowEditModal(false);
+                    setFormData({});
+                    setErrors({});
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Close"
+                >
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="space-y-6">
                   {/* Basic Information */}
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -793,27 +796,28 @@ const EvacuationCentersManagement: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setShowEditModal(false);
-                      setFormData({});
-                      setErrors({});
-                    }}
-                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={showCreateModal ? handleCreate : handleUpdate}
-                    disabled={submitting}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                  >
-                    {submitting ? 'Saving...' : (showCreateModal ? 'Create' : 'Update')}
-                  </button>
-                </div>
+              {/* Fixed Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 bg-gray-50">
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setShowEditModal(false);
+                    setFormData({});
+                    setErrors({});
+                  }}
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={showCreateModal ? handleCreate : handleUpdate}
+                  disabled={submitting}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  {submitting ? 'Saving...' : (showCreateModal ? 'Create Center' : 'Update Center')}
+                </button>
               </div>
             </div>
           </div>
