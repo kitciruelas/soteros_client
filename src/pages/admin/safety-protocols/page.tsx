@@ -166,12 +166,21 @@ const SafetyProtocolsManagement: React.FC = () => {
     setFormTitle(protocol.title || '');
     setFormDescription(protocol.description || '');
     setFormType((protocol.type as any) || '');
-    // Parse multiple attachments if stored as JSON array, otherwise use as single file
-    try {
-      const attachments = protocol.file_attachment ? JSON.parse(protocol.file_attachment) : [];
-      setFormFileAttachments(Array.isArray(attachments) ? attachments : [protocol.file_attachment || ''].filter(Boolean));
-    } catch {
-      setFormFileAttachments([protocol.file_attachment || ''].filter(Boolean));
+    // Parse multiple attachments - handle both array and string formats
+    if (Array.isArray(protocol.file_attachment)) {
+      // Already an array
+      setFormFileAttachments(protocol.file_attachment.filter(Boolean));
+    } else if (protocol.file_attachment) {
+      try {
+        // Try to parse as JSON
+        const parsed = JSON.parse(protocol.file_attachment);
+        setFormFileAttachments(Array.isArray(parsed) ? parsed.filter(Boolean) : [protocol.file_attachment]);
+      } catch {
+        // Single file string
+        setFormFileAttachments([protocol.file_attachment]);
+      }
+    } else {
+      setFormFileAttachments([]);
     }
     setUploadProgress({});
   };
@@ -521,46 +530,52 @@ const SafetyProtocolsManagement: React.FC = () => {
                     <span className="text-xs text-gray-500">ID: {selectedProtocol.protocol_id ?? selectedProtocol.id}</span>
                   </div>
                   {selectedProtocol.file_attachment && (() => {
-                    try {
-                      const attachments = JSON.parse(selectedProtocol.file_attachment);
-                      if (Array.isArray(attachments) && attachments.length > 0) {
-                        return (
-                          <div className="flex flex-wrap gap-2">
-                            {attachments.map((url: string, idx: number) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
-                              >
-                                <i className={`mr-1.5 ${
-                                  /\.(jpg|jpeg|png|gif|webp)$/i.test(url) ? 'ri-image-line' :
-                                  /\.pdf$/i.test(url) ? 'ri-file-pdf-line' : 'ri-file-text-line'
-                                }`}></i>
-                                File {idx + 1}
-                              </a>
-                            ))}
-                          </div>
-                        );
+                    // Parse attachments - handle both array and string formats
+                    let attachments: string[] = [];
+                    
+                    // Check if it's already an array (from API)
+                    if (Array.isArray(selectedProtocol.file_attachment)) {
+                      attachments = selectedProtocol.file_attachment;
+                    } else if (typeof selectedProtocol.file_attachment === 'string') {
+                      try {
+                        // Try to parse as JSON array
+                        const parsed = JSON.parse(selectedProtocol.file_attachment);
+                        attachments = Array.isArray(parsed) ? parsed : [selectedProtocol.file_attachment];
+                      } catch {
+                        // Single file (old format)
+                        attachments = [selectedProtocol.file_attachment];
                       }
-                    } catch {
-                      // Single file (old format)
-                      return (
-                        <a
-                          href={selectedProtocol.file_attachment.startsWith('http') 
-                            ? selectedProtocol.file_attachment 
-                            : `/uploads/${selectedProtocol.file_attachment}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
-                        >
-                          <i className="ri-file-text-line mr-1.5"></i>
-                          View Attachment
-                        </a>
-                      );
                     }
-                    return null;
+
+                    // Filter out empty strings and display
+                    const validAttachments = attachments.filter(a => a && a.trim());
+                    
+                    if (validAttachments.length === 0) return null;
+
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {validAttachments.map((url: string, idx: number) => {
+                          // Ensure URL is properly formatted
+                          const fileUrl = url.startsWith('http') ? url : `/uploads/${url}`;
+                          
+                          return (
+                            <a
+                              key={idx}
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                            >
+                              <i className={`mr-1.5 ${
+                                /\.(jpg|jpeg|png|gif|webp)$/i.test(url) ? 'ri-image-line' :
+                                /\.pdf$/i.test(url) ? 'ri-file-pdf-line' : 'ri-file-text-line'
+                              }`}></i>
+                              {validAttachments.length > 1 ? `File ${idx + 1}` : 'View Attachment'}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    );
                   })()}
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{selectedProtocol.title}</h3>
