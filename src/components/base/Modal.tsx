@@ -55,9 +55,9 @@ export default function Modal({
       />
       
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-start justify-center p-4">
         <div 
-          className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all duration-300 scale-100`}
+          className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} my-8 transform transition-all duration-300 scale-100`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
