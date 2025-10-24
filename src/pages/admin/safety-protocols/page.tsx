@@ -226,6 +226,12 @@ const SafetyProtocolsManagement: React.FC = () => {
       // Convert multiple attachments to JSON string
       const attachmentsJson = formFileAttachments.length > 0 ? JSON.stringify(formFileAttachments) : null;
 
+      console.log('💾 Saving protocol:', {
+        attachmentCount: formFileAttachments.length,
+        attachmentsJsonLength: attachmentsJson?.length || 0,
+        attachmentsJson: attachmentsJson
+      });
+
       if (!selectedProtocol) {
         // Create
         const payload = {
@@ -235,7 +241,13 @@ const SafetyProtocolsManagement: React.FC = () => {
           file_attachment: attachmentsJson,
           created_by: adminId || null,
         };
-        await safetyProtocolsApi.createProtocol(payload);
+        console.log('📝 CREATE payload:', {
+          ...payload,
+          file_attachment_length: payload.file_attachment?.length || 0
+        });
+        
+        const response = await safetyProtocolsApi.createProtocol(payload);
+        console.log('✅ CREATE response:', response);
         showToast({ type: 'success', message: 'Protocol created successfully' });
       } else {
         // Update existing
@@ -245,13 +257,26 @@ const SafetyProtocolsManagement: React.FC = () => {
         if (formDescription.trim() !== '') payload.description = formDescription.trim();
         if ((formType as any) && formType !== '') payload.type = formType as any;
         payload.file_attachment = attachmentsJson;
-        await safetyProtocolsApi.updateProtocol(protocolId, payload);
+        
+        console.log('✏️ UPDATE payload:', {
+          protocolId,
+          ...payload,
+          file_attachment_length: payload.file_attachment?.length || 0
+        });
+        
+        const response = await safetyProtocolsApi.updateProtocol(protocolId, payload);
+        console.log('✅ UPDATE response:', response);
         showToast({ type: 'success', message: 'Protocol updated successfully' });
       }
       await fetchProtocols();
       setShowProtocolModal(false);
     } catch (err) {
-      console.error('Save failed:', err);
+      console.error('❌ Save failed:', err);
+      console.error('Error details:', {
+        message: (err as any)?.message,
+        response: (err as any)?.response,
+        status: (err as any)?.status
+      });
       showToast({ type: 'error', message: 'Failed to save protocol' });
     } finally {
       setIsSaving(false);
@@ -260,47 +285,73 @@ const SafetyProtocolsManagement: React.FC = () => {
 
   const handleAttachmentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    
+    console.log('📤 Upload triggered:', {
+      filesCount: files?.length || 0,
+      files: files ? Array.from(files).map(f => ({ name: f.name, size: f.size, type: f.type })) : []
+    });
+    
+    if (!files || files.length === 0) {
+      console.warn('⚠️ No files selected');
+      return;
+    }
     
     try {
       setUploading(true);
       const uploadedUrls: string[] = [];
+      
+      console.log(`🚀 Starting upload of ${files.length} file(s)...`);
       
       // Upload each file
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileKey = `${file.name}-${Date.now()}`;
         
+        console.log(`📁 Uploading file ${i + 1}/${files.length}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+        
         try {
           setUploadProgress(prev => ({ ...prev, [fileKey]: true }));
           
           const res = await safetyProtocolsApi.uploadAttachment(file);
+          console.log(`✅ Upload successful for ${file.name}:`, res);
+          
           if (res && (res as any).url) {
             uploadedUrls.push((res as any).url || (res as any).path);
             showToast({ type: 'success', message: `${file.name} uploaded successfully` });
+          } else {
+            console.error('❌ No URL in response for', file.name);
           }
           
           setUploadProgress(prev => ({ ...prev, [fileKey]: false }));
         } catch (error) {
-          console.error(`Failed to upload ${file.name}:`, error);
+          console.error(`❌ Failed to upload ${file.name}:`, error);
           showToast({ type: 'error', message: `Failed to upload ${file.name}` });
           setUploadProgress(prev => ({ ...prev, [fileKey]: false }));
         }
       }
       
+      console.log(`✨ Upload complete! ${uploadedUrls.length} file(s) uploaded:`, uploadedUrls);
+      
       // Add new URLs to existing attachments
       if (uploadedUrls.length > 0) {
-        setFormFileAttachments(prev => [...prev, ...uploadedUrls]);
+        setFormFileAttachments(prev => {
+          const newAttachments = [...prev, ...uploadedUrls];
+          console.log('📎 Total attachments now:', newAttachments.length, newAttachments);
+          return newAttachments;
+        });
+      } else {
+        console.warn('⚠️ No files were successfully uploaded');
       }
       
     } catch (error) {
-      console.error('Attachment upload failed:', error);
+      console.error('❌ Attachment upload failed:', error);
       showToast({ type: 'error', message: 'Failed to upload files' });
     } finally {
       setUploading(false);
       setUploadProgress({});
       // Reset input so same file can be uploaded again
       e.target.value = '';
+      console.log('🏁 Upload process finished');
     }
   };
 
@@ -772,7 +823,10 @@ const SafetyProtocolsManagement: React.FC = () => {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500">PDF, DOC, Images up to 10MB each</p>
-                    <p className="text-xs text-blue-600 font-medium">✨ You can select multiple files at once!</p>
+                    <div className="space-y-1">
+                      <p className="text-xs text-blue-600 font-medium">✨ You can select multiple files at once!</p>
+                      <p className="text-xs text-gray-500 italic">💡 Hold Ctrl (Windows) or Cmd (Mac) to select multiple files</p>
+                    </div>
                     {uploading && (
                       <div className="flex items-center justify-center text-sm text-blue-600 pt-2">
                         <i className="ri-loader-4-line animate-spin mr-2"></i>
