@@ -1054,86 +1054,82 @@ const ViewIncidents: React.FC = () => {
 
       {/* Incident Details Modal */}
       {showIncidentModal && selectedIncident && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 Incident Details - #{selectedIncident.id}
               </h3>
+              <button
+                onClick={() => setShowIncidentModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <i className="ri-close-line text-2xl"></i>
+              </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Type</label>
-                  <p className="text-sm text-gray-900">{getIncidentTypeText(selectedIncident.type)}</p>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Basic Information */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                    <p className="text-sm font-medium text-gray-900">{getIncidentTypeText(selectedIncident.type)}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Priority</label>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(selectedIncident.priorityLevel)}`}>
+                      {selectedIncident.priorityLevel.toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Safety Status</label>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getSafetyStatusColor(selectedIncident.safetyStatus)}`}>
+                      {selectedIncident.safetyStatus.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Validation</label>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                      selectedIncident.validationStatus === 'validated'
+                        ? 'bg-green-100 text-green-800 border border-green-200'
+                        : selectedIncident.validationStatus === 'rejected'
+                        ? 'bg-red-100 text-red-800 border border-red-200'
+                        : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                    }`}>
+                      {selectedIncident.validationStatus.charAt(0).toUpperCase() + selectedIncident.validationStatus.slice(1)}
+                    </span>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Priority</label>
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(selectedIncident.priorityLevel)}`}>
-                    {selectedIncident.priorityLevel.toUpperCase()}
-                  </span>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                  <p className="text-sm text-gray-900 bg-white p-3 rounded border border-gray-200">{selectedIncident.description}</p>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Safety Status</label>
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getSafetyStatusColor(selectedIncident.safetyStatus)}`}>
-                    {selectedIncident.safetyStatus.replace('_', ' ').toUpperCase()}
-                  </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                    <p className="text-sm text-gray-900">{selectedIncident.location}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Coordinates</label>
+                    <p className="text-sm text-gray-900">{selectedIncident.latitude}, {selectedIncident.longitude}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Validation Status</label>
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                    selectedIncident.validationStatus === 'validated'
-                      ? 'bg-green-100 text-green-800 border border-green-200'
-                      : selectedIncident.validationStatus === 'rejected'
-                      ? 'bg-red-100 text-red-800 border border-red-200'
-                      : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                  }`}>
-                    {selectedIncident.validationStatus.charAt(0).toUpperCase() + selectedIncident.validationStatus.slice(1)}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <p className="text-sm text-gray-900">{selectedIncident.description}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Location</label>
-                <p className="text-sm text-gray-900">{selectedIncident.location}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Latitude</label>
-                  <p className="text-sm text-gray-900">{selectedIncident.latitude}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Longitude</label>
-                  <p className="text-sm text-gray-900">{selectedIncident.longitude}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Reported By</label>
-                  <p className="text-sm text-gray-900">{selectedIncident.reportedBy}</p>
-                  {selectedIncident.reporterPhone && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      <i className="ri-phone-line mr-1"></i>
-                      {selectedIncident.reporterPhone}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Assigned Teams</label>
-                  <p className="text-sm text-gray-900">
-                    {selectedIncident.allAssignedTeams ? (
-                      <span className="text-green-600">{selectedIncident.allAssignedTeams}</span>
-                    ) : selectedIncident.assignedTeamName ? (
-                      <span className="text-green-600">{selectedIncident.assignedTeamName}</span>
-                    ) : (
-                      'Not assigned'
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Reported By</label>
+                    <p className="text-sm text-gray-900">{selectedIncident.reportedBy}</p>
+                    {selectedIncident.reporterPhone && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        <i className="ri-phone-line mr-1"></i>
+                        {selectedIncident.reporterPhone}
+                      </p>
                     )}
-                  </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Date Reported</label>
+                    <p className="text-sm text-gray-900">{new Date(selectedIncident.dateReported).toLocaleString()}</p>
+                  </div>
                 </div>
               </div>
               {/* Team Information Section */}
@@ -1429,34 +1425,18 @@ const ViewIncidents: React.FC = () => {
                   </div>
                 );
               })()}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Date Reported</label>
-                  <p className="text-sm text-gray-900">
-                    {new Date(selectedIncident.dateReported).toLocaleString()}
-                  </p>
-                </div>
-                {selectedIncident.dateResolved && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date Resolved</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(selectedIncident.dateResolved).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
               <button
                 onClick={() => setShowIncidentModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
+                <i className="ri-close-line mr-2"></i>
                 Close
               </button>
               <button 
                 onClick={() => setShowMapModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
               >
                 <i className="ri-map-pin-line mr-2"></i>
                 View on Map
