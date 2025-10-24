@@ -217,9 +217,10 @@ const SafetyProtocolsManagement: React.FC = () => {
     try {
       setUploading(true);
       const res = await safetyProtocolsApi.uploadAttachment(file);
-      if (res && (res as any).filename) {
-        setFormFileAttachment((res as any).filename);
-        showToast({ type: 'success', message: 'File uploaded' });
+      if (res && (res as any).url) {
+        // Store the full Cloudinary URL (not just filename)
+        setFormFileAttachment((res as any).url || (res as any).path);
+        showToast({ type: 'success', message: 'File uploaded successfully' });
       }
     } catch (error) {
       console.error('Attachment upload failed:', error);
