@@ -58,8 +58,7 @@ export class ExportUtils {
         "Republic of the Philippines",
         "Province of Batangas",
         "Municipality of Rosario",
-        "MUNICIPAL DISASTER RISK REDUCTION AND MANAGEMENT OFFICE",
-        title
+        "MUNICIPAL DISASTER RISK REDUCTION AND MANAGEMENT OFFICE"
       ],
       includeTimestamp = true,
       logoUrl = "/images/partners/MDRRMO.png",
@@ -238,6 +237,16 @@ export class ExportUtils {
     }
 
     await drawPageHeader()
+
+    // Add title below header
+    if (title && title !== "Data Export") {
+      currentY += 8
+      doc.setFontSize(13)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(17, 24, 39)
+      doc.text(title, pageWidth / 2, currentY, { align: "center" })
+      currentY += 3
+    }
 
     // Footer drawing function
     const drawPageFooter = async (currentPageNumber: number, totalPages?: number) => {
