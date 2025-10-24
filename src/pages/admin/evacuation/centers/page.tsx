@@ -667,6 +667,8 @@ const EvacuationCentersManagement: React.FC = () => {
                             longitude={formData.longitude || null}
                             onCoordinateChange={handleCoordinateChange}
                             height="250px"
+                            center={[13.8456, 121.2006]}
+                            zoom={13}
                           />
                         </div>
 

@@ -63,7 +63,7 @@ const CoordinatePicker: React.FC<CoordinatePickerProps> = ({
   longitude,
   onCoordinateChange,
   height = '300px',
-  center = [13.7565, 121.3851], // Default to San Juan, Batangas
+  center = [13.8456, 121.2006], // Default to Rosario, Batangas
   zoom = 13
 }) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>(center);
