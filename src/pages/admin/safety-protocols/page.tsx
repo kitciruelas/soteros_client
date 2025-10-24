@@ -44,8 +44,9 @@ const SafetyProtocolsManagement: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formType, setFormType] = useState<'' | 'fire' | 'earthquake' | 'medical' | 'intrusion' | 'general'>('');
-  const [formFileAttachment, setFormFileAttachment] = useState('');
+  const [formFileAttachments, setFormFileAttachments] = useState<string[]>([]); // Changed to array for multiple files
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{[key: string]: boolean}>({});
 
   // Export modal state
   const [showExportModal, setShowExportModal] = useState(false);
@@ -153,7 +154,8 @@ const SafetyProtocolsManagement: React.FC = () => {
     setFormTitle('');
     setFormDescription('');
     setFormType('');
-    setFormFileAttachment('');
+    setFormFileAttachments([]);
+    setUploadProgress({});
   };
 
   const handleEditProtocol = (protocol: SafetyProtocol) => {
@@ -164,7 +166,14 @@ const SafetyProtocolsManagement: React.FC = () => {
     setFormTitle(protocol.title || '');
     setFormDescription(protocol.description || '');
     setFormType((protocol.type as any) || '');
-    setFormFileAttachment(protocol.file_attachment || '');
+    // Parse multiple attachments if stored as JSON array, otherwise use as single file
+    try {
+      const attachments = protocol.file_attachment ? JSON.parse(protocol.file_attachment) : [];
+      setFormFileAttachments(Array.isArray(attachments) ? attachments : [protocol.file_attachment || ''].filter(Boolean));
+    } catch {
+      setFormFileAttachments([protocol.file_attachment || ''].filter(Boolean));
+    }
+    setUploadProgress({});
   };
 
   const handleViewProtocol = (protocol: SafetyProtocol) => {
@@ -179,13 +188,16 @@ const SafetyProtocolsManagement: React.FC = () => {
       const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}');
       const adminId = adminInfo?.admin?.id;
 
+      // Convert multiple attachments to JSON string
+      const attachmentsJson = formFileAttachments.length > 0 ? JSON.stringify(formFileAttachments) : null;
+
       if (!selectedProtocol) {
         // Create
         const payload = {
           title: formTitle.trim(),
           description: formDescription.trim(),
           type: (formType || 'general') as 'fire' | 'earthquake' | 'medical' | 'intrusion' | 'general',
-          file_attachment: formFileAttachment.trim() || null,
+          file_attachment: attachmentsJson,
           created_by: adminId || null,
         };
         await safetyProtocolsApi.createProtocol(payload);
@@ -197,7 +209,7 @@ const SafetyProtocolsManagement: React.FC = () => {
         if (formTitle.trim() !== '') payload.title = formTitle.trim();
         if (formDescription.trim() !== '') payload.description = formDescription.trim();
         if ((formType as any) && formType !== '') payload.type = formType as any;
-        payload.file_attachment = formFileAttachment.trim() ? formFileAttachment.trim() : null;
+        payload.file_attachment = attachmentsJson;
         await safetyProtocolsApi.updateProtocol(protocolId, payload);
         showToast({ type: 'success', message: 'Protocol updated successfully' });
       }
@@ -212,22 +224,54 @@ const SafetyProtocolsManagement: React.FC = () => {
   };
 
   const handleAttachmentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
     try {
       setUploading(true);
-      const res = await safetyProtocolsApi.uploadAttachment(file);
-      if (res && (res as any).url) {
-        // Store the full Cloudinary URL (not just filename)
-        setFormFileAttachment((res as any).url || (res as any).path);
-        showToast({ type: 'success', message: 'File uploaded successfully' });
+      const uploadedUrls: string[] = [];
+      
+      // Upload each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileKey = `${file.name}-${Date.now()}`;
+        
+        try {
+          setUploadProgress(prev => ({ ...prev, [fileKey]: true }));
+          
+          const res = await safetyProtocolsApi.uploadAttachment(file);
+          if (res && (res as any).url) {
+            uploadedUrls.push((res as any).url || (res as any).path);
+            showToast({ type: 'success', message: `${file.name} uploaded successfully` });
+          }
+          
+          setUploadProgress(prev => ({ ...prev, [fileKey]: false }));
+        } catch (error) {
+          console.error(`Failed to upload ${file.name}:`, error);
+          showToast({ type: 'error', message: `Failed to upload ${file.name}` });
+          setUploadProgress(prev => ({ ...prev, [fileKey]: false }));
+        }
       }
+      
+      // Add new URLs to existing attachments
+      if (uploadedUrls.length > 0) {
+        setFormFileAttachments(prev => [...prev, ...uploadedUrls]);
+      }
+      
     } catch (error) {
       console.error('Attachment upload failed:', error);
-      showToast({ type: 'error', message: 'Failed to upload file' });
+      showToast({ type: 'error', message: 'Failed to upload files' });
     } finally {
       setUploading(false);
+      setUploadProgress({});
+      // Reset input so same file can be uploaded again
+      e.target.value = '';
     }
+  };
+
+  const removeAttachment = (index: number) => {
+    setFormFileAttachments(prev => prev.filter((_, i) => i !== index));
+    showToast({ type: 'success', message: 'Attachment removed' });
   };
 
   const requestDeleteProtocol = (protocol: SafetyProtocol) => {
@@ -476,19 +520,48 @@ const SafetyProtocolsManagement: React.FC = () => {
                     </span>
                     <span className="text-xs text-gray-500">ID: {selectedProtocol.protocol_id ?? selectedProtocol.id}</span>
                   </div>
-                  {selectedProtocol.file_attachment && (
-                    <a
-                      href={selectedProtocol.file_attachment.startsWith('http') 
-                        ? selectedProtocol.file_attachment 
-                        : `/uploads/${selectedProtocol.file_attachment}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
-                    >
-                      <i className="ri-file-text-line mr-1.5"></i>
-                      View Attachment
-                    </a>
-                  )}
+                  {selectedProtocol.file_attachment && (() => {
+                    try {
+                      const attachments = JSON.parse(selectedProtocol.file_attachment);
+                      if (Array.isArray(attachments) && attachments.length > 0) {
+                        return (
+                          <div className="flex flex-wrap gap-2">
+                            {attachments.map((url: string, idx: number) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                              >
+                                <i className={`mr-1.5 ${
+                                  /\.(jpg|jpeg|png|gif|webp)$/i.test(url) ? 'ri-image-line' :
+                                  /\.pdf$/i.test(url) ? 'ri-file-pdf-line' : 'ri-file-text-line'
+                                }`}></i>
+                                File {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        );
+                      }
+                    } catch {
+                      // Single file (old format)
+                      return (
+                        <a
+                          href={selectedProtocol.file_attachment.startsWith('http') 
+                            ? selectedProtocol.file_attachment 
+                            : `/uploads/${selectedProtocol.file_attachment}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                        >
+                          <i className="ri-file-text-line mr-1.5"></i>
+                          View Attachment
+                        </a>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{selectedProtocol.title}</h3>
                 <p className="text-gray-600 mb-4 whitespace-pre-line">{selectedProtocol.description}</p>
@@ -579,36 +652,90 @@ const SafetyProtocolsManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">File Attachment</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  File Attachments ({formFileAttachments.length})
+                </label>
+                
+                {/* Uploaded Files List */}
+                {formFileAttachments.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    {formFileAttachments.map((url, index) => {
+                      const fileName = url.split('/').pop() || 'File';
+                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+                      const isPdf = /\.pdf$/i.test(url);
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200 group hover:border-blue-300 transition-all">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              isImage ? 'bg-blue-100' : isPdf ? 'bg-red-100' : 'bg-gray-100'
+                            }`}>
+                              <i className={`text-lg ${
+                                isImage ? 'ri-image-line text-blue-600' :
+                                isPdf ? 'ri-file-pdf-line text-red-600' :
+                                'ri-file-line text-gray-600'
+                              }`}></i>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{fileName}</p>
+                              <p className="text-xs text-gray-500">Uploaded to Cloudinary</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Preview"
+                            >
+                              <i className="ri-eye-line"></i>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => removeAttachment(index)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove"
+                            >
+                              <i className="ri-delete-bin-line"></i>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Upload Area */}
                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-lg hover:border-blue-400 transition-all cursor-pointer">
                   <div className="space-y-2 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <i className="ri-upload-cloud-2-line text-4xl text-gray-400"></i>
+                    </div>
                     <div className="flex text-sm text-gray-600">
                       <input
                         type="file"
                         accept="*/*"
+                        multiple
                         onChange={handleAttachmentChange}
                         className="sr-only"
                         id="file-upload"
+                        disabled={uploading}
                       />
                       <label
                         htmlFor="file-upload"
                         className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-700 focus-within:outline-none"
                       >
-                        <span>Upload a file</span>
+                        <span>Click to upload files</span>
                       </label>
                       <p className="pl-1">or drag and drop</p>
                     </div>
-                    <p className="text-xs text-gray-500">PDF, DOC, Images up to 10MB</p>
+                    <p className="text-xs text-gray-500">PDF, DOC, Images up to 10MB each</p>
+                    <p className="text-xs text-blue-600 font-medium">✨ You can select multiple files at once!</p>
                     {uploading && (
-                      <div className="flex items-center justify-center text-sm text-blue-600">
+                      <div className="flex items-center justify-center text-sm text-blue-600 pt-2">
                         <i className="ri-loader-4-line animate-spin mr-2"></i>
-                        Uploading...
-                      </div>
-                    )}
-                    {formFileAttachment && (
-                      <div className="flex items-center justify-center text-sm text-green-600">
-                        <i className="ri-check-line mr-1"></i>
-                        {formFileAttachment}
+                        Uploading files...
                       </div>
                     )}
                   </div>

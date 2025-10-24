@@ -493,125 +493,165 @@ const SafetyProtocolsPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* File Attachment */}
-                  {protocol.file_attachment && (
-                    <div className="mb-4">
-                      {viewMode === 'grid' ? (
-                        <div className="relative">
-                          {/* File Preview */}
-                          {protocol.file_attachment.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
-                            // Image preview
-                            <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
-                              <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between px-4 z-10">
-                                <div className="flex items-center min-w-0">
-                                  <i className="ri-image-line text-xl text-white mr-2 flex-shrink-0"></i>
-                                  <span className="text-white font-medium truncate text-sm">
-                                    {protocol.file_attachment.split('/').pop()}
-                                  </span>
+                  {/* File Attachments */}
+                  {protocol.file_attachment && (() => {
+                    // Parse multiple attachments
+                    let attachments: string[] = [];
+                    try {
+                      const parsed = JSON.parse(protocol.file_attachment);
+                      attachments = Array.isArray(parsed) ? parsed : [protocol.file_attachment];
+                    } catch {
+                      attachments = [protocol.file_attachment];
+                    }
+
+                    return (
+                      <div className="mb-4">
+                        {viewMode === 'grid' ? (
+                          <div className="space-y-3">
+                            {attachments.map((fileUrl, fileIndex) => {
+                              const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                              const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+
+                              return (
+                                <div key={fileIndex} className="relative">
+                                  {/* File Preview */}
+                                  {isImage ? (
+                                    // Image preview
+                                    <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
+                                      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between px-4 z-10">
+                                        <div className="flex items-center min-w-0">
+                                          <i className="ri-image-line text-xl text-white mr-2 flex-shrink-0"></i>
+                                          <span className="text-white font-medium truncate text-sm">
+                                            {fileUrl.split('/').pop()} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
+                                          </span>
+                                        </div>
+                                        <a
+                                          href={`${getFileUrl(fileUrl)}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <i className="ri-download-line text-xl"></i>
+                                        </a>
+                                      </div>
+                                      <div className="pt-12 aspect-[4/3] bg-gray-100">
+                                        <img
+                                          src={`${getFileUrl(fileUrl)}`}
+                                          alt={protocol.title}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2">
+                                            <i className="ri-fullscreen-line"></i>
+                                            <span>View Full Image</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : isPdf ? (
+                                    // PDF preview with embedded viewer
+                                    <div className="relative rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm group">
+                                      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-red-600 to-red-700 flex items-center justify-between px-4 z-10">
+                                        <div className="flex items-center min-w-0">
+                                          <i className="ri-file-pdf-line text-xl text-white mr-2 flex-shrink-0"></i>
+                                          <span className="text-white font-medium truncate text-sm">
+                                            {fileUrl.split('/').pop()} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
+                                          </span>
+                                        </div>
+                                        <a
+                                          href={`${getFileUrl(fileUrl)}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <i className="ri-download-line text-xl"></i>
+                                        </a>
+                                      </div>
+                                      {/* PDF Embed Preview */}
+                                      <div className="pt-12 aspect-[4/3] bg-gray-50">
+                                        <iframe
+                                          src={`${getFileUrl(fileUrl)}#toolbar=0&view=FitH`}
+                                          className="w-full h-full"
+                                          title={protocol.title}
+                                        />
+                                      </div>
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2">
+                                            <i className="ri-fullscreen-line"></i>
+                                            <span>Open Full PDF</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    // Generic file preview
+                                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
+                                      <div className="text-center">
+                                        <i className="ri-file-text-line text-4xl text-gray-400"></i>
+                                        <p className="text-sm text-gray-600 mt-2">Document</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* View button overlay */}
+                                  <a
+                                    href={`${getFileUrl(fileUrl)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl group"
+                                  >
+                                    <span className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                                      <i className="ri-eye-line"></i>
+                                      <span>View File</span>
+                                    </span>
+                                  </a>
                                 </div>
-                                <a
-                                  href={`${getFileUrl(protocol.file_attachment)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <i className="ri-download-line text-xl"></i>
-                                </a>
-                              </div>
-                              <div className="pt-12 aspect-[4/3] bg-gray-100">
-                                <img
-                                  src={`${getFileUrl(protocol.file_attachment)}`}
-                                  alt={protocol.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                                  <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2">
-                                    <i className="ri-fullscreen-line"></i>
-                                    <span>View Full Image</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ) : protocol.file_attachment.toLowerCase().endsWith('.pdf') ? (
-                            // PDF preview with embedded viewer
-                            <div className="relative rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm group">
-                              <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-red-600 to-red-700 flex items-center justify-between px-4 z-10">
-                                <div className="flex items-center min-w-0">
-                                  <i className="ri-file-pdf-line text-xl text-white mr-2 flex-shrink-0"></i>
-                                  <span className="text-white font-medium truncate text-sm">
-                                    {protocol.file_attachment.split('/').pop()}
-                                  </span>
-                                </div>
-                                <a
-                                  href={`${getFileUrl(protocol.file_attachment)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <i className="ri-download-line text-xl"></i>
-                                </a>
-                              </div>
-                              {/* PDF Embed Preview */}
-                              <div className="pt-12 aspect-[4/3] bg-gray-50">
-                                <iframe
-                                  src={`${getFileUrl(protocol.file_attachment)}#toolbar=0&view=FitH`}
-                                  className="w-full h-full"
-                                  title={protocol.title}
-                                />
-                              </div>
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                                  <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2">
-                                    <i className="ri-fullscreen-line"></i>
-                                    <span>Open Full PDF</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            // Generic file preview
-                            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
-                              <div className="text-center">
-                                <i className="ri-file-text-line text-4xl text-gray-400"></i>
-                                <p className="text-sm text-gray-600 mt-2">Document</p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* View button overlay */}
-                          <a
-                            href={`${getFileUrl(protocol.file_attachment)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl group"
-                          >
-                            <span className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                              <i className="ri-eye-line"></i>
-                              <span>View File</span>
-                            </span>
-                          </a>
-                        </div>
-                      ) : (
-                        // List view - keep original link style
-                        <a
-                          href={`${getFileUrl(protocol.file_attachment)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-green-600 hover:text-green-700 font-semibold transition-colors group"
-                        >
-                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2 group-hover:bg-green-200 transition-colors">
-                            <i className="ri-file-text-line text-sm"></i>
+                              );
+                            })}
                           </div>
-                          <span className="text-sm">View Attachment</span>
-                          <i className="ri-external-link-line ml-1 text-xs"></i>
-                        </a>
-                      )}
-                    </div>
-                  )}
+                        ) : (
+                          // List view - show all files as links
+                          <div className="flex flex-wrap gap-2">
+                            {attachments.map((fileUrl, fileIndex) => {
+                              const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                              const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+                              
+                              return (
+                                <a
+                                  key={fileIndex}
+                                  href={`${getFileUrl(fileUrl)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-green-600 hover:text-green-700 font-semibold transition-colors group"
+                                >
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 transition-colors ${
+                                    isImage ? 'bg-blue-100 group-hover:bg-blue-200' :
+                                    isPdf ? 'bg-red-100 group-hover:bg-red-200' :
+                                    'bg-green-100 group-hover:bg-green-200'
+                                  }`}>
+                                    <i className={`text-sm ${
+                                      isImage ? 'ri-image-line' :
+                                      isPdf ? 'ri-file-pdf-line' :
+                                      'ri-file-text-line'
+                                    }`}></i>
+                                  </div>
+                                  <span className="text-sm">
+                                    {attachments.length > 1 ? `File ${fileIndex + 1}` : 'View Attachment'}
+                                  </span>
+                                  <i className="ri-external-link-line ml-1 text-xs"></i>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Footer */}
                   <div className={`pt-4 border-t border-gray-200 ${viewMode === 'list' ? 'flex items-center justify-between mt-4' : 'mt-auto'}`}>
@@ -691,112 +731,143 @@ const SafetyProtocolsPage: React.FC = () => {
                 <p className="text-gray-600 whitespace-pre-wrap">{selectedProtocol.description}</p>
               </div>
 
-              {/* File Attachment */}
-              {selectedProtocol.file_attachment && (
-                <div className="mt-8">
-                  <h4 className="font-semibold text-gray-900 mb-4">Attached Document</h4>
-                  {selectedProtocol.file_attachment.toLowerCase().endsWith('.pdf') ? (
-                    // PDF Preview
-                    <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
-                      <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                            <i className="ri-file-pdf-line text-2xl text-white"></i>
+              {/* File Attachments */}
+              {selectedProtocol.file_attachment && (() => {
+                // Parse multiple attachments
+                let attachments: string[] = [];
+                try {
+                  const parsed = JSON.parse(selectedProtocol.file_attachment);
+                  attachments = Array.isArray(parsed) ? parsed : [selectedProtocol.file_attachment];
+                } catch {
+                  attachments = [selectedProtocol.file_attachment];
+                }
+
+                return (
+                  <div className="mt-8">
+                    <h4 className="font-semibold text-gray-900 mb-4">
+                      Attached Document{attachments.length > 1 ? 's' : ''} ({attachments.length})
+                    </h4>
+                    <div className="space-y-4">
+                      {attachments.map((fileUrl, fileIndex) => {
+                        const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+                        const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                        const fileName = fileUrl.split('/').pop();
+
+                        return (
+                          <div key={fileIndex}>
+                            {isPdf ? (
+                              // PDF Preview
+                              <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                                <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                                      <i className="ri-file-pdf-line text-2xl text-white"></i>
+                                    </div>
+                                    <span className="font-medium text-white">
+                                      {fileName} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <a
+                                      href={`${getFileUrl(fileUrl)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                                    >
+                                      <i className="ri-download-line"></i>
+                                      <span>Download</span>
+                                    </a>
+                                    <a
+                                      href={`${getFileUrl(fileUrl)}#toolbar=1`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                                    >
+                                      <i className="ri-fullscreen-line"></i>
+                                      <span>Full View</span>
+                                    </a>
+                                  </div>
+                                </div>
+                                <div className="h-[600px] bg-gray-50">
+                                  <iframe
+                                    src={`${getFileUrl(fileUrl)}#toolbar=0&view=FitH`}
+                                    className="w-full h-full"
+                                    title={selectedProtocol.title}
+                                  />
+                                </div>
+                              </div>
+                            ) : isImage ? (
+                              // Image Preview
+                              <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                                      <i className="ri-image-line text-2xl text-white"></i>
+                                    </div>
+                                    <span className="font-medium text-white">
+                                      {fileName} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <a
+                                      href={`${getFileUrl(fileUrl)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                                    >
+                                      <i className="ri-download-line"></i>
+                                      <span>Download</span>
+                                    </a>
+                                    <a
+                                      href={`${getFileUrl(fileUrl)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                                    >
+                                      <i className="ri-fullscreen-line"></i>
+                                      <span>Full View</span>
+                                    </a>
+                                  </div>
+                                </div>
+                                <div className="bg-gray-50 p-4">
+                                  <div className="max-h-[600px] overflow-hidden rounded-lg">
+                                    <img
+                                      src={`${getFileUrl(fileUrl)}`}
+                                      alt={selectedProtocol.title}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              // Other file types
+                              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="bg-gray-50 p-4 flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <i className="ri-file-text-line text-gray-500"></i>
+                                    <span className="font-medium text-gray-900">
+                                      {fileName} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
+                                    </span>
+                                  </div>
+                                  <a
+                                    href={`${getFileUrl(fileUrl)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
+                                  >
+                                    <i className="ri-download-line"></i>
+                                    <span>Download File</span>
+                                  </a>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <span className="font-medium text-white">{selectedProtocol.file_attachment.split('/').pop()}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <a
-                            href={`${getFileUrl(selectedProtocol.file_attachment)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                          >
-                            <i className="ri-download-line"></i>
-                            <span>Download</span>
-                          </a>
-                          <a
-                            href={`${getFileUrl(selectedProtocol.file_attachment)}#toolbar=1`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                          >
-                            <i className="ri-fullscreen-line"></i>
-                            <span>Full View</span>
-                          </a>
-                        </div>
-                      </div>
-                      <div className="h-[600px] bg-gray-50">
-                        <iframe
-                          src={`${getFileUrl(selectedProtocol.file_attachment)}#toolbar=0&view=FitH`}
-                          className="w-full h-full"
-                          title={selectedProtocol.title}
-                        />
-                      </div>
+                        );
+                      })}
                     </div>
-                  ) : selectedProtocol.file_attachment.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
-                    // Image Preview
-                    <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
-                      <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                            <i className="ri-image-line text-2xl text-white"></i>
-                          </div>
-                          <span className="font-medium text-white">{selectedProtocol.file_attachment.split('/').pop()}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <a
-                            href={`${getFileUrl(selectedProtocol.file_attachment)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                          >
-                            <i className="ri-download-line"></i>
-                            <span>Download</span>
-                          </a>
-                          <a
-                            href={`${getFileUrl(selectedProtocol.file_attachment)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                          >
-                            <i className="ri-fullscreen-line"></i>
-                            <span>Full View</span>
-                          </a>
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 p-4">
-                        <div className="max-h-[600px] overflow-hidden rounded-lg">
-                          <img
-                            src={`${getFileUrl(selectedProtocol.file_attachment)}`}
-                            alt={selectedProtocol.title}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // Other file types
-                    <div className="border border-gray-200 rounded-xl overflow-hidden">
-                      <div className="bg-gray-50 p-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <i className="ri-file-text-line text-gray-500"></i>
-                          <span className="font-medium text-gray-900">{selectedProtocol.file_attachment.split('/').pop()}</span>
-                        </div>
-                        <a
-                          href={`${getFileUrl(selectedProtocol.file_attachment)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
-                        >
-                          <i className="ri-download-line"></i>
-                          <span>Download File</span>
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
 
               {/* Metadata */}
               <div className="mt-8 pt-6 border-t border-gray-200">
