@@ -13,6 +13,8 @@ export interface ExportOptions {
   title?: string
   includeTimestamp?: boolean
   logoUrl?: string
+  leftLogoUrl?: string
+  rightLogoUrl?: string
 }
 
 export class ExportUtils {
@@ -51,7 +53,13 @@ export class ExportUtils {
       title = "Data Export",
       includeTimestamp = true,
       logoUrl = "/images/partners/MDRRMO.png",
+      leftLogoUrl,
+      rightLogoUrl,
     } = options
+
+    // Use specific logos if provided, otherwise fall back to logoUrl for both sides
+    const leftLogo = leftLogoUrl || logoUrl
+    const rightLogo = rightLogoUrl || logoUrl
 
     const doc = new jsPDF()
 
@@ -62,33 +70,19 @@ export class ExportUtils {
     let currentY = headerHeight
 
     const drawPageHeader = async () => {
-      // ===== ENHANCED HEADER =====
+      // ===== ENHANCED HEADER WITH DUAL LOGOS =====
       doc.setFillColor(248, 250, 252)
       doc.rect(0, 0, pageWidth, headerHeight + 5, "F")
 
-      if (includeTimestamp) {
-        doc.setFontSize(10) // Slightly larger font for better readability
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(75, 85, 99) // Better color contrast
-        const now = new Date()
-        const monthName = now.toLocaleString("default", { month: "long" })
-        const day = now.getDate()
-        const year = now.getFullYear()
-        let hours = now.getHours()
-        const minutes = now.getMinutes().toString().padStart(2, "0")
-        const seconds = now.getSeconds().toString().padStart(2, "0")
-        const ampm = hours >= 12 ? "PM" : "AM"
-        hours = hours % 12
-        hours = hours ? hours : 12
-        const hourStr = hours.toString().padStart(2, "0")
-        const timestampText = `Generated: ${monthName} ${day}, ${year} at ${hourStr}:${minutes}:${seconds} ${ampm}`
-        doc.text(timestampText, margin, 18)
-      }
+      const logoWidth = 25
+      const logoHeight = 25
+      const logoY = 10
 
-      if (logoUrl) {
+      // Helper function to load and add image
+      const addLogoImage = async (imageUrl: string, xPos: number) => {
         try {
-          if (logoUrl.startsWith("data:image")) {
-            doc.addImage(logoUrl, "PNG", pageWidth - margin - 30, 10, 30, 20)
+          if (imageUrl.startsWith("data:image")) {
+            doc.addImage(imageUrl, "PNG", xPos, logoY, logoWidth, logoHeight)
           } else {
             const img = new Image()
             img.crossOrigin = "Anonymous"
@@ -104,18 +98,16 @@ export class ExportUtils {
                   }
 
                   const scaleFactor = 6 // Higher resolution for ultra quality
-                  const maxWidth = 30
-                  const maxHeight = 20
                   const aspectRatio = img.width / img.height
 
-                  let drawWidth = maxWidth
-                  let drawHeight = maxHeight
+                  let drawWidth = logoWidth
+                  let drawHeight = logoHeight
 
-                  if (img.width > maxWidth || img.height > maxHeight) {
-                    if (aspectRatio > maxWidth / maxHeight) {
-                      drawHeight = maxWidth / aspectRatio
+                  if (img.width > logoWidth || img.height > logoHeight) {
+                    if (aspectRatio > logoWidth / logoHeight) {
+                      drawHeight = logoWidth / aspectRatio
                     } else {
-                      drawWidth = maxHeight * aspectRatio
+                      drawWidth = logoHeight * aspectRatio
                     }
                   }
 
@@ -137,7 +129,8 @@ export class ExportUtils {
                   ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
 
                   const base64 = canvas.toDataURL("image/png", 1.0)
-                  doc.addImage(base64, "PNG", pageWidth - margin - drawWidth, 10, drawWidth, drawHeight)
+                  const yOffset = logoY + (logoHeight - drawHeight) / 2
+                  doc.addImage(base64, "PNG", xPos, yOffset, drawWidth, drawHeight)
                   resolve()
                 } catch (error) {
                   reject(error)
@@ -145,32 +138,61 @@ export class ExportUtils {
               }
 
               img.onerror = () => {
-                reject(new Error(`Failed to load image: ${logoUrl}`))
+                reject(new Error(`Failed to load image: ${imageUrl}`))
               }
 
-              img.src = logoUrl
+              img.src = imageUrl
             })
 
-            try {
-              await loadImagePromise
-            } catch (imageError) {
-              console.warn("Failed to load logo, using text placeholder:", imageError)
-              doc.setFontSize(12)
-              doc.setFont("helvetica", "bold")
-              doc.setTextColor(59, 130, 246)
-              doc.text("LOGO", pageWidth - margin - 25, 20)
-            }
+            await loadImagePromise
           }
         } catch (error) {
           console.warn("Failed to add logo to PDF:", error)
         }
       }
 
-      doc.setFontSize(18) // Larger title
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(17, 24, 39) // Darker, more professional color
-      doc.text(title, pageWidth / 2, 35, { align: "center" })
+      // Add left logo
+      if (leftLogo) {
+        await addLogoImage(leftLogo, margin)
+      }
 
+      // Add right logo
+      if (rightLogo) {
+        await addLogoImage(rightLogo, pageWidth - margin - logoWidth)
+      }
+
+      // Center text/title section
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(75, 85, 99)
+      
+      // Main title
+      doc.setFontSize(14)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(17, 24, 39)
+      doc.text(title, pageWidth / 2, 20, { align: "center" })
+
+      // Timestamp below title
+      if (includeTimestamp) {
+        doc.setFontSize(8)
+        doc.setFont("helvetica", "normal")
+        doc.setTextColor(107, 114, 128)
+        const now = new Date()
+        const monthName = now.toLocaleString("default", { month: "long" })
+        const day = now.getDate()
+        const year = now.getFullYear()
+        let hours = now.getHours()
+        const minutes = now.getMinutes().toString().padStart(2, "0")
+        const seconds = now.getSeconds().toString().padStart(2, "0")
+        const ampm = hours >= 12 ? "PM" : "AM"
+        hours = hours % 12
+        hours = hours ? hours : 12
+        const hourStr = hours.toString().padStart(2, "0")
+        const timestampText = `Generated: ${monthName} ${day}, ${year} at ${hourStr}:${minutes}:${seconds} ${ampm}`
+        doc.text(timestampText, pageWidth / 2, 30, { align: "center" })
+      }
+
+      // Bottom border line
       doc.setDrawColor(229, 231, 235)
       doc.setLineWidth(0.5)
       doc.line(margin, headerHeight, pageWidth - margin, headerHeight)
