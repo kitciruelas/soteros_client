@@ -1337,28 +1337,98 @@ const ViewIncidents: React.FC = () => {
                 </div>
               </div>
               {/* Attachments Section */}
-              {selectedIncident.attachment && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
-                  <div className="space-y-2">
-                    {selectedIncident.attachment.split(',').map((filename, index) => (
-                      <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        <i className="ri-file-line text-gray-500 mr-2"></i>
-                        <span className="text-sm text-gray-700 flex-1">{filename}</span>
-                        <a
-                          href={`/uploads/incidents/${filename}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded hover:bg-blue-200 transition-colors"
-                        >
-                          <i className="ri-eye-line mr-1"></i>
-                          View
-                        </a>
-                      </div>
-                    ))}
+              {selectedIncident.attachment && (() => {
+                // Parse attachments - handle both JSON array (new) and comma-separated (old) formats
+                let attachments: string[] = [];
+                try {
+                  // Try to parse as JSON array (new Cloudinary format)
+                  const parsed = JSON.parse(selectedIncident.attachment);
+                  attachments = Array.isArray(parsed) ? parsed : [selectedIncident.attachment];
+                } catch {
+                  // Fall back to comma-separated format (old local format)
+                  if (selectedIncident.attachment.includes(',')) {
+                    attachments = selectedIncident.attachment.split(',').map(s => s.trim());
+                  } else {
+                    attachments = [selectedIncident.attachment];
+                  }
+                }
+
+                // Filter out empty strings
+                attachments = attachments.filter(url => url && url.trim());
+
+                if (attachments.length === 0) return null;
+
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Attachments ({attachments.length})
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {attachments.map((url, index) => {
+                        const isCloudinary = url.startsWith('http://') || url.startsWith('https://');
+                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+                        const isPdf = /\.pdf$/i.test(url);
+                        const fileName = url.split('/').pop() || `File ${index + 1}`;
+
+                        return (
+                          <div key={index} className="relative group">
+                            {isImage ? (
+                              // Image preview
+                              <div className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                                <img
+                                  src={isCloudinary ? url : `/uploads/incidents/${url}`}
+                                  alt={`Attachment ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                                {/* Overlay with view button */}
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <a
+                                    href={isCloudinary ? url : `/uploads/incidents/${url}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1.5 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-1"
+                                  >
+                                    <i className="ri-eye-line"></i>
+                                    <span className="text-sm">View</span>
+                                  </a>
+                                </div>
+                                {/* File number badge */}
+                                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded-full">
+                                  {index + 1}
+                                </div>
+                              </div>
+                            ) : (
+                              // PDF or other file preview
+                              <div className="aspect-square rounded-lg border border-gray-200 bg-gray-50 flex flex-col items-center justify-center p-4">
+                                <div className={`w-16 h-16 rounded-lg flex items-center justify-center mb-2 ${
+                                  isPdf ? 'bg-red-100' : 'bg-gray-100'
+                                }`}>
+                                  <i className={`text-3xl ${
+                                    isPdf ? 'ri-file-pdf-line text-red-500' : 'ri-file-line text-gray-500'
+                                  }`}></i>
+                                </div>
+                                <p className="text-xs text-gray-600 text-center truncate w-full" title={fileName}>
+                                  {fileName}
+                                </p>
+                                <a
+                                  href={isCloudinary ? url : `/uploads/incidents/${url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded hover:bg-blue-200 transition-colors"
+                                >
+                                  <i className="ri-eye-line mr-1"></i>
+                                  View
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
