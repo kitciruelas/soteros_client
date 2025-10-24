@@ -16,15 +16,27 @@ interface SafetyProtocol {
   updated_at: string;
 }
 
-// Helper function to get the backend base URL for uploads
-const getBackendUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL;
-  if (apiUrl) {
-    // Remove /api suffix if present
-    return apiUrl.replace(/\/api\/?$/, '');
+// Helper function to get the file URL (supports both local and Cloudinary)
+const getFileUrl = (fileAttachment: string | null) => {
+  if (!fileAttachment) return '';
+  
+  // If it's already a full URL (Cloudinary), return as-is
+  if (fileAttachment.startsWith('http://') || fileAttachment.startsWith('https://')) {
+    return fileAttachment;
   }
-  // Fallback to production backend
-  return 'https://soteros-backend.onrender.com';
+  
+  // Otherwise, it's a local file path - construct the backend URL
+  const apiUrl = import.meta.env.VITE_API_URL;
+  let baseUrl = 'https://soteros-backend.onrender.com';
+  
+  if (apiUrl) {
+    baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+  }
+  
+  return `${baseUrl}/uploads/${fileAttachment}`;
 };
 
 const SafetyProtocolsPage: React.FC = () => {
@@ -37,6 +49,11 @@ const SafetyProtocolsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedProtocol, setSelectedProtocol] = useState<SafetyProtocol | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Debug: Log file URL handling on mount
+  useEffect(() => {
+    console.log('🖼️ Safety Protocols - File URL handler ready (supports Cloudinary & local)');
+  }, []);
 
   useEffect(() => {
     const authState = getAuthState();
@@ -454,7 +471,7 @@ const SafetyProtocolsPage: React.FC = () => {
                                   </span>
                                 </div>
                                 <a
-                                  href={`${getBackendUrl()}/uploads/${protocol.file_attachment}`}
+                                  href={`${getFileUrl(protocol.file_attachment)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
@@ -465,7 +482,7 @@ const SafetyProtocolsPage: React.FC = () => {
                               </div>
                               <div className="pt-12 aspect-[4/3] bg-gray-100">
                                 <img
-                                  src={`${getBackendUrl()}/uploads/${protocol.file_attachment}`}
+                                  src={`${getFileUrl(protocol.file_attachment)}`}
                                   alt={protocol.title}
                                   className="w-full h-full object-cover"
                                 />
@@ -490,7 +507,7 @@ const SafetyProtocolsPage: React.FC = () => {
                                   </span>
                                 </div>
                                 <a
-                                  href={`${getBackendUrl()}/uploads/${protocol.file_attachment}`}
+                                  href={`${getFileUrl(protocol.file_attachment)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
@@ -502,7 +519,7 @@ const SafetyProtocolsPage: React.FC = () => {
                               {/* PDF Embed Preview */}
                               <div className="pt-12 aspect-[4/3] bg-gray-50">
                                 <iframe
-                                  src={`${getBackendUrl()}/uploads/${protocol.file_attachment}#toolbar=0&view=FitH`}
+                                  src={`${getFileUrl(protocol.file_attachment)}#toolbar=0&view=FitH`}
                                   className="w-full h-full"
                                   title={protocol.title}
                                 />
@@ -528,7 +545,7 @@ const SafetyProtocolsPage: React.FC = () => {
                           
                           {/* View button overlay */}
                           <a
-                            href={`${getBackendUrl()}/uploads/${protocol.file_attachment}`}
+                            href={`${getFileUrl(protocol.file_attachment)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl group"
@@ -542,7 +559,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       ) : (
                         // List view - keep original link style
                         <a
-                          href={`${getBackendUrl()}/uploads/${protocol.file_attachment}`}
+                          href={`${getFileUrl(protocol.file_attachment)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center text-green-600 hover:text-green-700 font-semibold transition-colors group"
@@ -651,7 +668,7 @@ const SafetyProtocolsPage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <a
-                            href={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}`}
+                            href={`${getFileUrl(selectedProtocol.file_attachment)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
@@ -660,7 +677,7 @@ const SafetyProtocolsPage: React.FC = () => {
                             <span>Download</span>
                           </a>
                           <a
-                            href={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}#toolbar=1`}
+                            href={`${getFileUrl(selectedProtocol.file_attachment)}#toolbar=1`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
@@ -672,7 +689,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       </div>
                       <div className="h-[600px] bg-gray-50">
                         <iframe
-                          src={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}#toolbar=0&view=FitH`}
+                          src={`${getFileUrl(selectedProtocol.file_attachment)}#toolbar=0&view=FitH`}
                           className="w-full h-full"
                           title={selectedProtocol.title}
                         />
@@ -690,7 +707,7 @@ const SafetyProtocolsPage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <a
-                            href={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}`}
+                            href={`${getFileUrl(selectedProtocol.file_attachment)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
@@ -699,7 +716,7 @@ const SafetyProtocolsPage: React.FC = () => {
                             <span>Download</span>
                           </a>
                           <a
-                            href={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}`}
+                            href={`${getFileUrl(selectedProtocol.file_attachment)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
@@ -712,7 +729,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       <div className="bg-gray-50 p-4">
                         <div className="max-h-[600px] overflow-hidden rounded-lg">
                           <img
-                            src={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}`}
+                            src={`${getFileUrl(selectedProtocol.file_attachment)}`}
                             alt={selectedProtocol.title}
                             className="w-full h-full object-contain"
                           />
@@ -728,7 +745,7 @@ const SafetyProtocolsPage: React.FC = () => {
                           <span className="font-medium text-gray-900">{selectedProtocol.file_attachment.split('/').pop()}</span>
                         </div>
                         <a
-                          href={`${getBackendUrl()}/uploads/${selectedProtocol.file_attachment}`}
+                          href={`${getFileUrl(selectedProtocol.file_attachment)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
