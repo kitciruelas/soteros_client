@@ -138,6 +138,15 @@ const SafetyProtocolsManagement: React.FC = () => {
     try {
       const rows = await safetyProtocolsApi.getProtocols();
       const mapped = Array.isArray(rows) ? rows.map(mapRowToProtocol) : [];
+      
+      // Debug: Log file attachments
+      console.log('📥 Fetched protocols:', mapped.map(p => ({
+        id: p.protocol_id || p.id,
+        title: p.title,
+        file_attachment_type: typeof p.file_attachment,
+        file_attachment_value: p.file_attachment
+      })));
+      
       setProtocols(mapped);
     } catch (error) {
       console.error('Error fetching protocols:', error);
@@ -166,22 +175,39 @@ const SafetyProtocolsManagement: React.FC = () => {
     setFormTitle(protocol.title || '');
     setFormDescription(protocol.description || '');
     setFormType((protocol.type as any) || '');
+    
+    console.log('📝 Editing protocol - file_attachment:', {
+      type: typeof protocol.file_attachment,
+      isArray: Array.isArray(protocol.file_attachment),
+      value: protocol.file_attachment,
+      length: Array.isArray(protocol.file_attachment) ? protocol.file_attachment.length : 'N/A'
+    });
+    
     // Parse multiple attachments - handle both array and string formats
+    let finalAttachments: string[] = [];
+    
     if (Array.isArray(protocol.file_attachment)) {
       // Already an array
-      setFormFileAttachments(protocol.file_attachment.filter(Boolean));
+      finalAttachments = protocol.file_attachment.filter(Boolean);
+      console.log('✅ Array format:', finalAttachments);
     } else if (protocol.file_attachment) {
       try {
         // Try to parse as JSON
         const parsed = JSON.parse(protocol.file_attachment);
-        setFormFileAttachments(Array.isArray(parsed) ? parsed.filter(Boolean) : [protocol.file_attachment]);
-      } catch {
+        finalAttachments = Array.isArray(parsed) ? parsed.filter(Boolean) : [protocol.file_attachment];
+        console.log('✅ Parsed JSON format:', finalAttachments);
+      } catch (e) {
         // Single file string
-        setFormFileAttachments([protocol.file_attachment]);
+        finalAttachments = [protocol.file_attachment];
+        console.log('✅ Single file format:', finalAttachments);
       }
     } else {
-      setFormFileAttachments([]);
+      finalAttachments = [];
+      console.log('⚠️ No attachments');
     }
+    
+    console.log('📎 Final attachments to load:', finalAttachments);
+    setFormFileAttachments(finalAttachments);
     setUploadProgress({});
   };
 

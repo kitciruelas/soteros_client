@@ -99,8 +99,30 @@ const SafetyProtocolsPage: React.FC = () => {
   useEffect(() => {
     if (isModalOpen && selectedProtocol) {
       setCurrentSlide(0);
+      console.log('🔄 Modal opened, reset slide to 0');
     }
   }, [isModalOpen, selectedProtocol]);
+
+  // Auto-correct currentSlide if out of bounds
+  useEffect(() => {
+    if (isModalOpen && selectedProtocol?.file_attachment) {
+      let attachments: string[] = [];
+      try {
+        const parsed = JSON.parse(selectedProtocol.file_attachment);
+        attachments = Array.isArray(parsed) ? parsed : [selectedProtocol.file_attachment];
+      } catch {
+        attachments = [selectedProtocol.file_attachment];
+      }
+
+      if (currentSlide >= attachments.length) {
+        console.warn('⚠️ currentSlide out of bounds, resetting to 0', {
+          currentSlide,
+          totalFiles: attachments.length
+        });
+        setCurrentSlide(0);
+      }
+    }
+  }, [currentSlide, isModalOpen, selectedProtocol]);
 
   // Keyboard navigation for carousel
   useEffect(() => {
@@ -788,14 +810,23 @@ const SafetyProtocolsPage: React.FC = () => {
                 }
 
                 const nextSlide = () => {
-                  setCurrentSlide((prev) => (prev + 1) % attachments.length);
+                  setCurrentSlide((prev) => {
+                    const next = (prev + 1) % attachments.length;
+                    console.log('➡️ Next slide:', prev, '→', next);
+                    return next;
+                  });
                 };
 
                 const prevSlide = () => {
-                  setCurrentSlide((prev) => (prev - 1 + attachments.length) % attachments.length);
+                  setCurrentSlide((prev) => {
+                    const previous = (prev - 1 + attachments.length) % attachments.length;
+                    console.log('⬅️ Previous slide:', prev, '→', previous);
+                    return previous;
+                  });
                 };
 
                 const goToSlide = (index: number) => {
+                  console.log('🎯 Jump to slide:', index);
                   setCurrentSlide(index);
                 };
 
@@ -807,7 +838,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       </h4>
                       {attachments.length > 1 && (
                         <span className="text-sm text-gray-600 font-medium">
-                          {currentSlide + 1} / {attachments.length}
+                          {Math.max(1, Math.min(currentSlide + 1, attachments.length))} / {attachments.length}
                         </span>
                       )}
                     </div>
@@ -816,15 +847,26 @@ const SafetyProtocolsPage: React.FC = () => {
                     <div className="relative">
                       {/* Current File Display */}
                       {attachments.map((fileUrl, fileIndex) => {
+                        // Ensure currentSlide is within bounds
+                        const safeCurrentSlide = Math.max(0, Math.min(currentSlide, attachments.length - 1));
+                        
                         // Only show current slide
-                        if (fileIndex !== currentSlide) return null;
+                        if (fileIndex !== safeCurrentSlide) return null;
+
+                        console.log('🎬 Rendering slide:', {
+                          fileIndex,
+                          safeCurrentSlide,
+                          currentSlide,
+                          totalFiles: attachments.length,
+                          fileUrl
+                        });
 
                         const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
                         const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
                         const fileName = fileUrl.split('/').pop();
 
                         return (
-                          <div key={fileIndex} className="transition-opacity duration-300">
+                          <div key={`slide-${fileIndex}-${fileUrl}`} className="transition-opacity duration-300">
                             {isPdf ? (
                               // PDF Preview
                               <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
