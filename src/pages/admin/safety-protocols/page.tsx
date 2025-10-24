@@ -478,7 +478,9 @@ const SafetyProtocolsManagement: React.FC = () => {
                   </div>
                   {selectedProtocol.file_attachment && (
                     <a
-                      href={`/uploads/${selectedProtocol.file_attachment}`}
+                      href={selectedProtocol.file_attachment.startsWith('http') 
+                        ? selectedProtocol.file_attachment 
+                        : `/uploads/${selectedProtocol.file_attachment}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
