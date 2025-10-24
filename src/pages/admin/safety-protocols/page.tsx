@@ -750,47 +750,68 @@ const SafetyProtocolsManagement: React.FC = () => {
                 
                 {/* Uploaded Files List */}
                 {formFileAttachments.length > 0 && (
-                  <div className="mb-4 space-y-2">
+                  <div className="mb-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {formFileAttachments.map((url, index) => {
-                      const fileName = url.split('/').pop() || 'File';
+                      const fileName = url.split('/').pop() || `File ${index + 1}`;
                       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
                       const isPdf = /\.pdf$/i.test(url);
                       
                       return (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200 group hover:border-blue-300 transition-all">
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                              isImage ? 'bg-blue-100' : isPdf ? 'bg-red-100' : 'bg-gray-100'
-                            }`}>
-                              <i className={`text-lg ${
-                                isImage ? 'ri-image-line text-blue-600' :
-                                isPdf ? 'ri-file-pdf-line text-red-600' :
-                                'ri-file-line text-gray-600'
-                              }`}></i>
+                        <div key={index} className="relative group bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all overflow-hidden">
+                          {/* Preview Area */}
+                          <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
+                            {isImage ? (
+                              <img 
+                                src={url} 
+                                alt={fileName}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex flex-col items-center justify-center ${
+                                isPdf ? 'bg-red-50' : 'bg-gray-100'
+                              }`}>
+                                <i className={`text-4xl mb-2 ${
+                                  isPdf ? 'ri-file-pdf-line text-red-500' : 'ri-file-line text-gray-400'
+                                }`}></i>
+                                <span className="text-xs text-gray-500">
+                                  {isPdf ? 'PDF' : 'File'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Overlay with actions */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-white/90 hover:bg-white text-gray-700 rounded-lg transition-colors"
+                                title="Preview"
+                              >
+                                <i className="ri-eye-line"></i>
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => removeAttachment(index)}
+                                className="p-2 bg-white/90 hover:bg-white text-red-600 rounded-lg transition-colors"
+                                title="Remove"
+                              >
+                                <i className="ri-delete-bin-line"></i>
+                              </button>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{fileName}</p>
-                              <p className="text-xs text-gray-500">Uploaded to Cloudinary</p>
+                            
+                            {/* File number badge */}
+                            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded-full">
+                              {index + 1}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Preview"
-                            >
-                              <i className="ri-eye-line"></i>
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => removeAttachment(index)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Remove"
-                            >
-                              <i className="ri-delete-bin-line"></i>
-                            </button>
+                          
+                          {/* File info */}
+                          <div className="p-2 border-t border-gray-100">
+                            <p className="text-xs font-medium text-gray-700 truncate" title={fileName}>
+                              {fileName}
+                            </p>
                           </div>
                         </div>
                       );
