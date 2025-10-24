@@ -632,27 +632,29 @@ const AlertsManagement: React.FC = () => {
       {/* Create Alert Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i className="ri-alarm-warning-line text-blue-600 text-lg"></i>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">Create New Alert</h3>
-                    <p className="text-sm text-gray-600">Send emergency notifications to targeted recipients</p>
-                  </div>
+          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+            {/* Fixed Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i className="ri-alarm-warning-line text-blue-600 text-lg"></i>
                 </div>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
-                >
-                  <i className="ri-close-line text-xl"></i>
-                </button>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Create New Alert</h3>
+                  <p className="text-sm text-gray-600">Send emergency notifications to targeted recipients</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                title="Close"
+              >
+                <i className="ri-close-line text-xl"></i>
+              </button>
             </div>
-            <div className="p-6">
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - Form Fields */}
                 <div className="space-y-4">
@@ -1023,8 +1025,8 @@ const AlertsManagement: React.FC = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            {/* Fixed Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 {(newAlert?.recipients || []).length > 0 && (
                   <span>
@@ -1036,14 +1038,14 @@ const AlertsManagement: React.FC = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateAlert}
                   disabled={!newAlert.title || !newAlert.message}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   <i className="ri-add-line mr-2"></i>
                   Create Alert
@@ -1057,27 +1059,29 @@ const AlertsManagement: React.FC = () => {
       {/* Edit Alert Modal */}
       {showEditModal && editAlert && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i className="ri-edit-line text-blue-600 text-lg"></i>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">Edit Alert</h3>
-                    <p className="text-sm text-gray-600">Modify the alert details and settings</p>
-                  </div>
+          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+            {/* Fixed Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i className="ri-edit-line text-blue-600 text-lg"></i>
                 </div>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
-                >
-                  <i className="ri-close-line text-xl"></i>
-                </button>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Edit Alert</h3>
+                  <p className="text-sm text-gray-600">Modify the alert details and settings</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                title="Close"
+              >
+                <i className="ri-close-line text-xl"></i>
+              </button>
             </div>
-            <div className="p-6">
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - Form Fields */}
                 <div className="space-y-4">
@@ -1448,8 +1452,8 @@ const AlertsManagement: React.FC = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            {/* Fixed Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 {(editAlert?.recipients || []).length > 0 && (
                   <span>
@@ -1461,14 +1465,14 @@ const AlertsManagement: React.FC = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleEditAlert}
                   disabled={!editAlert.title || !editAlert.message}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   <i className="ri-save-line mr-2"></i>
                   Update Alert
