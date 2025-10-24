@@ -621,24 +621,7 @@ const SafetyProtocolsPage: React.FC = () => {
                                   {isImage ? (
                                     // Image preview
                                     <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
-                                      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between px-4 z-10">
-                                        <div className="flex items-center min-w-0">
-                                          <i className="ri-image-line text-xl text-white mr-2 flex-shrink-0"></i>
-                                          <span className="text-white font-medium truncate text-sm">
-                                            {fileUrl.split('/').pop()} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
-                                          </span>
-                                        </div>
-                                        <a
-                                          href={`${getFileUrl(fileUrl)}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <i className="ri-download-line text-xl"></i>
-                                        </a>
-                                      </div>
-                                      <div className="pt-12 aspect-[4/3] bg-gray-100">
+                                      <div className="aspect-[4/3] bg-gray-100">
                                         <img
                                           key={fileUrl}
                                           src={`${getFileUrl(fileUrl)}`}
@@ -647,6 +630,12 @@ const SafetyProtocolsPage: React.FC = () => {
                                           loading="lazy"
                                         />
                                       </div>
+                                      {/* Counter badge */}
+                                      {attachments.length > 1 && (
+                                        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                                          {fileIndex + 1}/{attachments.length}
+                                        </div>
+                                      )}
                                     </div>
                                   ) : isPdf ? (
                                     // PDF preview with embedded viewer
@@ -958,37 +947,7 @@ const SafetyProtocolsPage: React.FC = () => {
                             ) : isImage ? (
                               // Image Preview
                               <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
-                                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                                      <i className="ri-image-line text-2xl text-white"></i>
-                                    </div>
-                                    <span className="font-medium text-white">
-                                      {fileName} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <a
-                                      href={`${getFileUrl(fileUrl)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                                    >
-                                      <i className="ri-download-line"></i>
-                                      <span>Download</span>
-                                    </a>
-                                    <a
-                                      href={`${getFileUrl(fileUrl)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                                    >
-                                      <i className="ri-fullscreen-line"></i>
-                                      <span>Full View</span>
-                                    </a>
-                                  </div>
-                                </div>
-                                <div className="bg-gray-50 p-4">
+                                <div className="bg-gray-50 p-4 relative">
                                   <div className="max-h-[600px] overflow-hidden rounded-lg">
                                     <img
                                       key={fileUrl}
@@ -997,6 +956,32 @@ const SafetyProtocolsPage: React.FC = () => {
                                       className="w-full h-full object-contain"
                                       loading="lazy"
                                     />
+                                  </div>
+                                  {/* Counter and download buttons overlay */}
+                                  {attachments.length > 1 && (
+                                    <div className="absolute top-8 right-8 bg-black/70 backdrop-blur-sm text-white text-sm font-medium px-4 py-2 rounded-full">
+                                      {fileIndex + 1}/{attachments.length}
+                                    </div>
+                                  )}
+                                  <div className="absolute top-8 left-8 flex items-center space-x-2">
+                                    <a
+                                      href={`${getFileUrl(fileUrl)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-black/70 backdrop-blur-sm hover:bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                                    >
+                                      <i className="ri-download-line"></i>
+                                      <span>Download</span>
+                                    </a>
+                                    <a
+                                      href={`${getFileUrl(fileUrl)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-black/70 backdrop-blur-sm hover:bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                                    >
+                                      <i className="ri-fullscreen-line"></i>
+                                      <span>Full View</span>
+                                    </a>
                                   </div>
                                 </div>
                               </div>
