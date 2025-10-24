@@ -27,24 +27,25 @@ const getFileUrl = (fileAttachment: string | null) => {
   
   // Check if it's a Cloudinary path (starts with folder structure like "mdrrmo/")
   if (fileAttachment.startsWith('mdrrmo/')) {
-    // Construct full Cloudinary URL
     const cloudName = 'dko23mxez';
+    let filePath = fileAttachment;
     
-    // Check if file has extension
-    const hasExtension = fileAttachment.includes('.') && fileAttachment.split('.').length > 1;
-    const fileExt = hasExtension ? fileAttachment.split('.').pop()?.toLowerCase() : '';
+    // If the file doesn't have an extension and it's in safety-protocols, add .pdf
+    if (!filePath.includes('.') && filePath.includes('safety-protocols')) {
+      filePath = `${filePath}.pdf`;
+    }
     
-    // For safety protocols, assume PDF if no extension (common with Cloudinary)
-    const isPdfOrDoc = ['pdf', 'doc', 'docx'].includes(fileExt || '') || 
-                       (fileAttachment.includes('/safety-protocols/') && !hasExtension);
-    
-    // Use 'raw' for PDFs/docs, 'image' for images
-    const resourceType = isPdfOrDoc ? 'raw' : 'image';
-    
-    // If no extension and it's a PDF, add .pdf
-    const finalPath = (!hasExtension && isPdfOrDoc) ? `${fileAttachment}.pdf` : fileAttachment;
-    
-    return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${finalPath}`;
+    return `https://res.cloudinary.com/${cloudName}/image/upload/${filePath}`;
+  }
+  
+  // Check if it looks like a Cloudinary public ID (random string with possible extension)
+  // Pattern: alphanumeric string (often 10-30 chars) with optional .pdf/.jpg etc
+  const cloudinaryIdPattern = /^[a-z0-9]{10,}(\.(pdf|jpg|jpeg|png|gif|webp|doc|docx))?$/i;
+  if (cloudinaryIdPattern.test(fileAttachment)) {
+    const cloudName = 'dko23mxez';
+    // Assume it's in the safety-protocols folder
+    const fullPath = `mdrrmo/safety-protocols/${fileAttachment}`;
+    return `https://res.cloudinary.com/${cloudName}/image/upload/${fullPath}`;
   }
   
   // Otherwise, it's a local file path - construct the backend URL
