@@ -176,22 +176,35 @@ export class ExportUtils {
 
       if (headerLines && headerLines.length > 0) {
         // Multi-line header (official document style)
+        const maxTextWidth = pageWidth - (2 * margin) - (2 * logoWidth) - 10 // Leave space for logos
+        
         headerLines.forEach((line, index) => {
           if (index === 0) {
             // First line - usually "Republic of the Philippines"
             doc.setFontSize(11)
             doc.setFont("helvetica", "bold")
           } else if (index === headerLines.length - 1) {
-            // Last line - usually the main title/office name
-            doc.setFontSize(12)
+            // Last line - usually the main title/office name (MDRRMO)
+            doc.setFontSize(9)
             doc.setFont("helvetica", "bold")
           } else {
             // Middle lines - location/department info
             doc.setFontSize(10)
             doc.setFont("helvetica", "normal")
           }
-          doc.text(line, pageWidth / 2, textY, { align: "center" })
-          textY += 4.5
+          
+          // Split long text if needed
+          const splitText = doc.splitTextToSize(line, maxTextWidth)
+          if (Array.isArray(splitText) && splitText.length > 1) {
+            splitText.forEach((textLine, lineIndex) => {
+              doc.text(textLine, pageWidth / 2, textY, { align: "center" })
+              if (lineIndex < splitText.length - 1) textY += 4
+            })
+            textY += 4.5
+          } else {
+            doc.text(line, pageWidth / 2, textY, { align: "center", maxWidth: maxTextWidth })
+            textY += 4.5
+          }
         })
       } else {
         // Simple title format
