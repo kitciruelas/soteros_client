@@ -95,6 +95,40 @@ const SafetyProtocolsPage: React.FC = () => {
     console.log('🖼️ Safety Protocols - File URL handler ready (supports Cloudinary & local)');
   }, []);
 
+  // Reset slide when opening modal or changing protocol
+  useEffect(() => {
+    if (isModalOpen && selectedProtocol) {
+      setCurrentSlide(0);
+    }
+  }, [isModalOpen, selectedProtocol]);
+
+  // Keyboard navigation for carousel
+  useEffect(() => {
+    if (!isModalOpen || !selectedProtocol?.file_attachment) return;
+
+    // Parse attachments to check if multiple files
+    let attachments: string[] = [];
+    try {
+      const parsed = JSON.parse(selectedProtocol.file_attachment);
+      attachments = Array.isArray(parsed) ? parsed : [selectedProtocol.file_attachment];
+    } catch {
+      attachments = [selectedProtocol.file_attachment];
+    }
+
+    if (attachments.length <= 1) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setCurrentSlide((prev) => (prev - 1 + attachments.length) % attachments.length);
+      } else if (e.key === 'ArrowRight') {
+        setCurrentSlide((prev) => (prev + 1) % attachments.length);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, selectedProtocol]);
+
   useEffect(() => {
     const authState = getAuthState();
     // Only allow user type to access this page
@@ -505,16 +539,24 @@ const SafetyProtocolsPage: React.FC = () => {
                       attachments = [protocol.file_attachment];
                     }
 
+                    // Debug: Log URLs being displayed
+                    console.log('📂 Protocol attachments:', {
+                      protocolId: protocol.protocol_id,
+                      count: attachments.length,
+                      urls: attachments
+                    });
+
                     return (
                       <div className="mb-4">
                         {viewMode === 'grid' ? (
                           <div className="space-y-3">
                             {attachments.map((fileUrl, fileIndex) => {
+                              console.log(`🖼️ Rendering image ${fileIndex + 1}:`, fileUrl);
                               const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
                               const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
 
                               return (
-                                <div key={fileIndex} className="relative">
+                                <div key={`${protocol.protocol_id}-${fileIndex}-${fileUrl}`} className="relative">
                                   {/* File Preview */}
                                   {isImage ? (
                                     // Image preview
@@ -538,9 +580,11 @@ const SafetyProtocolsPage: React.FC = () => {
                                       </div>
                                       <div className="pt-12 aspect-[4/3] bg-gray-100">
                                         <img
+                                          key={fileUrl}
                                           src={`${getFileUrl(fileUrl)}`}
-                                          alt={protocol.title}
+                                          alt={`${protocol.title} - Image ${fileIndex + 1}`}
                                           className="w-full h-full object-cover"
+                                          loading="lazy"
                                         />
                                       </div>
                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -743,27 +787,6 @@ const SafetyProtocolsPage: React.FC = () => {
                   attachments = [selectedProtocol.file_attachment];
                 }
 
-                // Reset slide when opening modal
-                React.useEffect(() => {
-                  setCurrentSlide(0);
-                }, [selectedProtocol]);
-
-                // Keyboard navigation
-                React.useEffect(() => {
-                  const handleKeyDown = (e: KeyboardEvent) => {
-                    if (!isModalOpen || attachments.length <= 1) return;
-                    
-                    if (e.key === 'ArrowLeft') {
-                      prevSlide();
-                    } else if (e.key === 'ArrowRight') {
-                      nextSlide();
-                    }
-                  };
-
-                  window.addEventListener('keydown', handleKeyDown);
-                  return () => window.removeEventListener('keydown', handleKeyDown);
-                }, [isModalOpen, attachments.length]);
-
                 const nextSlide = () => {
                   setCurrentSlide((prev) => (prev + 1) % attachments.length);
                 };
@@ -879,9 +902,11 @@ const SafetyProtocolsPage: React.FC = () => {
                                 <div className="bg-gray-50 p-4">
                                   <div className="max-h-[600px] overflow-hidden rounded-lg">
                                     <img
+                                      key={fileUrl}
                                       src={`${getFileUrl(fileUrl)}`}
-                                      alt={selectedProtocol.title}
+                                      alt={`${selectedProtocol.title} - Image ${fileIndex + 1}`}
                                       className="w-full h-full object-contain"
+                                      loading="lazy"
                                     />
                                   </div>
                                 </div>
@@ -973,9 +998,11 @@ const SafetyProtocolsPage: React.FC = () => {
                             >
                               {isImage ? (
                                 <img
+                                  key={`thumb-${fileUrl}`}
                                   src={getFileUrl(fileUrl)}
                                   alt={`Thumbnail ${index + 1}`}
                                   className="w-full h-full object-cover rounded-md"
+                                  loading="lazy"
                                 />
                               ) : (
                                 <div className={`w-full h-full flex items-center justify-center rounded-md ${
