@@ -604,8 +604,8 @@ const EvacuationCentersManagement: React.FC = () => {
 
         {/* Create/Edit Modal */}
         {(showCreateModal || showEditModal) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto shadow-2xl">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-4xl w-full my-8 shadow-2xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900">
