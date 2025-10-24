@@ -63,7 +63,7 @@ export class ExportUtils {
       ],
       includeTimestamp = true,
       logoUrl = "/images/partners/MDRRMO.png",
-      leftLogoUrl = "/images/soteros_logo.png",
+      leftLogoUrl = "/images/partners/lgu-pt.png",
       rightLogoUrl = "/images/partners/MDRRMO.png",
     } = options
 
@@ -239,6 +239,93 @@ export class ExportUtils {
 
     await drawPageHeader()
 
+    // Footer drawing function
+    const drawPageFooter = async (currentPageNumber: number, totalPages?: number) => {
+      const footerY = pageHeight - 15
+      
+      // Add Soteros logo in footer (bottom left)
+      try {
+        const footerLogoWidth = 20
+        const footerLogoHeight = 15
+        const footerLogoY = pageHeight - 18
+        const soterosLogo = "/images/soteros_logo.png"
+        
+        if (soterosLogo) {
+          const img = new Image()
+          img.crossOrigin = "Anonymous"
+          
+          const loadImagePromise = new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              try {
+                const canvas = document.createElement("canvas")
+                const ctx = canvas.getContext("2d")
+                if (!ctx) {
+                  reject(new Error("Canvas context not available"))
+                  return
+                }
+
+                const scaleFactor = 6
+                const aspectRatio = img.width / img.height
+
+                let drawWidth = footerLogoWidth
+                let drawHeight = footerLogoHeight
+
+                if (img.width > footerLogoWidth || img.height > footerLogoHeight) {
+                  if (aspectRatio > footerLogoWidth / footerLogoHeight) {
+                    drawHeight = footerLogoWidth / aspectRatio
+                  } else {
+                    drawWidth = footerLogoHeight * aspectRatio
+                  }
+                }
+
+                canvas.width = Math.max(img.width, drawWidth * scaleFactor)
+                canvas.height = Math.max(img.height, drawHeight * scaleFactor)
+
+                ctx.imageSmoothingEnabled = true
+                ctx.imageSmoothingQuality = "high"
+                ctx.fillStyle = "#FFFFFF"
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                const scaleX = canvas.width / img.width
+                const scaleY = canvas.height / img.height
+                const scale = Math.min(scaleX, scaleY)
+
+                const x = (canvas.width - img.width * scale) / 2
+                const y = (canvas.height - img.height * scale) / 2
+
+                ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
+
+                const base64 = canvas.toDataURL("image/png", 1.0)
+                const yOffset = footerLogoY + (footerLogoHeight - drawHeight) / 2
+                doc.addImage(base64, "PNG", margin, yOffset, drawWidth, drawHeight)
+                resolve()
+              } catch (error) {
+                reject(error)
+              }
+            }
+
+            img.onerror = () => {
+              reject(new Error(`Failed to load footer logo`))
+            }
+
+            img.src = soterosLogo
+          })
+
+          await loadImagePromise
+        }
+      } catch (error) {
+        console.warn("Failed to add footer logo:", error)
+      }
+
+      // Footer text (center)
+      doc.setFontSize(8)
+      doc.setTextColor(107, 114, 128)
+      const footerText = totalPages 
+        ? `Page ${currentPageNumber} of ${totalPages} • Generated ${new Date().toLocaleDateString()}`
+        : `Page ${currentPageNumber} • Generated ${new Date().toLocaleDateString()}`
+      doc.text(footerText, pageWidth / 2, footerY, { align: "center" })
+    }
+
     // ===== ENHANCED TABLE LOGIC =====
     const headers = columns.map((col) => col.label)
     const rows = data.map((item) =>
@@ -357,11 +444,7 @@ export class ExportUtils {
 
       // Check for page break
       if (currentY + maxCellHeight > pageHeight - margin - 15) {
-        doc.setFontSize(8)
-        doc.setTextColor(107, 114, 128)
-        doc.text(`Page ${pageNumber} of ${Math.ceil(data.length / 25)}`, pageWidth / 2, pageHeight - 10, {
-          align: "center",
-        })
+        await drawPageFooter(pageNumber, Math.ceil(data.length / 25))
         doc.addPage()
         pageNumber++
         await drawPageHeader()
@@ -433,10 +516,8 @@ export class ExportUtils {
     doc.setTextColor(30, 64, 175)
     doc.text(`Total Records: ${data.length}`, pageWidth / 2, currentY + 10, { align: "center" })
 
-    doc.setFontSize(8)
-    doc.setTextColor(107, 114, 128)
-    const footerText = `Page ${pageNumber} • Generated ${new Date().toLocaleDateString()}`
-    doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" })
+    // Draw footer with logo on last page
+    await drawPageFooter(pageNumber)
 
     doc.save(`${filename}${includeTimestamp ? `_${this.getTimestamp()}` : ""}.pdf`)
   }
