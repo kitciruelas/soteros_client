@@ -11,6 +11,8 @@ export interface ExportColumn {
 export interface ExportOptions {
   filename?: string
   title?: string
+  subtitle?: string
+  headerLines?: string[]
   includeTimestamp?: boolean
   logoUrl?: string
   leftLogoUrl?: string
@@ -51,15 +53,23 @@ export class ExportUtils {
     const {
       filename = "export",
       title = "Data Export",
+      subtitle,
+      headerLines = [
+        "Republic of the Philippines",
+        "Province of Batangas",
+        "Municipality of Rosario",
+        "MUNICIPAL DISASTER RISK REDUCTION AND MANAGEMENT OFFICE",
+        title
+      ],
       includeTimestamp = true,
       logoUrl = "/images/partners/MDRRMO.png",
-      leftLogoUrl,
-      rightLogoUrl,
+      leftLogoUrl = "/images/soteros_logo.png",
+      rightLogoUrl = "/images/partners/MDRRMO.png",
     } = options
 
     // Use specific logos if provided, otherwise fall back to logoUrl for both sides
-    const leftLogo = leftLogoUrl || logoUrl
-    const rightLogo = rightLogoUrl || logoUrl
+    const leftLogo = leftLogoUrl
+    const rightLogo = rightLogoUrl
 
     const doc = new jsPDF()
 
@@ -162,18 +172,47 @@ export class ExportUtils {
       }
 
       // Center text/title section
-      doc.setFontSize(10)
-      doc.setFont("helvetica", "normal")
-      doc.setTextColor(75, 85, 99)
-      
-      // Main title
-      doc.setFontSize(14)
-      doc.setFont("helvetica", "bold")
       doc.setTextColor(17, 24, 39)
-      doc.text(title, pageWidth / 2, 20, { align: "center" })
+      let textY = 12
 
-      // Timestamp below title
+      if (headerLines && headerLines.length > 0) {
+        // Multi-line header (official document style)
+        headerLines.forEach((line, index) => {
+          if (index === 0) {
+            // First line - usually "Republic of the Philippines"
+            doc.setFontSize(11)
+            doc.setFont("helvetica", "bold")
+          } else if (index === headerLines.length - 1) {
+            // Last line - usually the main title/office name
+            doc.setFontSize(12)
+            doc.setFont("helvetica", "bold")
+          } else {
+            // Middle lines - location/department info
+            doc.setFontSize(10)
+            doc.setFont("helvetica", "normal")
+          }
+          doc.text(line, pageWidth / 2, textY, { align: "center" })
+          textY += 4.5
+        })
+      } else {
+        // Simple title format
+        doc.setFontSize(14)
+        doc.setFont("helvetica", "bold")
+        doc.text(title, pageWidth / 2, textY, { align: "center" })
+        textY += 5
+
+        if (subtitle) {
+          doc.setFontSize(10)
+          doc.setFont("helvetica", "normal")
+          doc.setTextColor(75, 85, 99)
+          doc.text(subtitle, pageWidth / 2, textY, { align: "center" })
+          textY += 5
+        }
+      }
+
+      // Timestamp below header text
       if (includeTimestamp) {
+        textY += 2
         doc.setFontSize(8)
         doc.setFont("helvetica", "normal")
         doc.setTextColor(107, 114, 128)
@@ -189,7 +228,7 @@ export class ExportUtils {
         hours = hours ? hours : 12
         const hourStr = hours.toString().padStart(2, "0")
         const timestampText = `Generated: ${monthName} ${day}, ${year} at ${hourStr}:${minutes}:${seconds} ${ampm}`
-        doc.text(timestampText, pageWidth / 2, 30, { align: "center" })
+        doc.text(timestampText, pageWidth / 2, textY, { align: "center" })
       }
 
       // Bottom border line

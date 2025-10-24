@@ -596,7 +596,7 @@ const StaffManagement: React.FC = () => {
   const handleConfirmExportPDF = async () => {
     const exportData = filteredStaff.map(s => ({ ...s }));
     // Build dynamic title based on filters
-    let title = 'Staff List';
+    let title = 'Staff Roster';
     const filterParts = [];
     if (searchTerm.trim()) filterParts.push(`Search: "${searchTerm.trim()}"`);
     if (statusFilter !== 'all') filterParts.push(`Status: ${statusFilter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
@@ -611,7 +611,6 @@ const StaffManagement: React.FC = () => {
     const options = {
       filename: 'Staff_Export',
       title,
-      logoUrl: '/images/partners/MDRRMO.png',
       includeTimestamp: true,
     };
     await ExportUtils.exportToPDF(exportData, exportColumns, options);
