@@ -89,6 +89,8 @@ const SafetyProtocolsPage: React.FC = () => {
   const [selectedProtocol, setSelectedProtocol] = useState<SafetyProtocol | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  // Track current slide for each protocol card in grid view
+  const [cardSlides, setCardSlides] = useState<Record<number, number>>({});
 
   // Debug: Log file URL handling on mount
   useEffect(() => {
@@ -561,18 +563,54 @@ const SafetyProtocolsPage: React.FC = () => {
                       attachments = [protocol.file_attachment];
                     }
 
+                    // Get current slide for this card (default to 0)
+                    const currentCardSlide = cardSlides[protocol.protocol_id] || 0;
+
+                    // Carousel navigation functions
+                    const nextCardSlide = (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCardSlides(prev => ({
+                        ...prev,
+                        [protocol.protocol_id]: (currentCardSlide + 1) % attachments.length
+                      }));
+                    };
+
+                    const prevCardSlide = (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCardSlides(prev => ({
+                        ...prev,
+                        [protocol.protocol_id]: (currentCardSlide - 1 + attachments.length) % attachments.length
+                      }));
+                    };
+
+                    const goToCardSlide = (index: number) => (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCardSlides(prev => ({
+                        ...prev,
+                        [protocol.protocol_id]: index
+                      }));
+                    };
+
                     // Debug: Log URLs being displayed
                     console.log('📂 Protocol attachments:', {
                       protocolId: protocol.protocol_id,
                       count: attachments.length,
+                      currentSlide: currentCardSlide,
                       urls: attachments
                     });
 
                     return (
                       <div className="mb-4">
                         {viewMode === 'grid' ? (
-                          <div className="space-y-3">
+                          <div className="relative">
+                            {/* Carousel - Show only current slide */}
                             {attachments.map((fileUrl, fileIndex) => {
+                              // Only show current slide
+                              if (fileIndex !== currentCardSlide) return null;
+
                               console.log(`🖼️ Rendering image ${fileIndex + 1}:`, fileUrl);
                               const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
                               const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
@@ -609,14 +647,6 @@ const SafetyProtocolsPage: React.FC = () => {
                                           loading="lazy"
                                         />
                                       </div>
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                                          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2">
-                                            <i className="ri-fullscreen-line"></i>
-                                            <span>View Full Image</span>
-                                          </div>
-                                        </div>
-                                      </div>
                                     </div>
                                   ) : isPdf ? (
                                     // PDF preview with embedded viewer
@@ -646,14 +676,6 @@ const SafetyProtocolsPage: React.FC = () => {
                                           title={protocol.title}
                                         />
                                       </div>
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                                          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2">
-                                            <i className="ri-fullscreen-line"></i>
-                                            <span>Open Full PDF</span>
-                                          </div>
-                                        </div>
-                                      </div>
                                     </div>
                                   ) : (
                                     // Generic file preview
@@ -664,22 +686,47 @@ const SafetyProtocolsPage: React.FC = () => {
                                       </div>
                                     </div>
                                   )}
-                                  
-                                  {/* View button overlay */}
-                                  <a
-                                    href={`${getFileUrl(fileUrl)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl group"
-                                  >
-                                    <span className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-gray-900 font-medium flex items-center space-x-2 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                                      <i className="ri-eye-line"></i>
-                                      <span>View File</span>
-                                    </span>
-                                  </a>
                                 </div>
                               );
                             })}
+
+                            {/* Navigation Arrows - Only show if multiple attachments */}
+                            {attachments.length > 1 && (
+                              <>
+                                <button
+                                  onClick={prevCardSlide}
+                                  className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-20"
+                                  aria-label="Previous image"
+                                >
+                                  <i className="ri-arrow-left-s-line text-2xl text-gray-800"></i>
+                                </button>
+                                <button
+                                  onClick={nextCardSlide}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-20"
+                                  aria-label="Next image"
+                                >
+                                  <i className="ri-arrow-right-s-line text-2xl text-gray-800"></i>
+                                </button>
+                              </>
+                            )}
+
+                            {/* Indicator Dots - Only show if multiple attachments */}
+                            {attachments.length > 1 && (
+                              <div className="flex items-center justify-center gap-2 mt-3">
+                                {attachments.map((_, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={goToCardSlide(index)}
+                                    className={`transition-all duration-300 ${
+                                      index === currentCardSlide
+                                        ? 'w-6 h-2 bg-green-600 rounded-full'
+                                        : 'w-2 h-2 bg-gray-300 hover:bg-gray-400 rounded-full'
+                                    }`}
+                                    aria-label={`Go to image ${index + 1}`}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           // List view - show all files as links
