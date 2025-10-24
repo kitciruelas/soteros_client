@@ -20,9 +20,31 @@ interface SafetyProtocol {
 const getFileUrl = (fileAttachment: string | null) => {
   if (!fileAttachment) return '';
   
-  // If it's already a full URL (Cloudinary), return as-is
+  // If it's already a full URL (Cloudinary or other), return as-is
   if (fileAttachment.startsWith('http://') || fileAttachment.startsWith('https://')) {
     return fileAttachment;
+  }
+  
+  // Check if it's a Cloudinary path (starts with folder structure like "mdrrmo/")
+  if (fileAttachment.startsWith('mdrrmo/')) {
+    // Construct full Cloudinary URL
+    const cloudName = 'dko23mxez';
+    
+    // Check if file has extension
+    const hasExtension = fileAttachment.includes('.') && fileAttachment.split('.').length > 1;
+    const fileExt = hasExtension ? fileAttachment.split('.').pop()?.toLowerCase() : '';
+    
+    // For safety protocols, assume PDF if no extension (common with Cloudinary)
+    const isPdfOrDoc = ['pdf', 'doc', 'docx'].includes(fileExt || '') || 
+                       (fileAttachment.includes('/safety-protocols/') && !hasExtension);
+    
+    // Use 'raw' for PDFs/docs, 'image' for images
+    const resourceType = isPdfOrDoc ? 'raw' : 'image';
+    
+    // If no extension and it's a PDF, add .pdf
+    const finalPath = (!hasExtension && isPdfOrDoc) ? `${fileAttachment}.pdf` : fileAttachment;
+    
+    return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${finalPath}`;
   }
   
   // Otherwise, it's a local file path - construct the backend URL
