@@ -88,6 +88,7 @@ const SafetyProtocolsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedProtocol, setSelectedProtocol] = useState<SafetyProtocol | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Debug: Log file URL handling on mount
   useEffect(() => {
@@ -731,7 +732,7 @@ const SafetyProtocolsPage: React.FC = () => {
                 <p className="text-gray-600 whitespace-pre-wrap">{selectedProtocol.description}</p>
               </div>
 
-              {/* File Attachments */}
+              {/* File Attachments Carousel */}
               {selectedProtocol.file_attachment && (() => {
                 // Parse multiple attachments
                 let attachments: string[] = [];
@@ -742,19 +743,65 @@ const SafetyProtocolsPage: React.FC = () => {
                   attachments = [selectedProtocol.file_attachment];
                 }
 
+                // Reset slide when opening modal
+                React.useEffect(() => {
+                  setCurrentSlide(0);
+                }, [selectedProtocol]);
+
+                // Keyboard navigation
+                React.useEffect(() => {
+                  const handleKeyDown = (e: KeyboardEvent) => {
+                    if (!isModalOpen || attachments.length <= 1) return;
+                    
+                    if (e.key === 'ArrowLeft') {
+                      prevSlide();
+                    } else if (e.key === 'ArrowRight') {
+                      nextSlide();
+                    }
+                  };
+
+                  window.addEventListener('keydown', handleKeyDown);
+                  return () => window.removeEventListener('keydown', handleKeyDown);
+                }, [isModalOpen, attachments.length]);
+
+                const nextSlide = () => {
+                  setCurrentSlide((prev) => (prev + 1) % attachments.length);
+                };
+
+                const prevSlide = () => {
+                  setCurrentSlide((prev) => (prev - 1 + attachments.length) % attachments.length);
+                };
+
+                const goToSlide = (index: number) => {
+                  setCurrentSlide(index);
+                };
+
                 return (
                   <div className="mt-8">
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Attached Document{attachments.length > 1 ? 's' : ''} ({attachments.length})
-                    </h4>
-                    <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-gray-900">
+                        Attached Document{attachments.length > 1 ? 's' : ''} 
+                      </h4>
+                      {attachments.length > 1 && (
+                        <span className="text-sm text-gray-600 font-medium">
+                          {currentSlide + 1} / {attachments.length}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Carousel Container */}
+                    <div className="relative">
+                      {/* Current File Display */}
                       {attachments.map((fileUrl, fileIndex) => {
+                        // Only show current slide
+                        if (fileIndex !== currentSlide) return null;
+
                         const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
                         const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
                         const fileName = fileUrl.split('/').pop();
 
                         return (
-                          <div key={fileIndex}>
+                          <div key={fileIndex} className="transition-opacity duration-300">
                             {isPdf ? (
                               // PDF Preview
                               <div className="border border-gray-200 rounded-xl overflow-hidden shadow-lg">
@@ -864,7 +911,86 @@ const SafetyProtocolsPage: React.FC = () => {
                           </div>
                         );
                       })}
+
+                      {/* Navigation Buttons - Only show if multiple files */}
+                      {attachments.length > 1 && (
+                        <>
+                          {/* Previous Button */}
+                          <button
+                            onClick={prevSlide}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-10"
+                            aria-label="Previous file"
+                          >
+                            <i className="ri-arrow-left-line text-2xl text-gray-800"></i>
+                          </button>
+
+                          {/* Next Button */}
+                          <button
+                            onClick={nextSlide}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-10"
+                            aria-label="Next file"
+                          >
+                            <i className="ri-arrow-right-line text-2xl text-gray-800"></i>
+                          </button>
+                        </>
+                      )}
                     </div>
+
+                    {/* Indicator Dots - Only show if multiple files */}
+                    {attachments.length > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-6">
+                        {attachments.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => goToSlide(index)}
+                            className={`transition-all duration-300 ${
+                              index === currentSlide
+                                ? 'w-8 h-3 bg-green-600 rounded-full'
+                                : 'w-3 h-3 bg-gray-300 hover:bg-gray-400 rounded-full'
+                            }`}
+                            aria-label={`Go to file ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* File List - Thumbnails */}
+                    {attachments.length > 1 && (
+                      <div className="flex items-center gap-3 mt-6 overflow-x-auto pb-2">
+                        {attachments.map((fileUrl, index) => {
+                          const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+                          const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                          
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => goToSlide(index)}
+                              className={`flex-shrink-0 w-20 h-20 rounded-lg border-2 transition-all ${
+                                index === currentSlide
+                                  ? 'border-green-600 shadow-lg scale-110'
+                                  : 'border-gray-300 hover:border-green-400 opacity-70 hover:opacity-100'
+                              }`}
+                            >
+                              {isImage ? (
+                                <img
+                                  src={getFileUrl(fileUrl)}
+                                  alt={`Thumbnail ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                              ) : (
+                                <div className={`w-full h-full flex items-center justify-center rounded-md ${
+                                  isPdf ? 'bg-red-100' : 'bg-gray-100'
+                                }`}>
+                                  <i className={`text-2xl ${
+                                    isPdf ? 'ri-file-pdf-line text-red-600' : 'ri-file-text-line text-gray-600'
+                                  }`}></i>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
