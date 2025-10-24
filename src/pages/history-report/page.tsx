@@ -807,36 +807,7 @@ export default function HistoryReportPage() {
                   <i className="ri-error-warning-line text-3xl text-red-500"></i>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Unable to Load Reports</h3>
-                <p className="text-red-600 mb-6 text-lg font-medium max-w-lg mx-auto">{error}</p>
-
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
-                  <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-                    <i className="ri-bug-line mr-2 text-blue-500"></i>
-                    Debug Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-600">API Endpoint:</span>
-                      <p className="font-mono text-gray-800 break-all">
-                        {import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api')}/incidents/user/{userData?.userId || userData?.user_id || userData?.id || "unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">User ID:</span>
-                      <p className="font-mono text-gray-800">
-                        {userData?.userId || userData?.user_id || userData?.id || "No ID found"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">User Type:</span>
-                      <p className="font-mono text-gray-800">{userData?.userType || "Unknown"}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">Status:</span>
-                      <p className="font-mono text-gray-800">Authentication Required</p>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-red-600 mb-8 text-lg font-medium max-w-lg mx-auto">{error}</p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
