@@ -243,11 +243,11 @@ export class ExportUtils {
     const drawPageFooter = async (currentPageNumber: number, totalPages?: number) => {
       const footerY = pageHeight - 15
       
-      // Add Soteros logo in footer (bottom left)
+      // Add Soteros logo in footer (bottom center)
       try {
-        const footerLogoWidth = 20
-        const footerLogoHeight = 15
-        const footerLogoY = pageHeight - 18
+        const footerLogoWidth = 25
+        const footerLogoHeight = 18
+        const footerLogoY = pageHeight - 20
         const soterosLogo = "/images/soteros_logo.png"
         
         if (soterosLogo) {
@@ -297,7 +297,8 @@ export class ExportUtils {
 
                 const base64 = canvas.toDataURL("image/png", 1.0)
                 const yOffset = footerLogoY + (footerLogoHeight - drawHeight) / 2
-                doc.addImage(base64, "PNG", margin, yOffset, drawWidth, drawHeight)
+                const centerX = (pageWidth - drawWidth) / 2
+                doc.addImage(base64, "PNG", centerX, yOffset, drawWidth, drawHeight)
                 resolve()
               } catch (error) {
                 reject(error)
@@ -317,13 +318,13 @@ export class ExportUtils {
         console.warn("Failed to add footer logo:", error)
       }
 
-      // Footer text (center)
-      doc.setFontSize(8)
+      // Footer text (below logo)
+      doc.setFontSize(7)
       doc.setTextColor(107, 114, 128)
       const footerText = totalPages 
-        ? `Page ${currentPageNumber} of ${totalPages} • Generated ${new Date().toLocaleDateString()}`
-        : `Page ${currentPageNumber} • Generated ${new Date().toLocaleDateString()}`
-      doc.text(footerText, pageWidth / 2, footerY, { align: "center" })
+        ? `Page ${currentPageNumber} of ${totalPages}`
+        : `Page ${currentPageNumber}`
+      doc.text(footerText, pageWidth / 2, pageHeight - 5, { align: "center" })
     }
 
     // ===== ENHANCED TABLE LOGIC =====
