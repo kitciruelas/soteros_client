@@ -20,8 +20,13 @@ interface SafetyProtocol {
 const getFileUrl = (fileAttachment: string | null) => {
   if (!fileAttachment) return '';
   
-  // If it's already a full URL (Cloudinary or other), return as-is
+  // If it's already a full URL (Cloudinary or other)
   if (fileAttachment.startsWith('http://') || fileAttachment.startsWith('https://')) {
+    // Fix Cloudinary URLs that have wrong resource type for PDFs
+    if (fileAttachment.includes('res.cloudinary.com') && fileAttachment.toLowerCase().endsWith('.pdf')) {
+      // If it's using /image/upload/ for a PDF, change to /raw/upload/
+      return fileAttachment.replace('/image/upload/', '/raw/upload/');
+    }
     return fileAttachment;
   }
   
