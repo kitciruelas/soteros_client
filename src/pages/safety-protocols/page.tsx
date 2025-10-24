@@ -35,7 +35,12 @@ const getFileUrl = (fileAttachment: string | null) => {
       filePath = `${filePath}.pdf`;
     }
     
-    return `https://res.cloudinary.com/${cloudName}/image/upload/${filePath}`;
+    // Determine resource type based on file extension
+    const isPdf = filePath.toLowerCase().endsWith('.pdf');
+    const isDoc = filePath.toLowerCase().match(/\.(doc|docx)$/);
+    const resourceType = (isPdf || isDoc) ? 'raw' : 'image';
+    
+    return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${filePath}`;
   }
   
   // Check if it looks like a Cloudinary public ID (random string with possible extension)
@@ -45,7 +50,13 @@ const getFileUrl = (fileAttachment: string | null) => {
     const cloudName = 'dko23mxez';
     // Assume it's in the safety-protocols folder
     const fullPath = `mdrrmo/safety-protocols/${fileAttachment}`;
-    return `https://res.cloudinary.com/${cloudName}/image/upload/${fullPath}`;
+    
+    // Determine resource type based on file extension
+    const isPdf = fileAttachment.toLowerCase().endsWith('.pdf');
+    const isDoc = fileAttachment.toLowerCase().match(/\.(doc|docx)$/);
+    const resourceType = (isPdf || isDoc) ? 'raw' : 'image';
+    
+    return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${fullPath}`;
   }
   
   // Otherwise, it's a local file path - construct the backend URL
