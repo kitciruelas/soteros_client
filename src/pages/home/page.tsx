@@ -170,12 +170,12 @@ export default function Home() {
     fetchTestimonials()
   }, [testimonialsLimit])
 
-  // Hotline data for MDRRMO Padre Garcia, Batangas
+  // Hotline data for SoteROS
   const hotlines = [
     {
       name: "MDRRMO",
       description: "Municipal Disaster Risk Reduction & Management Office",
-      number: "(043) 311.2935 | 703.2646 | 0917.133.9605",
+      number: "0926 739 5243",
       icon: "ri-shield-cross-line",
       logo: "/images/partners/MDRRMO.png",
       priority: "high",
@@ -183,7 +183,7 @@ export default function Home() {
     {
       name: "PNP",
       description: "Municipal Police Station",
-      number: "(043) 724.7026 | 0915.254.2577",
+      number: "0927 237 0519 | 0998 598 5699",
       icon: "ri-police-car-line",
       logo: "/images/partners/pnp.jpg",
       priority: "high",
@@ -207,17 +207,52 @@ export default function Home() {
     {
       name: "MSWDO",
       description: "Municipal Social Welfare & Development Office",
-      number: "(043) 312.1367",
+      number: "(043) 043 740 1338 | 0939 038 0295",
       icon: "ri-community-line",
       logo: "/images/partners/msdw.jpg",
       priority: "medium",
     },
     {
-      name: "MVM Hospital",
-      description: "Rosario District Hospital",
-      number: "(043) 312.0411",
+      name: "Sto. Rosario Hospital",
+      description: "V. Escano St. cor. Recto St. Brgy. C, Rosario, Batangas",
+      number: "(043) 321-1025 | Fax: (043) 321-3896",
+      icon: "ri-hospital-fill",
+      priority: "medium",
+    },
+    {
+      name: "Palma - Malaluan Hospital",
+      description: "J. Magtibay St., Brgy. D, Rosario, Batangas",
+      number: "(043) 321-1410 | (02) 520-6304 | Fax: (043) 321-0322",
+      icon: "ri-hospital-fill",
+      priority: "medium",
+    },
+    {
+      name: "MVM Rosario District Hospital",
+      description: "Namunga, Rosario, Batangas",
+      number: "(043) 321-1330",
       icon: "ri-hospital-fill",
       logo: "/images/partners/mvm.jpg",
+      priority: "medium",
+    },
+    {
+      name: "Christ the Savior General Hospital Inc.",
+      description: "Brgy. A, Rosario, Batangas",
+      number: "(043) 321-1703",
+      icon: "ri-hospital-fill",
+      priority: "medium",
+    },
+    {
+      name: "Untalan General Hospital",
+      description: "Brgy. B, Rosario, Batangas",
+      number: "(043) 321-1513",
+      icon: "ri-hospital-fill",
+      priority: "medium",
+    },
+    {
+      name: "St. Gerald General Hospital",
+      description: "Masaya, Rosario, Batangas",
+      number: "0961 329 9844",
+      icon: "ri-hospital-fill",
       priority: "medium",
     },
     {
@@ -897,14 +932,14 @@ export default function Home() {
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Trusted By</h3>
             <p className="text-lg text-gray-600">Working together for community safety</p>
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden sm:block"> 
             <Carousel
               items={[
                 { name: "LGU", image: "/images/partners/lgu-pt.png", alt: "Local Government Unit" },
                 { name: "MDRRMO", image: "/images/partners/MDRRMO.png", alt: "MDRRMO  " },
                 { name: "BFP", image: "/images/partners/bfp.jpg", alt: "Bureau of Fire Protection" },
                 { name: "PNP", image: "/images/partners/pnp.jpg", alt: "Philippine National Police" },
-                { name: "SOTEROS", image: "/images/soterblue.png", alt: "Philippine National Police" },
+                { name: "SOTEROS", image: "/images/soteros_logo.png", alt: "Philippine National Police" },
 
                 { name: "RedCross", image: "/images/partners/prc.png", alt: "Philippine Red Cross" },
                 { name: "MHo", image: "/images/partners/mho.png", alt: "MHO" },
@@ -1431,7 +1466,7 @@ export default function Home() {
           <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-gray-400 text-sm">
-                © 2024 MDRRMO Rosario, Batangas. All rights reserved.
+                © 2024 SoteROS. All rights reserved.
               </div>
               <div className="flex flex-wrap gap-6 text-sm">
                 <button 
