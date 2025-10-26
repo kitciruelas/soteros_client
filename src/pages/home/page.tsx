@@ -1209,11 +1209,15 @@ export default function Home() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center flex-1 min-w-0">
                             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                              <img
-                                src={hotline.logo || "/placeholder.svg"}
-                                alt={`${hotline.name} Logo`}
-                                className="w-8 h-8 object-contain rounded-full"
-                              />
+                              {hotline.logo ? (
+                                <img
+                                  src={hotline.logo}
+                                  alt={`${hotline.name} Logo`}
+                                  className="w-8 h-8 object-contain rounded-full"
+                                />
+                              ) : (
+                                <i className={`${hotline.icon} text-red-600 text-xl`}></i>
+                              )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h5 className="font-semibold text-gray-900 text-sm mb-1 truncate">{hotline.name}</h5>
@@ -1251,11 +1255,15 @@ export default function Home() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center flex-1 min-w-0">
                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                              <img
-                                src={hotline.logo || "/placeholder.svg"}
-                                alt={`${hotline.name} Logo`}
-                                className="w-8 h-8 object-contain rounded-full"
-                              />
+                              {hotline.logo ? (
+                                <img
+                                  src={hotline.logo}
+                                  alt={`${hotline.name} Logo`}
+                                  className="w-8 h-8 object-contain rounded-full"
+                                />
+                              ) : (
+                                <i className={`${hotline.icon} text-blue-600 text-xl`}></i>
+                              )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h5 className="font-semibold text-gray-900 text-sm mb-1 truncate">{hotline.name}</h5>
