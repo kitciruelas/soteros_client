@@ -1346,7 +1346,7 @@ const EvacuationCenterPage: React.FC = () => {
                           </div>
                         )}
                         {resource.picture && (
-                          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center pointer-events-none">
                             <i className="ri-zoom-in-line text-white opacity-0 hover:opacity-100 transition-opacity text-2xl"></i>
                           </div>
                         )}
@@ -1384,12 +1384,6 @@ const EvacuationCenterPage: React.FC = () => {
                           </span>
                         </div>
                         
-                        {resource.picture && (
-                          <div className="flex items-center justify-center">
-                            <i className="ri-image-line mr-1 text-blue-500"></i>
-                            <span className="text-blue-600">Has image</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1410,7 +1404,9 @@ const EvacuationCenterPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}      {/* Contact Information Modal */}
+      )}
+
+      {/* Contact Information Modal */}
       {selectedContactInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="relative bg-white rounded-2xl max-w-2xl w-full overflow-hidden">
@@ -1662,4 +1658,3 @@ const EvacuationCenterPage: React.FC = () => {
 };
 
 export default EvacuationCenterPage;
-
