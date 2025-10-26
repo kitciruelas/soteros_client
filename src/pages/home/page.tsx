@@ -1106,7 +1106,7 @@ export default function Home() {
                 },
                 {
                   q: "What emergency numbers should I call?",
-                  a: "MDRRMO: (043) 311.2935, PNP: (043) 724.7026, BFP: (043) 312.1102. Click Emergency Hotline for full list of contacts.",
+                  a: "MDRRMO: 0926 739 5243, PNP: 0927 237 0519 | 0998 598 5699, BFP: (043) 312.1102. Click Emergency Hotline for full list of contacts.",
                   icon: "ri-phone-line",
                   color: "from-indigo-500 to-blue-500"
                 },
