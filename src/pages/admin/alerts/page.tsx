@@ -116,6 +116,7 @@ const AlertsManagement: React.FC = () => {
   const [editBarangaySearch, setEditBarangaySearch] = useState('');
   const [showEditBarangayDropdown, setShowEditBarangayDropdown] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [sendingAlertId, setSendingAlertId] = useState<number | null>(null);
 
   // Map-related state
   const [mapCenter] = useState<[number, number]>([13.845420, 121.206189
@@ -350,6 +351,7 @@ const AlertsManagement: React.FC = () => {
 
   const handleSendAlert = async (alertId: number) => {
     try {
+      setSendingAlertId(alertId);
       const data = await alertsApi.sendAlert(alertId);
 
       if (data.success) {
@@ -362,6 +364,8 @@ const AlertsManagement: React.FC = () => {
     } catch (error) {
       console.error('Error sending alert:', error);
       showToast({ type: 'error', message: 'Error sending alert' });
+    } finally {
+      setSendingAlertId(null);
     }
   };
 
@@ -586,10 +590,24 @@ const AlertsManagement: React.FC = () => {
                   {alert.status !== 'sent' && (
                     <button
                       onClick={() => handleSendAlert(alert.id)}
-                      className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                      disabled={sendingAlertId === alert.id}
+                      className={`px-3 py-1 text-white text-sm rounded-lg transition-colors flex items-center ${
+                        sendingAlertId === alert.id 
+                          ? 'bg-green-500 cursor-not-allowed' 
+                          : 'bg-green-600 hover:bg-green-700'
+                      }`}
                     >
-                      <i className="ri-mail-send-line mr-1"></i>
-                      Send
+                      {sendingAlertId === alert.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <i className="ri-mail-send-line mr-1"></i>
+                          Send
+                        </>
+                      )}
                     </button>
                   )}
                   <button
