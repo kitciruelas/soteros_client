@@ -114,7 +114,7 @@ const AdminLogin: React.FC = () => {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent mb-2">
             Admin Portal
           </h1>
-          <p className="text-gray-600 font-medium">ProteQ Emergency Management System</p>
+          <p className="text-gray-600 font-medium">SoteROS Emergency Management System</p>
 
           <div className="flex justify-center items-center gap-4 mt-4">
             <div className="flex items-center gap-1 text-xs text-gray-500">
