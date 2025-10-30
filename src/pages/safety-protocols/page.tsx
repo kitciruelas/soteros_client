@@ -244,11 +244,11 @@ const SafetyProtocolsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative inline-flex items-center justify-center mb-6">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
-            <div className="relative w-20 h-20 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
+            <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
               <i className="ri-loader-4-line text-3xl text-white animate-spin"></i>
             </div>
           </div>
@@ -260,16 +260,16 @@ const SafetyProtocolsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
       <Navbar isAuthenticated={isAuthenticated} userData={userData || undefined} />
 
       {/* Enhanced Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-r from-green-600/5 to-emerald-600/5"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-indigo-600/5"></div>
         <div className="absolute inset-0 opacity-40">
           <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25px 25px, rgba(34, 197, 94, 0.05) 2px, transparent 0)`,
+            backgroundImage: `radial-gradient(circle at 25px 25px, rgba(156, 146, 172, 0.05) 2px, transparent 0)`,
             backgroundSize: '50px 50px'
           }}></div>
         </div>
@@ -278,14 +278,14 @@ const SafetyProtocolsPage: React.FC = () => {
           <div className="text-center max-w-4xl mx-auto">
             {/* Icon with enhanced styling */}
             <div className="relative inline-flex items-center justify-center mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
-              <div className="relative w-20 h-20 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
+              <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
                 <i className="ri-shield-check-line text-3xl text-white"></i>
               </div>
             </div>
 
             {/* Enhanced Typography */}
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-green-900 to-emerald-900 bg-clip-text text-transparent mb-6 leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight">
               Safety Protocols
             </h1>
 
@@ -297,7 +297,7 @@ const SafetyProtocolsPage: React.FC = () => {
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
               <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-green-600">{protocolStats.total}</div>
+                <div className="text-2xl font-bold text-blue-600">{protocolStats.total}</div>
                 <div className="text-sm text-gray-600">Total Protocols</div>
               </div>
               <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
@@ -315,16 +315,16 @@ const SafetyProtocolsPage: React.FC = () => {
             </div>
 
             {/* Enhanced Info Banner */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-center text-green-800">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <i className="ri-information-line text-green-600"></i>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
+              <div className="flex items-center justify-center text-blue-800">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <i className="ri-information-line text-blue-600"></i>
                 </div>
                 <p className="font-semibold text-lg">
                   Comprehensive safety protocols for all emergency situations
                 </p>
               </div>
-              <p className="text-green-600 text-sm mt-2 opacity-80">
+              <p className="text-blue-600 text-sm mt-2 opacity-80">
                 Updated regularly • Last update: {new Date().toLocaleTimeString()}
               </p>
             </div>
