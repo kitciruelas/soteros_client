@@ -656,20 +656,6 @@ const AlertsManagement: React.FC = () => {
               <option value="high">High</option>
               <option value="critical">Critical</option>
             </select>
-            {(searchTerm || typeFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all') && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setTypeFilter('all');
-                  setStatusFilter('all');
-                  setPriorityFilter('all');
-                }}
-                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
-              >
-                <i className="ri-close-line mr-1"></i>
-                Clear Filters
-              </button>
-            )}
           </div>
           <div className="text-sm text-gray-600">
             Showing {filteredAlerts.length} of {alerts.length} alerts

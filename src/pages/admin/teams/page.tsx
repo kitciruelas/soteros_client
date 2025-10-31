@@ -434,19 +434,6 @@ const TeamsManagement: React.FC = () => {
               <option value="optimal">Optimal (3-4 members)</option>
               <option value="understaffed">Understaffed (&lt; 3 members)</option>
             </select>
-            {(searchTerm || statusFilter !== 'all') && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                }}
-                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                title="Clear filters"
-              >
-                <i className="ri-close-line mr-1"></i>
-                Clear Filters
-              </button>
-            )}
           </div>
           <div className="text-sm text-gray-600">
             Showing {filteredTeams.length} of {teams.length} teams
@@ -494,18 +481,6 @@ const TeamsManagement: React.FC = () => {
                           ? "No teams match your current search and filter criteria. Try adjusting your search or filters."
                           : "No teams have been created yet."}
                       </p>
-                      {(searchTerm || statusFilter !== 'all') && (
-                        <button
-                          onClick={() => {
-                            setSearchTerm('');
-                            setStatusFilter('all');
-                          }}
-                          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
-                        >
-                          <i className="ri-refresh-line mr-2"></i>
-                          Clear Filters
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
