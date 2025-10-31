@@ -96,6 +96,7 @@ interface ConfirmModalProps {
   icon?: string;
   iconColor?: string;
   isLoading?: boolean;
+  loadingText?: string;
 }
 
 export function ConfirmModal({
@@ -109,10 +110,17 @@ export function ConfirmModal({
   confirmVariant = 'primary',
   icon = 'ri-question-line',
   iconColor = 'text-blue-600',
-  isLoading = false
+  isLoading = false,
+  loadingText = 'Processing...'
 }: ConfirmModalProps) {
+  const handleClose = () => {
+    if (!isLoading) {
+      onClose();
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm" showCloseButton={false}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={title} size="sm" showCloseButton={false}>
       <div className="text-center">
         {/* Icon */}
         <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -141,10 +149,10 @@ export function ConfirmModal({
             fullWidth
           >
             {isLoading ? (
-              <>
+              <span className="flex items-center justify-center">
                 <i className="ri-loader-4-line animate-spin mr-2"></i>
-                Processing...
-              </>
+                {loadingText}
+              </span>
             ) : (
               confirmText
             )}

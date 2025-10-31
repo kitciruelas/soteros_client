@@ -380,8 +380,10 @@ const AlertsManagement: React.FC = () => {
 
   const confirmDeleteAlert = async () => {
     if (alertIdToDelete == null) return;
+    
+    setIsDeleting(true);
+    
     try {
-      setIsDeleting(true);
       const data = await alertsApi.deleteAlert(alertIdToDelete);
       if (data.success) {
         await fetchAlerts();
@@ -1520,6 +1522,7 @@ const AlertsManagement: React.FC = () => {
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
         isLoading={isDeleting}
+        loadingText="Deleting..."
       />
 
       <ExportPreviewModal
