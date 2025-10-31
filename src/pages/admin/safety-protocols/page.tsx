@@ -540,53 +540,69 @@ const SafetyProtocolsManagement: React.FC = () => {
       </div>
 
       {/* Protocols Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProtocols.map((protocol) => (
-          <div key={protocol.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 hover:shadow-lg transition-all duration-200 group">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getTypeColor(protocol.type || 'general')}`}>
-                    {protocol.category}
-                  </span>
+      {filteredProtocols.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <i className="ri-shield-check-line text-4xl text-gray-400 mb-4"></i>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {categoryFilter === 'all' && searchTerm.trim() === ''
+              ? 'No safety protocols available'
+              : 'No safety protocols match your filters'}
+          </h3>
+          <p className="text-gray-600">
+            {categoryFilter === 'all' && searchTerm.trim() === ''
+              ? 'No safety protocols have been created yet. Click "Add Protocol" to create your first one.'
+              : 'Try adjusting your search or filter criteria to see more results.'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProtocols.map((protocol) => (
+            <div key={protocol.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 hover:shadow-lg transition-all duration-200 group">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getTypeColor(protocol.type || 'general')}`}>
+                      {protocol.category}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{protocol.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2">{protocol.description}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{protocol.title}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2">{protocol.description}</p>
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
+                <div className="flex items-center text-xs text-gray-500">
+                  <i className="ri-time-line mr-1"></i>
+                  {new Date(protocol.updatedAt).toLocaleDateString()}
+                </div>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => handleViewProtocol(protocol)}
+                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                    title="View Protocol"
+                  >
+                    <i className="ri-eye-line text-lg"></i>
+                  </button>
+                  <button
+                    onClick={() => handleEditProtocol(protocol)}
+                    className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-all"
+                    title="Edit Protocol"
+                  >
+                    <i className="ri-edit-line text-lg"></i>
+                  </button>
+                  <button
+                    onClick={() => requestDeleteProtocol(protocol)}
+                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                    title="Delete Protocol"
+                  >
+                    <i className="ri-delete-bin-line text-lg"></i>
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
-              <div className="flex items-center text-xs text-gray-500">
-                <i className="ri-time-line mr-1"></i>
-                {new Date(protocol.updatedAt).toLocaleDateString()}
-              </div>
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => handleViewProtocol(protocol)}
-                  className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
-                  title="View Protocol"
-                >
-                  <i className="ri-eye-line text-lg"></i>
-                </button>
-                <button
-                  onClick={() => handleEditProtocol(protocol)}
-                  className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-all"
-                  title="Edit Protocol"
-                >
-                  <i className="ri-edit-line text-lg"></i>
-                </button>
-                <button
-                  onClick={() => requestDeleteProtocol(protocol)}
-                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                  title="Delete Protocol"
-                >
-                  <i className="ri-delete-bin-line text-lg"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Protocol Modal (using shared Modal component for consistency) */}
       <Modal
