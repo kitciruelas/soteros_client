@@ -481,7 +481,36 @@ const TeamsManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTeams.map((team) => (
+              {filteredTeams.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16">
+                    <div className="text-center">
+                      <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-2xl flex items-center justify-center">
+                        <i className="ri-team-line text-4xl text-gray-400"></i>
+                      </div>
+                      <h3 className="text-2xl font-semibold text-gray-900 mb-2">No teams found</h3>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        {searchTerm || statusFilter !== 'all'
+                          ? "No teams match your current search and filter criteria. Try adjusting your search or filters."
+                          : "No teams have been created yet."}
+                      </p>
+                      {(searchTerm || statusFilter !== 'all') && (
+                        <button
+                          onClick={() => {
+                            setSearchTerm('');
+                            setStatusFilter('all');
+                          }}
+                          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
+                        >
+                          <i className="ri-refresh-line mr-2"></i>
+                          Clear Filters
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredTeams.map((team) => (
                 <tr key={team.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -562,7 +591,8 @@ const TeamsManagement: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
