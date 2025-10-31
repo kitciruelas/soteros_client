@@ -21,6 +21,7 @@ const TeamsManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all'); // all, full, optimal, understaffed
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -309,7 +310,19 @@ const TeamsManagement: React.FC = () => {
     const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          team.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (team.member_no && team.member_no.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
+    
+    const memberCount = team.member_count || 0;
+    let matchesStatus = true;
+    
+    if (statusFilter === 'full') {
+      matchesStatus = memberCount >= 5;
+    } else if (statusFilter === 'optimal') {
+      matchesStatus = memberCount >= 3 && memberCount < 5;
+    } else if (statusFilter === 'understaffed') {
+      matchesStatus = memberCount < 3;
+    }
+    
+    return matchesSearch && matchesStatus;
   });
 
   if (loading) {
@@ -400,7 +413,7 @@ const TeamsManagement: React.FC = () => {
       {/* Filters and Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 flex-wrap">
             <div className="relative">
               <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <input
@@ -411,6 +424,29 @@ const TeamsManagement: React.FC = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="full">Full (5 members)</option>
+              <option value="optimal">Optimal (3-4 members)</option>
+              <option value="understaffed">Understaffed (&lt; 3 members)</option>
+            </select>
+            {(searchTerm || statusFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                title="Clear filters"
+              >
+                <i className="ri-close-line mr-1"></i>
+                Clear Filters
+              </button>
+            )}
           </div>
           <div className="text-sm text-gray-600">
             Showing {filteredTeams.length} of {teams.length} teams
@@ -483,9 +519,7 @@ const TeamsManagement: React.FC = () => {
                       {(team.member_count || 0) < 3 && (
                         <i className="ri-alert-line ml-1 text-xs" title="Team below minimum size (3 members required)"></i>
                       )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Based on assigned staff
-                      </p>
+                     
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
