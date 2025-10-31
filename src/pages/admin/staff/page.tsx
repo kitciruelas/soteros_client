@@ -99,6 +99,10 @@ const StaffManagement: React.FC = () => {
   const { showToast } = useToast();
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAssigningTeam, setIsAssigningTeam] = useState(false);
+  const [updatingStatusStaffId, setUpdatingStatusStaffId] = useState<number | null>(null);
+  const [updatingAvailabilityStaffId, setUpdatingAvailabilityStaffId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchStaff();
@@ -183,6 +187,7 @@ const StaffManagement: React.FC = () => {
 
   const handleStatusChange = async (staffId: number, newStatus: Staff['status']) => {
     try {
+      setUpdatingStatusStaffId(staffId);
       const data = await apiRequest(`/staff/${staffId}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status: newStatus }),
@@ -200,11 +205,14 @@ const StaffManagement: React.FC = () => {
     } catch (error) {
       console.error('Error updating staff status:', error);
       showToast({ type: 'error', message: 'Error updating staff status' });
+    } finally {
+      setUpdatingStatusStaffId(null);
     }
   };
 
   const handleAvailabilityChange = async (staffId: number, newAvailability: Staff['availability']) => {
     try {
+      setUpdatingAvailabilityStaffId(staffId);
       const data = await apiRequest(`/staff/${staffId}/availability`, {
         method: 'PUT',
         body: JSON.stringify({ availability: newAvailability }),
@@ -222,6 +230,8 @@ const StaffManagement: React.FC = () => {
     } catch (error) {
       console.error('Error updating staff availability:', error);
       showToast({ type: 'error', message: 'Error updating staff availability' });
+    } finally {
+      setUpdatingAvailabilityStaffId(null);
     }
   };
 
@@ -279,6 +289,7 @@ const StaffManagement: React.FC = () => {
     }
 
     try {
+      setIsSubmitting(true);
       const endpoint = selectedStaff 
         ? `/staff/${selectedStaff.id}`
         : '/staff';
@@ -310,6 +321,8 @@ const StaffManagement: React.FC = () => {
     } catch (error) {
       console.error('Error saving staff:', error);
       showToast({ type: 'error', message: 'Error saving staff' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -336,6 +349,7 @@ const StaffManagement: React.FC = () => {
     // Check team size limit when assigning to a team
     if (teamId !== '') {
       try {
+        setIsAssigningTeam(true);
         // Fetch current team members count
         const teamData = await apiRequest(`/teams/${teamId}`);
         
@@ -343,12 +357,14 @@ const StaffManagement: React.FC = () => {
           const currentMemberCount = teamData.team.member_count || 0;
           if (currentMemberCount >= 5) {
             showToast({ type: 'error', message: 'Team is at maximum capacity (5 members). Choose a different team.' });
+            setIsAssigningTeam(false);
             return;
           }
         }
       } catch (error) {
         console.error('Error checking team capacity:', error);
         showToast({ type: 'error', message: 'Error checking team capacity' });
+        setIsAssigningTeam(false);
         return;
       }
     }
@@ -373,6 +389,8 @@ const StaffManagement: React.FC = () => {
     } catch (error) {
       console.error('Error assigning staff to team:', error);
       showToast({ type: 'error', message: 'Error assigning staff to team' });
+    } finally {
+      setIsAssigningTeam(false);
     }
   };
 
@@ -413,9 +431,10 @@ const StaffManagement: React.FC = () => {
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Enter staff name"
             required
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -425,9 +444,10 @@ const StaffManagement: React.FC = () => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Enter email address"
             required
+            disabled={isSubmitting}
           />
         </div>
       </div>
@@ -440,11 +460,12 @@ const StaffManagement: React.FC = () => {
             defaultCountry="PH"
             value={formData.phone}
             onChange={(value) => setFormData(prev => ({ ...prev, phone: value || '' }))}
-            className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            inputClassName="w-full py-4 px-4 border-0 focus:ring-0 focus:outline-none bg-transparent text-gray-900 placeholder-gray-500"
-            buttonClassName="px-3 py-4 border-r border-gray-300 bg-gray-50 hover:bg-gray-100"
+            className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            inputClassName="w-full py-4 px-4 border-0 focus:ring-0 focus:outline-none bg-transparent text-gray-900 placeholder-gray-500 disabled:bg-gray-100"
+            buttonClassName="px-3 py-4 border-r border-gray-300 bg-gray-50 hover:bg-gray-100 disabled:opacity-50"
             dropdownClassName="bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto"
             placeholder="Enter phone number"
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -454,9 +475,10 @@ const StaffManagement: React.FC = () => {
             name="position"
             value={formData.position}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Enter position"
             required
+            disabled={isSubmitting}
           />
         </div>
       </div>
@@ -468,8 +490,9 @@ const StaffManagement: React.FC = () => {
             name="department"
             value={formData.department}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             required
+            disabled={isSubmitting}
           >
             <option value="">Select Department</option>
             <option value="Emergency Response">Emergency Response</option>
@@ -485,7 +508,8 @@ const StaffManagement: React.FC = () => {
             name="team_id"
             value={formData.team_id}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={isSubmitting}
           >
             <option value="">No Team</option>
             {filteredTeams.map(team => (
@@ -819,35 +843,51 @@ const StaffManagement: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAvailabilityColor(member.availability)}`}>
-                      {member.availability.replace('-', ' ').toUpperCase()}
-                    </span>
+                    {updatingAvailabilityStaffId === member.id ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        <span className="text-xs text-gray-500">Updating...</span>
+                      </div>
+                    ) : (
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAvailabilityColor(member.availability)}`}>
+                        {member.availability.replace('-', ' ').toUpperCase()}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditStaff(member)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Edit Staff"
+                        disabled={isSubmitting || updatingStatusStaffId !== null}
                       >
                         <i className="ri-edit-line"></i>
                       </button>
                       <button
                         onClick={() => handleAssignTeam(member)}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Assign to Team"
+                        disabled={isAssigningTeam || updatingStatusStaffId !== null}
                       >
                         <i className="ri-team-line"></i>
                       </button>
-                      <select
-                        value={member.status}
-                        onChange={(e) => handleStatusChange(member.id, e.target.value as Staff['status'])}
-                        className="text-xs border border-gray-300 rounded px-2 py-1"
-                        title="Change Status"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
+                      {updatingStatusStaffId === member.id ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        </div>
+                      ) : (
+                        <select
+                          value={member.status}
+                          onChange={(e) => handleStatusChange(member.id, e.target.value as Staff['status'])}
+                          className="text-xs border border-gray-300 rounded px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Change Status"
+                          disabled={updatingStatusStaffId !== null}
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -884,16 +924,25 @@ const StaffManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowStaffModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 {isEditing && (
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    disabled={isSubmitting}
                   >
-                    {selectedStaff ? 'Update Staff' : 'Add Staff'}
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {selectedStaff ? 'Updating...' : 'Creating...'}
+                      </>
+                    ) : (
+                      selectedStaff ? 'Update Staff' : 'Add Staff'
+                    )}
                   </button>
                 )}
               </div>
@@ -933,25 +982,32 @@ const StaffManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Team</label>
-                <select
-                  onChange={(e) => handleTeamAssignment(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">No Team</option>
-                  {teams.map(team => {
-                    const memberCount = team.member_count || 0;
-                    const isFull = memberCount >= 5;
-                    return (
-                      <option 
-                        key={team.id} 
-                        value={team.id}
-                        disabled={isFull}
-                      >
-                        {team.name} ({memberCount}/5 members){isFull ? ' - FULL' : ''}
-                      </option>
-                    );
-                  })}
-                </select>
+                {isAssigningTeam ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                    <span className="text-sm text-gray-600">Assigning team...</span>
+                  </div>
+                ) : (
+                  <select
+                    onChange={(e) => handleTeamAssignment(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">No Team</option>
+                    {teams.map(team => {
+                      const memberCount = team.member_count || 0;
+                      const isFull = memberCount >= 5;
+                      return (
+                        <option 
+                          key={team.id} 
+                          value={team.id}
+                          disabled={isFull}
+                        >
+                          {team.name} ({memberCount}/5 members){isFull ? ' - FULL' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   Teams with 5 members are at maximum capacity
                 </p>
@@ -961,7 +1017,8 @@ const StaffManagement: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowTeamAssignmentModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isAssigningTeam}
               >
                 Cancel
               </button>
