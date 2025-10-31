@@ -118,6 +118,12 @@ const AlertsManagement: React.FC = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [sendingAlertId, setSendingAlertId] = useState<number | null>(null);
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+
   // Map-related state
   const [mapCenter] = useState<[number, number]>([13.845420, 121.206189
 
@@ -147,31 +153,72 @@ const AlertsManagement: React.FC = () => {
     }
   ];
 
+  // Filter alerts based on search and filters
+  const filteredAlerts = alerts.filter(alert => {
+    // Search filter
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      const matchesSearch = 
+        alert.title.toLowerCase().includes(lowerSearch) ||
+        alert.message.toLowerCase().includes(lowerSearch) ||
+        (alert.location_text && alert.location_text.toLowerCase().includes(lowerSearch));
+      if (!matchesSearch) return false;
+    }
+
+    // Type filter
+    if (typeFilter !== 'all' && alert.type !== typeFilter) {
+      return false;
+    }
+
+    // Status filter
+    if (statusFilter !== 'all' && alert.status !== statusFilter) {
+      return false;
+    }
+
+    // Priority filter
+    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) {
+      return false;
+    }
+
+    return true;
+  });
+
   const handleExport = (format: 'csv' | 'pdf' | 'json' | 'excel') => {
-    if (!alerts.length) {
+    const alertsToExport = filteredAlerts.length > 0 ? filteredAlerts : alerts;
+    
+    if (!alertsToExport.length) {
       showToast({ type: 'warning', message: 'No data to export' });
       return;
     }
 
     try {
+      // Build dynamic export title based on filters
+      let filterTitle = 'Alerts Management Report';
+      const filterParts = [];
+      if (searchTerm) filterParts.push(`Search: "${searchTerm}"`);
+      if (typeFilter !== 'all') filterParts.push(`Type: ${typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1)}`);
+      if (statusFilter !== 'all') filterParts.push(`Status: ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`);
+      if (priorityFilter !== 'all') filterParts.push(`Priority: ${priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1)}`);
+      if (filterParts.length) filterTitle += ` (${filterParts.join(', ')})`;
+
       const options: ExportOptions = {
         filename: 'alerts_export',
-        title: 'Alerts Management Report',
+        title: filterTitle,
         includeTimestamp: true
       };
 
       switch (format) {
         case 'csv':
-          ExportUtils.exportToCSV(alerts, exportColumns, options);
+          ExportUtils.exportToCSV(alertsToExport, exportColumns, options);
           break;
         case 'pdf':
-          ExportUtils.exportToPDF(alerts, exportColumns, options);
+          ExportUtils.exportToPDF(alertsToExport, exportColumns, options);
           break;
         case 'json':
-          ExportUtils.exportToJSON(alerts, options);
+          ExportUtils.exportToJSON(alertsToExport, options);
           break;
         case 'excel':
-          ExportUtils.exportToExcel(alerts, exportColumns, options);
+          ExportUtils.exportToExcel(alertsToExport, exportColumns, options);
           break;
       }
 
@@ -530,7 +577,7 @@ const AlertsManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Emergency Alerts</p>
               <p className="text-xl font-bold text-gray-900">
-                {alerts.filter(a => a.type === 'emergency').length}
+                {filteredAlerts.filter(a => a.type === 'emergency').length}
               </p>
             </div>
           </div>
@@ -543,7 +590,7 @@ const AlertsManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Warnings</p>
               <p className="text-xl font-bold text-gray-900">
-                {alerts.filter(a => a.type === 'warning').length}
+                {filteredAlerts.filter(a => a.type === 'warning').length}
               </p>
             </div>
           </div>
@@ -556,9 +603,76 @@ const AlertsManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Sent Today</p>
               <p className="text-xl font-bold text-gray-900">
-                {alerts.filter(a => a.sent_at && new Date(a.sent_at).toDateString() === new Date().toDateString()).length}
+                {filteredAlerts.filter(a => a.sent_at && new Date(a.sent_at).toDateString() === new Date().toDateString()).length}
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters and Search */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+          <div className="flex items-center flex-wrap gap-4">
+            <div className="relative">
+              <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Search alerts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Types</option>
+              <option value="info">Information</option>
+              <option value="warning">Warning</option>
+              <option value="emergency">Emergency</option>
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="sent">Sent</option>
+              <option value="resolved">Resolved</option>
+            </select>
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Priorities</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+            {(searchTerm || typeFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setTypeFilter('all');
+                  setStatusFilter('all');
+                  setPriorityFilter('all');
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+              >
+                <i className="ri-close-line mr-1"></i>
+                Clear Filters
+              </button>
+            )}
+          </div>
+          <div className="text-sm text-gray-600">
+            Showing {filteredAlerts.length} of {alerts.length} alerts
           </div>
         </div>
       </div>
@@ -569,7 +683,18 @@ const AlertsManagement: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900">Recent Alerts</h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {alerts.map((alert) => (
+          {filteredAlerts.length === 0 ? (
+            <div className="p-12 text-center">
+              <i className="ri-inbox-line text-6xl text-gray-300 mb-4"></i>
+              <p className="text-gray-500 text-lg">No alerts found</p>
+              <p className="text-gray-400 text-sm mt-2">
+                {searchTerm || typeFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all'
+                  ? 'Try adjusting your filters'
+                  : 'Create your first alert to get started'}
+              </p>
+            </div>
+          ) : (
+            filteredAlerts.map((alert) => (
             <div key={alert.id} className="p-6 hover:bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -658,7 +783,7 @@ const AlertsManagement: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
 
@@ -1609,7 +1734,7 @@ const AlertsManagement: React.FC = () => {
           handleExport('excel');
           setShowExportModal(false);
         }}
-        data={alerts}
+        data={filteredAlerts.length > 0 ? filteredAlerts : alerts}
         columns={exportColumns}
         title="Export Alerts Data"
       />

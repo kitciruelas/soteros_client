@@ -238,7 +238,7 @@ const UserManagement: React.FC = () => {
         setSelectedUser(null);
       }
       
-      showToast({ type: 'success', message: 'User deleted successfully from database' });
+      showToast({ type: 'success', message: 'User deleted successfully' });
       setShowDeleteConfirm(false);
       setUserIdToDelete(null);
     } catch (error) {
