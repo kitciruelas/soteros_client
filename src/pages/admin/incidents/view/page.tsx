@@ -910,7 +910,35 @@ const ViewIncidents: React.FC = () => {
       {/* Incidents List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="divide-y divide-gray-200">
-          {filteredIncidents.map((incident) => (
+          {filteredIncidents.length === 0 ? (
+            <div className="text-center py-16 px-4">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-2xl flex items-center justify-center">
+                <i className="ri-inbox-line text-4xl text-gray-400"></i>
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">No incidents found</h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || startDate || endDate
+                  ? "No incidents match your current search and filter criteria. Try adjusting your search or filters."
+                  : "No incidents have been reported yet."}
+              </p>
+              {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || startDate || endDate) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                    setPriorityFilter('all');
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
+                >
+                  <i className="ri-refresh-line mr-2"></i>
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          ) : (
+            filteredIncidents.map((incident) => (
             <div key={incident.id} className="p-6 hover:bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -1048,7 +1076,8 @@ const ViewIncidents: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       </div>
 
