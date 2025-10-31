@@ -33,15 +33,17 @@ const TeamsManagement: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamIdToDelete, setTeamIdToDelete] = useState<number | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isAssigningMember, setIsAssigningMember] = useState<number | null>(null);
+  const [isRemovingMember, setIsRemovingMember] = useState<number | null>(null);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   const [formData, setFormData] = useState({
     member_no: '',
     name: '',
     description: ''
   });
-
-  const [editingMemberCount, setEditingMemberCount] = useState<number | null>(null);
-  const [editingMemberCountValue, setEditingMemberCountValue] = useState<string>('');
 
   // Helper function to get team status
   const getTeamStatus = (memberCount: number) => {
@@ -176,6 +178,7 @@ const TeamsManagement: React.FC = () => {
     e.preventDefault();
     
     try {
+      setIsSubmitting(true);
       const endpoint = selectedTeam 
         ? `/teams/${selectedTeam.id}`
         : '/teams';
@@ -198,6 +201,8 @@ const TeamsManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error saving team:', error);
       showToast({ type: 'error', message: error.message || 'Failed to save team' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -212,12 +217,16 @@ const TeamsManagement: React.FC = () => {
     
     // Fetch all staff members
     try {
+      setIsLoadingMembers(true);
       const data = await apiRequest('/staff');
       if (data.success) {
         setAllStaff(data.staff || []);
       }
     } catch (error) {
       console.error('Error fetching staff:', error);
+      showToast({ type: 'error', message: 'Failed to fetch staff members' });
+    } finally {
+      setIsLoadingMembers(false);
     }
   };
 
@@ -231,6 +240,9 @@ const TeamsManagement: React.FC = () => {
         showToast({ type: 'error', message: 'Team is at maximum capacity (5 members). Remove a member first.' });
         return;
       }
+      setIsAssigningMember(staffId);
+    } else {
+      setIsRemovingMember(staffId);
     }
     
     try {
@@ -257,6 +269,9 @@ const TeamsManagement: React.FC = () => {
     } catch (error) {
       console.error('Error assigning staff to team:', error);
       showToast({ type: 'error', message: 'Error assigning staff to team' });
+    } finally {
+      setIsAssigningMember(null);
+      setIsRemovingMember(null);
     }
   };
 
@@ -268,6 +283,7 @@ const TeamsManagement: React.FC = () => {
   const confirmDeleteTeam = async () => {
     if (teamIdToDelete == null) return;
     try {
+      setIsDeleting(true);
       const data = await apiRequest(`/teams/${teamIdToDelete}`, {
         method: 'DELETE',
       });
@@ -282,55 +298,12 @@ const TeamsManagement: React.FC = () => {
       console.error('Error deleting team:', error);
       showToast({ type: 'error', message: 'Error deleting team' });
     } finally {
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setTeamIdToDelete(null);
     }
   };
 
-  const handleMemberCountClick = (team: Team) => {
-    setEditingMemberCount(team.id);
-    setEditingMemberCountValue((team.member_count || 0).toString());
-  };
-
-  const handleMemberCountSave = async (teamId: number) => {
-    try {
-      const newCount = parseInt(editingMemberCountValue);
-      if (isNaN(newCount) || newCount < 3 || newCount > 5) {
-        showToast({ type: 'warning', message: 'Team size must be between 3 and 5 members' });
-        return;
-      }
-
-      // Update the team's member count in the database
-      const data = await apiRequest(`/teams/${teamId}/member-count`, {
-        method: 'PUT',
-        body: JSON.stringify({ member_count: newCount }),
-      });
-
-      if (data.success) {
-        // Update the local state
-        setTeams(prevTeams => 
-          prevTeams.map(team => 
-            team.id === teamId 
-              ? { ...team, member_count: newCount }
-              : team
-          )
-        );
-        setEditingMemberCount(null);
-        setEditingMemberCountValue('');
-        showToast({ type: 'success', message: 'Member count updated' });
-      } else {
-        showToast({ type: 'error', message: `Failed to update member count` });
-      }
-    } catch (error) {
-      console.error('Error updating member count:', error);
-      showToast({ type: 'error', message: 'Error updating member count' });
-    }
-  };
-
-  const handleMemberCountCancel = () => {
-    setEditingMemberCount(null);
-    setEditingMemberCountValue('');
-  };
 
   const filteredTeams = teams.filter(team => {
     const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -494,71 +467,27 @@ const TeamsManagement: React.FC = () => {
                       {team.description || 'No description'}
                     </div>
                   </td>
-                                     <td className="px-6 py-4 whitespace-nowrap">
-                     <div className="text-sm text-gray-900">
-                       {editingMemberCount === team.id ? (
-                         <div className="flex items-center space-x-2">
-                           <input
-                             type="number"
-                             min="3"
-                             max="5"
-                             value={editingMemberCountValue}
-                             onChange={(e) => setEditingMemberCountValue(e.target.value)}
-                             onBlur={() => handleMemberCountSave(team.id)}
-                             onKeyDown={(e) => {
-                               if (e.key === 'Enter') {
-                                 handleMemberCountSave(team.id);
-                               } else if (e.key === 'Escape') {
-                                 handleMemberCountCancel();
-                               }
-                             }}
-                             className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                             autoFocus
-                           />
-                           <span className="text-gray-500">
-                             {parseInt(editingMemberCountValue) === 1 ? 'member' : 'members'}
-                           </span>
-                           <div className="flex space-x-1">
-                             <button
-                               onClick={() => handleMemberCountSave(team.id)}
-                               className="text-green-600 hover:text-green-800 text-xs"
-                               title="Save"
-                             >
-                               <i className="ri-check-line"></i>
-                             </button>
-                             <button
-                               onClick={handleMemberCountCancel}
-                               className="text-red-600 hover:text-red-800 text-xs"
-                               title="Cancel"
-                             >
-                               <i className="ri-close-line"></i>
-                             </button>
-                           </div>
-                         </div>
-                       ) : (
-                         <div 
-                           onClick={() => handleMemberCountClick(team)}
-                           className={`cursor-pointer hover:bg-blue-50 px-2 py-1 rounded-md transition-colors ${
-                             (team.member_count || 0) >= 5 ? 'bg-red-50 text-red-700' : 
-                             (team.member_count || 0) >= 3 ? 'bg-green-50 text-green-700' : 
-                             'bg-yellow-50 text-yellow-700'
-                           }`}
-                           title={`Click to edit member count (3-5 members required)`}
-                         >
-                           <span className="font-medium">{team.member_count || 0}/5</span>
-                           <span className="ml-1 text-xs">
-                             {(team.member_count || 0) === 1 ? 'member' : 'members'}
-                           </span>
-                           {(team.member_count || 0) >= 5 && (
-                             <i className="ri-error-warning-line ml-1 text-xs" title="Team at maximum capacity"></i>
-                           )}
-                           {(team.member_count || 0) < 3 && (
-                             <i className="ri-alert-line ml-1 text-xs" title="Team below minimum size"></i>
-                           )}
-                         </div>
-                       )}
-                     </div>
-                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className={`px-2 py-1 rounded-md ${
+                      (team.member_count || 0) >= 5 ? 'bg-red-50 text-red-700' : 
+                      (team.member_count || 0) >= 3 ? 'bg-green-50 text-green-700' : 
+                      'bg-yellow-50 text-yellow-700'
+                    }`}>
+                      <span className="font-medium text-sm">{team.member_count || 0}/5</span>
+                      <span className="ml-1 text-xs">
+                        {(team.member_count || 0) === 1 ? 'member' : 'members'}
+                      </span>
+                      {(team.member_count || 0) >= 5 && (
+                        <i className="ri-error-warning-line ml-1 text-xs" title="Team at maximum capacity"></i>
+                      )}
+                      {(team.member_count || 0) < 3 && (
+                        <i className="ri-alert-line ml-1 text-xs" title="Team below minimum size (3 members required)"></i>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Based on assigned staff
+                      </p>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {new Date(team.created_at).toLocaleDateString()}
@@ -568,25 +497,34 @@ const TeamsManagement: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditTeam(team)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Edit Team"
+                        disabled={isSubmitting || isDeleting}
                       >
                         <i className="ri-edit-line"></i>
                       </button>
                       <button
                         onClick={() => handleManageMembers(team)}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Manage Members"
+                        disabled={isSubmitting || isDeleting}
                       >
                         <i className="ri-user-settings-line"></i>
                       </button>
-                      <button
-                        onClick={() => requestDeleteTeam(team.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete Team"
-                      >
-                        <i className="ri-delete-bin-line"></i>
-                      </button>
+                      {isDeleting && teamIdToDelete === team.id ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => requestDeleteTeam(team.id)}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete Team"
+                          disabled={isSubmitting || isDeleting}
+                        >
+                          <i className="ri-delete-bin-line"></i>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -616,9 +554,10 @@ const TeamsManagement: React.FC = () => {
                         name="member_no"
                         value={formData.member_no}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         placeholder="Enter member number"
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div>
@@ -628,9 +567,10 @@ const TeamsManagement: React.FC = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         placeholder="Enter team name"
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div>
@@ -640,8 +580,9 @@ const TeamsManagement: React.FC = () => {
                         value={formData.description}
                         onChange={handleInputChange}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         placeholder="Enter team description"
+                        disabled={isSubmitting}
                       />
                     </div>
                   </>
@@ -674,16 +615,25 @@ const TeamsManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowTeamModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
-                {isEditing && (
+                    {isEditing && (
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    disabled={isSubmitting}
                   >
-                    {selectedTeam ? 'Update Team' : 'Add Team'}
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {selectedTeam ? 'Updating...' : 'Creating...'}
+                      </>
+                    ) : (
+                      selectedTeam ? 'Update Team' : 'Add Team'
+                    )}
                   </button>
                 )}
               </div>
@@ -726,68 +676,89 @@ const TeamsManagement: React.FC = () => {
               </div>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Current Team Members */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Current Team Members</h4>
-                  <div className="space-y-2">
-                    {allStaff.filter(staff => staff.team_id === selectedTeam.id).map(staff => (
-                      <div key={staff.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900">{staff.name}</p>
-                          <p className="text-sm text-gray-600">{staff.position}</p>
-                        </div>
-                        <button
-                          onClick={() => handleAssignStaffToTeam(staff.id, false)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                    {allStaff.filter(staff => staff.team_id === selectedTeam.id).length === 0 && (
-                      <p className="text-gray-500 text-sm">No members assigned to this team</p>
-                    )}
-                  </div>
+              {isLoadingMembers ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                  <span className="text-gray-600">Loading staff members...</span>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Current Team Members */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Current Team Members</h4>
+                    <div className="space-y-2">
+                      {allStaff.filter(staff => staff.team_id === selectedTeam.id).map(staff => (
+                        <div key={staff.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">{staff.name}</p>
+                            <p className="text-sm text-gray-600">{staff.position}</p>
+                          </div>
+                          {isRemovingMember === staff.id ? (
+                            <div className="flex items-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleAssignStaffToTeam(staff.id, false)}
+                              className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={isRemovingMember !== null || isAssigningMember !== null}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {allStaff.filter(staff => staff.team_id === selectedTeam.id).length === 0 && (
+                        <p className="text-gray-500 text-sm">No members assigned to this team</p>
+                      )}
+                    </div>
+                  </div>
 
-                {/* Available Staff */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Available Staff</h4>
-                  <div className="space-y-2">
-                    {allStaff.filter(staff => !staff.team_id).map(staff => (
-                      <div key={staff.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900">{staff.name}</p>
-                          <p className="text-sm text-gray-600">{staff.position}</p>
-                          <p className="text-xs text-green-600">No team assigned</p>
+                  {/* Available Staff */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Available Staff</h4>
+                    <div className="space-y-2">
+                      {allStaff.filter(staff => !staff.team_id).map(staff => (
+                        <div key={staff.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">{staff.name}</p>
+                            <p className="text-sm text-gray-600">{staff.position}</p>
+                            <p className="text-xs text-green-600">No team assigned</p>
+                          </div>
+                          {isAssigningMember === staff.id ? (
+                            <div className="flex items-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleAssignStaffToTeam(staff.id, true)}
+                              disabled={(selectedTeam.member_count || 0) >= 5 || isRemovingMember !== null || isAssigningMember !== null}
+                              className={`text-sm ${
+                                (selectedTeam.member_count || 0) >= 5 || isRemovingMember !== null || isAssigningMember !== null
+                                  ? 'text-gray-400 cursor-not-allowed' 
+                                  : 'text-green-600 hover:text-green-800'
+                              }`}
+                              title={(selectedTeam.member_count || 0) >= 5 ? 'Team is at maximum capacity (5 members)' : 'Add to team'}
+                            >
+                              Add
+                            </button>
+                          )}
                         </div>
-                        <button
-                          onClick={() => handleAssignStaffToTeam(staff.id, true)}
-                          disabled={(selectedTeam.member_count || 0) >= 5}
-                          className={`text-sm ${
-                            (selectedTeam.member_count || 0) >= 5 
-                              ? 'text-gray-400 cursor-not-allowed' 
-                              : 'text-green-600 hover:text-green-800'
-                          }`}
-                          title={(selectedTeam.member_count || 0) >= 5 ? 'Team is at maximum capacity (5 members)' : 'Add to team'}
-                        >
-                          Add
-                        </button>
-                      </div>
-                    ))}
-                    {allStaff.filter(staff => !staff.team_id).length === 0 && (
-                      <p className="text-gray-500 text-sm">No available staff members</p>
-                    )}
+                      ))}
+                      {allStaff.filter(staff => !staff.team_id).length === 0 && (
+                        <p className="text-gray-500 text-sm">No available staff members</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowMembersModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isAssigningMember !== null || isRemovingMember !== null || isLoadingMembers}
               >
                 Close
               </button>
@@ -797,7 +768,7 @@ const TeamsManagement: React.FC = () => {
       )}
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setTeamIdToDelete(null); }}
+        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setTeamIdToDelete(null); } }}
         onConfirm={confirmDeleteTeam}
         title="Delete Team"
         message="Are you sure you want to delete this team? This action cannot be undone."
@@ -806,6 +777,8 @@ const TeamsManagement: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
+        isLoading={isDeleting}
+        loadingText="Deleting..."
       />
 
       <ExportPreviewModal
