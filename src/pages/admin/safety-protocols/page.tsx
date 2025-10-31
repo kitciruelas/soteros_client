@@ -39,6 +39,7 @@ const SafetyProtocolsManagement: React.FC = () => {
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [protocolToDelete, setProtocolToDelete] = useState<SafetyProtocol | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state for create/edit
   const [formTitle, setFormTitle] = useState('');
@@ -368,6 +369,7 @@ const SafetyProtocolsManagement: React.FC = () => {
   const confirmDeleteProtocol = async () => {
     if (!protocolToDelete) return;
     try {
+      setIsDeleting(true);
       const protocolId = Number(protocolToDelete.protocol_id ?? protocolToDelete.id);
       await safetyProtocolsApi.deleteProtocol(protocolId);
       await fetchProtocols();
@@ -376,6 +378,7 @@ const SafetyProtocolsManagement: React.FC = () => {
       console.error('Delete failed:', error);
       showToast({ type: 'error', message: 'Failed to delete protocol' });
     } finally {
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setProtocolToDelete(null);
     }
@@ -876,7 +879,7 @@ const SafetyProtocolsManagement: React.FC = () => {
       </Modal>
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setProtocolToDelete(null); }}
+        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setProtocolToDelete(null); } }}
         onConfirm={confirmDeleteProtocol}
         title="Delete Protocol"
         message={protocolToDelete ? `Are you sure you want to delete "${protocolToDelete.title}"? This action cannot be undone.` : 'Are you sure you want to delete this protocol?'}
@@ -885,6 +888,7 @@ const SafetyProtocolsManagement: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
+        isLoading={isDeleting}
       />
 
       <ExportPreviewModal
