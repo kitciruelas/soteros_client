@@ -56,6 +56,7 @@ const UserManagement: React.FC = () => {
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [allUsersForExport, setAllUsersForExport] = useState<User[]>([]);
   const [showExportPreview, setShowExportPreview] = useState(false);
 
@@ -180,16 +181,19 @@ const UserManagement: React.FC = () => {
   const confirmDeleteUser = async () => {
     if (userIdToDelete == null) return;
     try {
+      setDeleting(true);
       await userManagementApi.deleteUser(userIdToDelete);
       setUsers(prev => prev.filter(user => user.user_id !== userIdToDelete));
+      setAllUsersForExport(prev => prev.filter(user => user.user_id !== userIdToDelete));
       showToast({ type: 'success', message: 'User deleted successfully' });
+      setShowDeleteConfirm(false);
+      setUserIdToDelete(null);
     } catch (error) {
       console.error('Error deleting user:', error);
       setError('Failed to delete user');
       showToast({ type: 'error', message: 'Failed to delete user' });
     } finally {
-      setShowDeleteConfirm(false);
-      setUserIdToDelete(null);
+      setDeleting(false);
     }
   };
 
@@ -651,7 +655,12 @@ const UserManagement: React.FC = () => {
       />
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setUserIdToDelete(null); }}
+        onClose={() => { 
+          if (!deleting) {
+            setShowDeleteConfirm(false); 
+            setUserIdToDelete(null);
+          }
+        }}
         onConfirm={confirmDeleteUser}
         title="Delete User"
         message="Are you sure you want to delete this user? This action cannot be undone."
@@ -660,6 +669,7 @@ const UserManagement: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
+        isLoading={deleting}
       />
     </div>
   );
