@@ -160,19 +160,6 @@ const UserManagement: React.FC = () => {
     
     try {
       setUpdatingStatus(userId);
-      
-      // Optimistic update - update UI immediately
-      setUsers(prev => prev.map(user =>
-        user.user_id === userId ? { ...user, status: newStatus } : user
-      ));
-      setAllUsersForExport(prev => prev.map(user =>
-        user.user_id === userId ? { ...user, status: newStatus } : user
-      ));
-      
-      // Update selectedUser in modal if it's the same user
-      if (selectedUser && selectedUser.user_id === userId) {
-        setSelectedUser({ ...selectedUser, status: newStatus });
-      }
 
       // Get current admin id from auth state
       const authState = getAuthState();
@@ -180,7 +167,29 @@ const UserManagement: React.FC = () => {
 
       await userManagementApi.updateUserStatus(userId, newStatus, adminId);
 
-      showToast({ type: 'success', message: 'User status updated' });
+      // Update selectedUser in modal if it's the same user (optimistic update)
+      if (selectedUser && selectedUser.user_id === userId) {
+        setSelectedUser({ ...selectedUser, status: newStatus });
+      }
+
+      // Refetch data from server to ensure UI is in sync with database
+      await Promise.all([
+        fetchUsers(),
+        fetchAllUsersForExportData()
+      ]);
+
+      // Update selectedUser again after refetch to ensure it has latest data
+      if (selectedUser && selectedUser.user_id === userId) {
+        setUsers(currentUsers => {
+          const updatedUser = currentUsers.find(u => u.user_id === userId);
+          if (updatedUser) {
+            setSelectedUser({ ...updatedUser });
+          }
+          return currentUsers;
+        });
+      }
+
+      showToast({ type: 'success', message: 'User status updated successfully' });
     } catch (error) {
       console.error('Error updating user status:', error);
       
@@ -217,14 +226,19 @@ const UserManagement: React.FC = () => {
       setDeleting(true);
       await userManagementApi.deleteUser(userIdToDelete);
       
-      // Remove from UI lists immediately (backend does soft delete - sets status to 0)
-      setUsers(prev => prev.filter(user => user.user_id !== userIdToDelete));
-      setAllUsersForExport(prev => prev.filter(user => user.user_id !== userIdToDelete));
+      // Refetch data from server to ensure UI is in sync with database
+      await Promise.all([
+        fetchUsers(),
+        fetchAllUsersForExportData()
+      ]);
       
-      // Update total count
-      setTotalUsers(prev => Math.max(0, prev - 1));
+      // Close modal if the deleted user was being viewed
+      if (selectedUser && selectedUser.user_id === userIdToDelete) {
+        setShowUserModal(false);
+        setSelectedUser(null);
+      }
       
-      showToast({ type: 'success', message: 'User deleted successfully' });
+      showToast({ type: 'success', message: 'User deleted successfully from database' });
       setShowDeleteConfirm(false);
       setUserIdToDelete(null);
     } catch (error) {
