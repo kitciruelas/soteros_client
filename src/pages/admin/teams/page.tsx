@@ -176,21 +176,16 @@ const TeamsManagement: React.FC = () => {
     e.preventDefault();
     
     try {
-      const url = selectedTeam 
-        ? `/api/teams/${selectedTeam.id}`
-        : '/api/teams';
+      const endpoint = selectedTeam 
+        ? `/teams/${selectedTeam.id}`
+        : '/teams';
       
       const method = selectedTeam ? 'PUT' : 'POST';
       
-      const response = await fetch(url, {
+      const data = await apiRequest(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData),
       });
-      
-      const data = await response.json();
       
       if (data.success) {
         setShowTeamModal(false);
@@ -198,11 +193,11 @@ const TeamsManagement: React.FC = () => {
         showToast({ type: 'success', message: selectedTeam ? 'Team updated successfully' : 'Team added successfully' });
       } else {
         console.error('Failed to save team:', data.message);
-        showToast({ type: 'error', message: 'Failed to save team' });
+        showToast({ type: 'error', message: data.message || 'Failed to save team' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving team:', error);
-      showToast({ type: 'error', message: 'Failed to save team' });
+      showToast({ type: 'error', message: error.message || 'Failed to save team' });
     }
   };
 
