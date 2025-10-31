@@ -96,6 +96,7 @@ const EvacuationResourcesPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [error, setError] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     type: 'facility' as 'facility' | 'feature' | 'water' | 'supply',
     name: '',
@@ -282,6 +283,7 @@ const EvacuationResourcesPage: React.FC = () => {
   const confirmDelete = async () => {
     if (!selectedCenter || resourceIdToDelete == null) return;
     try {
+      setIsDeleting(true);
       setError('');
       await evacuationCentersApi.deleteResource(selectedCenter, resourceIdToDelete);
       await loadResourcesForCenter(selectedCenter);
@@ -291,6 +293,7 @@ const EvacuationResourcesPage: React.FC = () => {
       setError('Failed to delete resource. Please try again.');
       showToast({ type: 'error', message: 'Failed to delete resource' });
     } finally {
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setResourceIdToDelete(null);
     }
@@ -922,7 +925,7 @@ const EvacuationResourcesPage: React.FC = () => {
       )}
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setResourceIdToDelete(null); }}
+        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setResourceIdToDelete(null); } }}
         onConfirm={confirmDelete}
         title="Delete Resource"
         message="Are you sure you want to delete this resource? This action cannot be undone."
@@ -931,7 +934,7 @@ const EvacuationResourcesPage: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
-        isLoading={submitting}
+        isLoading={isDeleting}
       />
 
       {/* Image Modal */}

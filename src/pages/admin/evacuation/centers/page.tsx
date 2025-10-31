@@ -106,6 +106,7 @@ const EvacuationCentersManagement: React.FC = () => {
   const [formData, setFormData] = useState<Partial<EvacuationCenter>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const [showMapPicker, setShowMapPicker] = useState<boolean>(false);
 
@@ -274,6 +275,7 @@ const EvacuationCentersManagement: React.FC = () => {
     if (!selectedCenter) return;
 
     try {
+      setIsDeleting(true);
       await evacuationCentersApi.deleteCenter(selectedCenter.center_id);
       setCenters(prev => prev.filter(c => c.center_id !== selectedCenter.center_id));
       setShowDeleteModal(false);
@@ -290,6 +292,8 @@ const EvacuationCentersManagement: React.FC = () => {
         title: "Error",
         message: "Failed to delete evacuation center. Please try again.",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -826,7 +830,7 @@ const EvacuationCentersManagement: React.FC = () => {
         {/* Delete Confirmation Modal */}
         <ConfirmModal
           isOpen={showDeleteModal}
-          onClose={() => { setShowDeleteModal(false); setSelectedCenter(null); }}
+          onClose={() => { if (!isDeleting) { setShowDeleteModal(false); setSelectedCenter(null); } }}
           onConfirm={handleDelete}
           title="Delete Evacuation Center"
           message={`Are you sure you want to delete the evacuation center "${selectedCenter?.name}"? This action cannot be undone.`}
@@ -835,7 +839,7 @@ const EvacuationCentersManagement: React.FC = () => {
           confirmVariant="secondary"
           icon="ri-delete-bin-line"
           iconColor="text-red-600"
-          isLoading={submitting}
+          isLoading={isDeleting}
         />
 
         {/* Export Modal */}

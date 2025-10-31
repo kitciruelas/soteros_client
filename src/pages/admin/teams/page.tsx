@@ -32,6 +32,7 @@ const TeamsManagement: React.FC = () => {
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamIdToDelete, setTeamIdToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -273,6 +274,7 @@ const TeamsManagement: React.FC = () => {
   const confirmDeleteTeam = async () => {
     if (teamIdToDelete == null) return;
     try {
+      setIsDeleting(true);
       const data = await apiRequest(`/teams/${teamIdToDelete}`, {
         method: 'DELETE',
       });
@@ -287,6 +289,7 @@ const TeamsManagement: React.FC = () => {
       console.error('Error deleting team:', error);
       showToast({ type: 'error', message: 'Error deleting team' });
     } finally {
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setTeamIdToDelete(null);
     }
@@ -802,7 +805,7 @@ const TeamsManagement: React.FC = () => {
       )}
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setTeamIdToDelete(null); }}
+        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setTeamIdToDelete(null); } }}
         onConfirm={confirmDeleteTeam}
         title="Delete Team"
         message="Are you sure you want to delete this team? This action cannot be undone."
@@ -811,6 +814,7 @@ const TeamsManagement: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
+        isLoading={isDeleting}
       />
 
       <ExportPreviewModal

@@ -134,6 +134,7 @@ export default function AdminWelfareManagement() {
   const [error, setError] = useState<string | null>(null)
   const [showActivateConfirm, setShowActivateConfirm] = useState(false)
   const [settingToActivate, setSettingToActivate] = useState<WelfareSettings | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -326,7 +327,7 @@ export default function AdminWelfareManagement() {
     }
 
     try {
-      setIsSaving(true)
+      setIsDeleting(true)
       console.log('Deleting welfare settings with ID:', setting.id)
       const response = await apiRequest('/admin/welfare/settings', {
         method: 'DELETE',
@@ -347,7 +348,7 @@ export default function AdminWelfareManagement() {
       console.error('Error deleting settings:', error)
       showToast({ type: 'error', message: error.message || 'Failed to delete settings. Please check if the backend server is running.' })
     } finally {
-      setIsSaving(false)
+      setIsDeleting(false)
     }
   }
 
@@ -1095,7 +1096,7 @@ export default function AdminWelfareManagement() {
       {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setSelectedSetting(null); }}
+        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setSelectedSetting(null); } }}
         onConfirm={() => selectedSetting && handleDeleteSettings(selectedSetting)}
         title="Delete Welfare Settings"
         message={`Are you sure you want to delete the welfare check settings for "${selectedSetting?.title}"? This action cannot be undone.`}
@@ -1104,7 +1105,7 @@ export default function AdminWelfareManagement() {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
-        isLoading={isSaving}
+        isLoading={isDeleting}
       />
 
       {/* Activate Confirmation Modal */}
