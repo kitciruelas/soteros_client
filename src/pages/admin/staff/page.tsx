@@ -3,7 +3,6 @@ import ExportUtils from '../../../utils/exportUtils';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import type { ExportColumn } from '../../../utils/exportUtils';
 import { useToast } from '../../../components/base/Toast';
-import { ConfirmModal } from '../../../components/base/Modal';
 import PhoneInput, { formatPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { apiRequest } from '../../../utils/api';
@@ -100,9 +99,6 @@ const StaffManagement: React.FC = () => {
   const { showToast } = useToast();
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [staffIdToDelete, setStaffIdToDelete] = useState<number | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchStaff();
@@ -377,35 +373,6 @@ const StaffManagement: React.FC = () => {
     } catch (error) {
       console.error('Error assigning staff to team:', error);
       showToast({ type: 'error', message: 'Error assigning staff to team' });
-    }
-  };
-
-  const requestDeleteStaff = (staffId: number) => {
-    setStaffIdToDelete(staffId);
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteStaff = async () => {
-    if (staffIdToDelete == null) return;
-    try {
-      setIsDeleting(true);
-      const data = await apiRequest(`/staff/${staffIdToDelete}`, {
-        method: 'DELETE',
-      });
-      if (data.success) {
-        fetchStaff();
-        showToast({ type: 'success', message: 'Staff deleted successfully' });
-      } else {
-        console.error('Failed to delete staff:', data.message);
-        showToast({ type: 'error', message: 'Failed to delete staff' });
-      }
-    } catch (error) {
-      console.error('Error deleting staff:', error);
-      showToast({ type: 'error', message: 'Error deleting staff' });
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      setStaffIdToDelete(null);
     }
   };
 
@@ -881,13 +848,6 @@ const StaffManagement: React.FC = () => {
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                       </select>
-                      <button
-                        onClick={() => requestDeleteStaff(member.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete Staff"
-                      >
-                        <i className="ri-delete-bin-line"></i>
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1009,20 +969,6 @@ const StaffManagement: React.FC = () => {
           </div>
         </div>
       )}
-      
-      <ConfirmModal
-        isOpen={showDeleteConfirm}
-        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setStaffIdToDelete(null); } }}
-        onConfirm={confirmDeleteStaff}
-        title="Delete Staff"
-        message="Are you sure you want to delete this staff member? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        confirmVariant="secondary"
-        icon="ri-delete-bin-line"
-        iconColor="text-red-600"
-        isLoading={isDeleting}
-      />
     </div>
   );
 };

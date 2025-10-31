@@ -842,15 +842,12 @@ const SafetyProtocolsManagement: React.FC = () => {
                         htmlFor="file-upload"
                         className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-700 focus-within:outline-none"
                       >
-                        <span>Click to upload files</span>
+                        <span>Click to upload images</span>
                       </label>
                       <p className="pl-1">or drag and drop</p>
                     </div>
-                    <p className="text-xs text-gray-500">PDF, DOC, Images up to 10MB each</p>
-                    <div className="space-y-1">
-                      <p className="text-xs text-blue-600 font-medium">✨ You can select multiple files at once!</p>
-                      <p className="text-xs text-gray-500 italic">💡 Hold Ctrl (Windows) or Cmd (Mac) to select multiple files</p>
-                    </div>
+                    <p className="text-xs text-gray-500">Images (JPG, PNG, GIF, WEBP) up to 10MB each</p>
+                 
                     {uploading && (
                       <div className="flex items-center justify-center text-sm text-blue-600 pt-2">
                         <i className="ri-loader-4-line animate-spin mr-2"></i>

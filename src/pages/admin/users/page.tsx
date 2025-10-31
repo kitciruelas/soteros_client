@@ -56,7 +56,6 @@ const UserManagement: React.FC = () => {
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [allUsersForExport, setAllUsersForExport] = useState<User[]>([]);
   const [showExportPreview, setShowExportPreview] = useState(false);
 
@@ -181,7 +180,6 @@ const UserManagement: React.FC = () => {
   const confirmDeleteUser = async () => {
     if (userIdToDelete == null) return;
     try {
-      setIsDeleting(true);
       await userManagementApi.deleteUser(userIdToDelete);
       setUsers(prev => prev.filter(user => user.user_id !== userIdToDelete));
       showToast({ type: 'success', message: 'User deleted successfully' });
@@ -190,7 +188,6 @@ const UserManagement: React.FC = () => {
       setError('Failed to delete user');
       showToast({ type: 'error', message: 'Failed to delete user' });
     } finally {
-      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setUserIdToDelete(null);
     }
@@ -654,7 +651,7 @@ const UserManagement: React.FC = () => {
       />
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setUserIdToDelete(null); } }}
+        onClose={() => { setShowDeleteConfirm(false); setUserIdToDelete(null); }}
         onConfirm={confirmDeleteUser}
         title="Delete User"
         message="Are you sure you want to delete this user? This action cannot be undone."
@@ -663,7 +660,6 @@ const UserManagement: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
-        isLoading={isDeleting}
       />
     </div>
   );
