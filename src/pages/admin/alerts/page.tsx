@@ -371,6 +371,7 @@ const AlertsManagement: React.FC = () => {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [alertIdToDelete, setAlertIdToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const requestDeleteAlert = (alertId: number) => {
     setAlertIdToDelete(alertId);
@@ -380,6 +381,7 @@ const AlertsManagement: React.FC = () => {
   const confirmDeleteAlert = async () => {
     if (alertIdToDelete == null) return;
     try {
+      setIsDeleting(true);
       const data = await alertsApi.deleteAlert(alertIdToDelete);
       if (data.success) {
         await fetchAlerts();
@@ -391,6 +393,7 @@ const AlertsManagement: React.FC = () => {
       console.error('Error deleting alert:', error);
       showToast({ type: 'error', message: 'Error deleting alert' });
     } finally {
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setAlertIdToDelete(null);
     }
@@ -1502,7 +1505,12 @@ const AlertsManagement: React.FC = () => {
       )}
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setAlertIdToDelete(null); }}
+        onClose={() => { 
+          if (!isDeleting) {
+            setShowDeleteConfirm(false); 
+            setAlertIdToDelete(null); 
+          }
+        }}
         onConfirm={confirmDeleteAlert}
         title="Delete Alert"
         message="Are you sure you want to delete this alert? This action cannot be undone."
@@ -1511,6 +1519,7 @@ const AlertsManagement: React.FC = () => {
         confirmVariant="secondary"
         icon="ri-delete-bin-line"
         iconColor="text-red-600"
+        isLoading={isDeleting}
       />
 
       <ExportPreviewModal
