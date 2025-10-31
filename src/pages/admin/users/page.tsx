@@ -57,6 +57,7 @@ const UserManagement: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [allUsersForExport, setAllUsersForExport] = useState<User[]>([]);
   const [showExportPreview, setShowExportPreview] = useState(false);
 
@@ -154,22 +155,54 @@ const UserManagement: React.FC = () => {
   };
 
   const handleStatusChange = async (userId: number, newStatus: number) => {
+    // Get previous status before updating
+    const previousStatus = users.find(u => u.user_id === userId)?.status;
+    
     try {
+      setUpdatingStatus(userId);
+      
+      // Optimistic update - update UI immediately
+      setUsers(prev => prev.map(user =>
+        user.user_id === userId ? { ...user, status: newStatus } : user
+      ));
+      setAllUsersForExport(prev => prev.map(user =>
+        user.user_id === userId ? { ...user, status: newStatus } : user
+      ));
+      
+      // Update selectedUser in modal if it's the same user
+      if (selectedUser && selectedUser.user_id === userId) {
+        setSelectedUser({ ...selectedUser, status: newStatus });
+      }
+
       // Get current admin id from auth state
       const authState = getAuthState();
       const adminId = authState.userData?.admin_id;
 
       await userManagementApi.updateUserStatus(userId, newStatus, adminId);
 
-      // Update local state
-      setUsers(prev => prev.map(user =>
-        user.user_id === userId ? { ...user, status: newStatus } : user
-      ));
       showToast({ type: 'success', message: 'User status updated' });
     } catch (error) {
       console.error('Error updating user status:', error);
+      
+      // Revert optimistic update on error
+      if (previousStatus !== undefined) {
+        setUsers(prev => prev.map(user =>
+          user.user_id === userId ? { ...user, status: previousStatus } : user
+        ));
+        setAllUsersForExport(prev => prev.map(user =>
+          user.user_id === userId ? { ...user, status: previousStatus } : user
+        ));
+        
+        // Revert selectedUser in modal if it's the same user
+        if (selectedUser && selectedUser.user_id === userId) {
+          setSelectedUser({ ...selectedUser, status: previousStatus });
+        }
+      }
+      
       setError('Failed to update user status');
       showToast({ type: 'error', message: 'Failed to update user status' });
+    } finally {
+      setUpdatingStatus(null);
     }
   };
 
@@ -183,8 +216,14 @@ const UserManagement: React.FC = () => {
     try {
       setDeleting(true);
       await userManagementApi.deleteUser(userIdToDelete);
+      
+      // Remove from UI lists immediately (backend does soft delete - sets status to 0)
       setUsers(prev => prev.filter(user => user.user_id !== userIdToDelete));
       setAllUsersForExport(prev => prev.filter(user => user.user_id !== userIdToDelete));
+      
+      // Update total count
+      setTotalUsers(prev => Math.max(0, prev - 1));
+      
       showToast({ type: 'success', message: 'User deleted successfully' });
       setShowDeleteConfirm(false);
       setUserIdToDelete(null);
@@ -463,11 +502,19 @@ const UserManagement: React.FC = () => {
                       <select
                         value={user.status}
                         onChange={(e) => handleStatusChange(user.user_id, parseInt(e.target.value))}
-                        className="text-xs border border-gray-300 rounded px-2 py-1"
+                        disabled={updatingStatus === user.user_id}
+                        className={`text-xs border border-gray-300 rounded px-2 py-1 ${
+                          updatingStatus === user.user_id ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                       >
                         <option value={1}>Active</option>
                         <option value={0}>Inactive</option>
                       </select>
+                      {updatingStatus === user.user_id && (
+                        <div className="inline-block ml-1">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                        </div>
+                      )}
                       <button
                         onClick={() => requestDeleteUser(user.user_id)}
                         className="text-red-600 hover:text-red-900 ml-2"
