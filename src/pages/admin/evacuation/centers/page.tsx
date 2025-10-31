@@ -608,8 +608,21 @@ const EvacuationCentersManagement: React.FC = () => {
 
         {/* Create/Edit Modal */}
         {(showCreateModal || showEditModal) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] shadow-2xl flex flex-col">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => {
+              if (!submitting) {
+                setShowCreateModal(false);
+                setShowEditModal(false);
+                setFormData({});
+                setErrors({});
+              }
+            }}
+          >
+            <div 
+              className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] shadow-2xl flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Fixed Header */}
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -617,12 +630,15 @@ const EvacuationCentersManagement: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => {
-                    setShowCreateModal(false);
-                    setShowEditModal(false);
-                    setFormData({});
-                    setErrors({});
+                    if (!submitting) {
+                      setShowCreateModal(false);
+                      setShowEditModal(false);
+                      setFormData({});
+                      setErrors({});
+                    }
                   }}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  disabled={submitting}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Close"
                 >
                   <XIcon className="w-5 h-5" />
@@ -643,7 +659,8 @@ const EvacuationCentersManagement: React.FC = () => {
                           value={formData.name || ''}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           placeholder="Enter evacuation center name"
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          disabled={submitting}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
                             errors.name ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
@@ -689,7 +706,8 @@ const EvacuationCentersManagement: React.FC = () => {
                               value={formData.latitude || ''}
                               onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
                               placeholder="e.g., 13.7565"
-                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                              disabled={submitting}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                 errors.latitude ? 'border-red-500' : 'border-gray-300'
                               }`}
                             />
@@ -704,7 +722,8 @@ const EvacuationCentersManagement: React.FC = () => {
                               value={formData.longitude || ''}
                               onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
                               placeholder="e.g., 121.3851"
-                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                              disabled={submitting}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                 errors.longitude ? 'border-red-500' : 'border-gray-300'
                               }`}
                             />
@@ -732,7 +751,8 @@ const EvacuationCentersManagement: React.FC = () => {
                           value={formData.capacity || ''}
                           onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
                           placeholder="Enter maximum capacity"
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          disabled={submitting}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
                             errors.capacity ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
@@ -747,7 +767,8 @@ const EvacuationCentersManagement: React.FC = () => {
                           value={formData.current_occupancy || ''}
                           onChange={(e) => setFormData({ ...formData, current_occupancy: parseInt(e.target.value) })}
                           placeholder="Enter current occupancy"
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          disabled={submitting}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
                             errors.current_occupancy ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
@@ -759,7 +780,8 @@ const EvacuationCentersManagement: React.FC = () => {
                         <select
                           value={formData.status || 'open'}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value as 'open' | 'full' | 'closed' })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={submitting}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                           <option value="open">Open</option>
                           <option value="full">Full</option>
@@ -783,7 +805,8 @@ const EvacuationCentersManagement: React.FC = () => {
                           value={formData.contact_person || ''}
                           onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
                           placeholder="Enter contact person name"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={submitting}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                       </div>
 
@@ -794,7 +817,8 @@ const EvacuationCentersManagement: React.FC = () => {
                           value={formData.contact_number || ''}
                           onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
                           placeholder="Enter contact number"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={submitting}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                       </div>
                     </div>
@@ -806,21 +830,33 @@ const EvacuationCentersManagement: React.FC = () => {
               <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 bg-gray-50">
                 <button
                   onClick={() => {
-                    setShowCreateModal(false);
-                    setShowEditModal(false);
-                    setFormData({});
-                    setErrors({});
+                    if (!submitting) {
+                      setShowCreateModal(false);
+                      setShowEditModal(false);
+                      setFormData({});
+                      setErrors({});
+                    }
                   }}
-                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  disabled={submitting}
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={showCreateModal ? handleCreate : handleUpdate}
                   disabled={submitting}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
                 >
-                  {submitting ? 'Saving...' : (showCreateModal ? 'Create Center' : 'Update Center')}
+                  {submitting ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin mr-2"></i>
+                      {showCreateModal ? 'Creating...' : 'Updating...'}
+                    </>
+                  ) : (
+                    <>
+                      {showCreateModal ? 'Create Center' : 'Update Center'}
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -840,6 +876,7 @@ const EvacuationCentersManagement: React.FC = () => {
           icon="ri-delete-bin-line"
           iconColor="text-red-600"
           isLoading={isDeleting}
+          loadingText="Deleting..."
         />
 
         {/* Export Modal */}
