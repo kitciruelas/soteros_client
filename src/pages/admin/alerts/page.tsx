@@ -265,6 +265,8 @@ const AlertsManagement: React.FC = () => {
         return;
       }
 
+      setIsCreating(true);
+
       const alertData = {
         title: newAlert.title,
         message: newAlert.message,
@@ -303,6 +305,8 @@ const AlertsManagement: React.FC = () => {
     } catch (error) {
       console.error('Error creating alert:', error);
       showToast({ type: 'error', message: 'Error creating alert' });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -318,6 +322,8 @@ const AlertsManagement: React.FC = () => {
         showToast({ type: 'warning', message: 'Please specify alert radius' });
         return;
       }
+
+      setIsUpdating(true);
 
       const alertData = {
         title: editAlert.title,
@@ -346,6 +352,8 @@ const AlertsManagement: React.FC = () => {
     } catch (error) {
       console.error('Error updating alert:', error);
       showToast({ type: 'error', message: 'Error updating alert' });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -372,6 +380,8 @@ const AlertsManagement: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [alertIdToDelete, setAlertIdToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const requestDeleteAlert = (alertId: number) => {
     setAlertIdToDelete(alertId);
@@ -654,8 +664,18 @@ const AlertsManagement: React.FC = () => {
 
       {/* Create Alert Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            if (!isCreating) {
+              setShowCreateModal(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Fixed Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -668,8 +688,13 @@ const AlertsManagement: React.FC = () => {
                 </div>
               </div>
               <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                onClick={() => {
+                  if (!isCreating) {
+                    setShowCreateModal(false);
+                  }
+                }}
+                disabled={isCreating}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Close"
               >
                 <i className="ri-close-line text-xl"></i>
@@ -1060,18 +1085,32 @@ const AlertsManagement: React.FC = () => {
               </div>
               <div className="flex space-x-3">
                 <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  onClick={() => {
+                    if (!isCreating) {
+                      setShowCreateModal(false);
+                    }
+                  }}
+                  disabled={isCreating}
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateAlert}
-                  disabled={!newAlert.title || !newAlert.message}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                  disabled={!newAlert.title || !newAlert.message || isCreating}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
                 >
-                  <i className="ri-add-line mr-2"></i>
-                  Create Alert
+                  {isCreating ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin mr-2"></i>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-add-line mr-2"></i>
+                      Create Alert
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1081,8 +1120,18 @@ const AlertsManagement: React.FC = () => {
 
       {/* Edit Alert Modal */}
       {showEditModal && editAlert && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            if (!isUpdating) {
+              setShowEditModal(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Fixed Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -1095,8 +1144,13 @@ const AlertsManagement: React.FC = () => {
                 </div>
               </div>
               <button
-                onClick={() => setShowEditModal(false)}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                onClick={() => {
+                  if (!isUpdating) {
+                    setShowEditModal(false);
+                  }
+                }}
+                disabled={isUpdating}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Close"
               >
                 <i className="ri-close-line text-xl"></i>
@@ -1120,6 +1174,7 @@ const AlertsManagement: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter alert title"
                       required
+                      disabled={isUpdating}
                     />
                   </div>
                   {/* Alert Type */}
@@ -1487,18 +1542,32 @@ const AlertsManagement: React.FC = () => {
               </div>
               <div className="flex space-x-3">
                 <button
-                  onClick={() => setShowEditModal(false)}
-                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  onClick={() => {
+                    if (!isUpdating) {
+                      setShowEditModal(false);
+                    }
+                  }}
+                  disabled={isUpdating}
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleEditAlert}
-                  disabled={!editAlert.title || !editAlert.message}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                  disabled={!editAlert.title || !editAlert.message || isUpdating}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
                 >
-                  <i className="ri-save-line mr-2"></i>
-                  Update Alert
+                  {isUpdating ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin mr-2"></i>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-save-line mr-2"></i>
+                      Update Alert
+                    </>
+                  )}
                 </button>
               </div>
             </div>
