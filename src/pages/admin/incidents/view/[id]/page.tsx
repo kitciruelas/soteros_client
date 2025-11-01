@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { incidentsApi } from '../../../../utils/api';
-import IncidentMapModal from '../../../../components/IncidentMapModal';
+import { incidentsApi } from '../../../../../utils/api';
+import IncidentMapModal from '../../../../../components/IncidentMapModal';
 
 interface Incident {
   id: number;
