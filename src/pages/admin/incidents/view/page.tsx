@@ -1154,7 +1154,13 @@ const ViewIncidents: React.FC = () => {
                         <span className="ml-1 text-xs">(Rejected)</span>
                       )}
                     </span>
-
+                    {/* Reporter Badge - Prominently displayed */}
+                    {newIncidentIds.has(incident.id) && (
+                      <span className="px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg flex items-center space-x-1">
+                        <i className="ri-user-line"></i>
+                        <span>{incident.reportedBy}</span>
+                      </span>
+                    )}
                   </div>
                   <p className="text-gray-600 mb-3">{incident.description}</p>
                   <div className="flex items-center text-sm text-gray-500 space-x-4">
@@ -1162,14 +1168,22 @@ const ViewIncidents: React.FC = () => {
                       <i className="ri-map-pin-line mr-1"></i>
                       {incident.location}
                     </span>
-                    <span>
-                      <i className="ri-user-line mr-1"></i>
-                      Reported by: {incident.reportedBy}
-                    </span>
+                    {!newIncidentIds.has(incident.id) && (
+                      <span>
+                        <i className="ri-user-line mr-1"></i>
+                        Reported by: {incident.reportedBy}
+                      </span>
+                    )}
                     <span>
                       <i className="ri-time-line mr-1"></i>
                       {new Date(incident.dateReported).toLocaleString()}
                     </span>
+                    {newIncidentIds.has(incident.id) && incident.reporterPhone && (
+                      <span className="text-blue-600 font-medium">
+                        <i className="ri-phone-line mr-1"></i>
+                        {incident.reporterPhone}
+                      </span>
+                    )}
                     {incident.allAssignedTeams && (
                       <span className="text-green-600">
                         <i className="ri-team-line mr-1"></i>
