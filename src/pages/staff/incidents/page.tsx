@@ -538,17 +538,13 @@ const StaffIncidentsPage: React.FC = () => {
     } catch (error) {
       console.error("❌ Error updating incident:", error)
 
-      // Show error notification with more details
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Failed to update incident"
-      
+      // Show error notification
       const notificationId = Date.now().toString()
       setNotifications((prev) => [
         ...prev,
         {
           id: notificationId,
-          message: errorMessage,
+          message: "Failed to update incident",
           type: "error",
         },
       ])

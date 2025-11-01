@@ -116,17 +116,6 @@ export const getAuthToken = (): string | null => {
     console.log('No adminToken found in localStorage');
   }
   
-  // Check for staff token (legacy support)
-  const staffToken = localStorage.getItem('staffToken');
-  if (staffToken && staffToken.length > 10) {
-    console.log('Using legacy staffToken, length:', staffToken.length);
-    return staffToken;
-  } else if (staffToken) {
-    console.warn('staffToken found but too short:', staffToken.length);
-  } else {
-    console.log('No staffToken found in localStorage');
-  }
-  
   // Check for regular user token (legacy support)
   const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
   if (userToken && userToken.length > 10) {
@@ -150,15 +139,6 @@ export const clearAuthDataOnError = (): void => {
   localStorage.removeItem('userInfo');
   sessionStorage.removeItem('userInfo');
   localStorage.removeItem('adminToken');
-  localStorage.removeItem('staffToken');
-  localStorage.removeItem('token');
-  localStorage.removeItem('userToken');
-  localStorage.removeItem('user');
-  localStorage.removeItem('admin');
-  localStorage.removeItem('staff');
-  sessionStorage.removeItem('user');
-  sessionStorage.removeItem('admin');
-  sessionStorage.removeItem('staff');
   
   // Dispatch event to notify components
   window.dispatchEvent(new Event('authStateChanged'));
@@ -177,21 +157,6 @@ const createHeaders = (): HeadersInit => {
     headers['Authorization'] = `Bearer ${token}`;
     console.log('Authorization header set with token');
   } else {
-    console.warn('⚠️ No auth token found - request will be unauthenticated');
-    // Check what's in storage for debugging
-    const userInfo = localStorage.getItem('userInfo');
-    if (userInfo) {
-      try {
-        const parsed = JSON.parse(userInfo);
-        console.warn('userInfo found but token missing:', {
-          hasToken: !!parsed.token,
-          userType: parsed.userType || parsed.role,
-          keys: Object.keys(parsed)
-        });
-      } catch (e) {
-        console.error('Error parsing userInfo for debugging:', e);
-      }
-    }
   }
   
   return headers;
