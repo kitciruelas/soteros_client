@@ -776,7 +776,7 @@ export default function AdminWelfareManagement() {
               <div className="space-y-4">
                   <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                      System Title
+                      Title
                     </label>
                     <input
                       type="text"

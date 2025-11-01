@@ -96,6 +96,7 @@ export default function WelfareReportsPage() {
   const [allSettings, setAllSettings] = useState<WelfareSettings[]>([])
   const [showReportsExportPreview, setShowReportsExportPreview] = useState(false)
   const [selectedSettingId, setSelectedSettingId] = useState<string>('')
+  const [selectedStatus, setSelectedStatus] = useState<string>('')
 
   const fetchAllSettings = useCallback(async () => {
     try {
@@ -109,11 +110,16 @@ export default function WelfareReportsPage() {
     }
   }, [])
 
-  const fetchReports = useCallback(async (settingId?: number) => {
+  const fetchReports = useCallback(async (settingId?: number, status?: string) => {
     try {
       setReportsLoading(true)
-      console.log('Fetching welfare reports for setting ID:', settingId)
-      const url = settingId ? `/admin/welfare/reports?setting_id=${settingId}` : '/admin/welfare/reports'
+      console.log('Fetching welfare reports for setting ID:', settingId, 'status:', status)
+      
+      const params = new URLSearchParams()
+      if (settingId) params.append('setting_id', settingId.toString())
+      if (status && status !== '') params.append('status', status)
+      
+      const url = params.toString() ? `/admin/welfare/reports?${params.toString()}` : '/admin/welfare/reports'
       const response = await apiRequest(url)
       console.log('Welfare reports response:', response)
       
@@ -137,13 +143,18 @@ export default function WelfareReportsPage() {
   useEffect(() => {
     if (allSettings.length > 0) {
       const settingId = searchParams.get('setting_id');
+      const status = searchParams.get('status') || '';
+      
+      setSelectedSettingId(settingId || '');
+      setSelectedStatus(status);
+      
+      const parsedSettingId = settingId ? parseInt(settingId) : undefined;
+      fetchReports(parsedSettingId, status || undefined);
+      
       if (settingId) {
-        setSelectedSettingId(settingId);
-        fetchReports(parseInt(settingId));
         const setting = allSettings.find(s => s.id === parseInt(settingId));
         setSelectedSettingForReports(setting || null);
       } else {
-        fetchReports();
         setSelectedSettingForReports(null);
       }
     }
@@ -153,7 +164,12 @@ export default function WelfareReportsPage() {
     try {
       console.log('🔍 Fetching all welfare reports');
 
-      const response = await apiRequest('/admin/welfare/reports');
+      const params = new URLSearchParams()
+      if (selectedSettingId) params.append('setting_id', selectedSettingId)
+      if (selectedStatus && selectedStatus !== '') params.append('status', selectedStatus)
+
+      const url = params.toString() ? `/admin/welfare/reports?${params.toString()}` : '/admin/welfare/reports'
+      const response = await apiRequest(url);
 
       if (response.success) {
         console.log('✅ Successfully fetched', response.reports?.length || 0, 'reports for export');
@@ -224,38 +240,70 @@ export default function WelfareReportsPage() {
             title={reports.length === 0 ? 'No data to export' : 'Export reports'}
           >
             <i className="ri-download-line mr-2"></i>
-            Export ({reports.length})
+            Export ({reports.length}{selectedStatus && ` - ${selectedStatus === 'safe' ? 'Safe' : 'Needs Help'}`})
           </button>
         </div>
       </div>
 
-      {/* Filter by Setting */}
+      {/* Filter Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">Filter by Setting:</label>
-          <select
-            value={selectedSettingId}
-            onChange={(e) => {
-              const settingId = e.target.value
-              setSelectedSettingId(settingId)
-              const parsedId = settingId ? parseInt(settingId) : undefined
-              fetchReports(parsedId)
-              // Update URL without navigation
-              if (settingId) {
-                navigate(`/admin/welfare/reports?setting_id=${settingId}`, { replace: true })
-              } else {
-                navigate('/admin/welfare/reports', { replace: true })
-              }
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">All Settings</option>
-            {allSettings.map((setting) => (
-              <option key={setting.id} value={setting.id}>
-                {setting.title}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Filter by Setting:</label>
+            <select
+              value={selectedSettingId}
+              onChange={(e) => {
+                const settingId = e.target.value
+                setSelectedSettingId(settingId)
+                const parsedId = settingId ? parseInt(settingId) : undefined
+                
+                // Update URL params
+                const params = new URLSearchParams()
+                if (settingId) params.append('setting_id', settingId)
+                if (selectedStatus && selectedStatus !== '') params.append('status', selectedStatus)
+                
+                const url = params.toString() ? `/admin/welfare/reports?${params.toString()}` : '/admin/welfare/reports'
+                navigate(url, { replace: true })
+                fetchReports(parsedId, selectedStatus || undefined)
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Settings</option>
+              {allSettings.map((setting) => (
+                <option key={setting.id} value={setting.id}>
+                  {setting.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                const status = e.target.value
+                setSelectedStatus(status)
+                
+                // Update URL params
+                const params = new URLSearchParams()
+                if (selectedSettingId) params.append('setting_id', selectedSettingId)
+                if (status && status !== '') params.append('status', status)
+                
+                const url = params.toString() ? `/admin/welfare/reports?${params.toString()}` : '/admin/welfare/reports'
+                navigate(url, { replace: true })
+                
+                const parsedSettingId = selectedSettingId ? parseInt(selectedSettingId) : undefined
+                fetchReports(parsedSettingId, status || undefined)
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Status</option>
+              <option value="safe">Safe</option>
+              <option value="needs_help">Needs Help</option>
+            </select>
+          </div>
+
           {selectedSettingForReports && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">
