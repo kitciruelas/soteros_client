@@ -17,6 +17,7 @@ export interface ExportOptions {
   logoUrl?: string
   leftLogoUrl?: string
   rightLogoUrl?: string
+  orientation?: 'portrait' | 'landscape'
 }
 
 export class ExportUtils {
@@ -64,13 +65,16 @@ export class ExportUtils {
       logoUrl = "/images/partners/MDRRMO.png",
       leftLogoUrl = "/images/partners/lgu-pt.png",
       rightLogoUrl = "/images/partners/MDRRMO.png",
+      orientation = 'portrait',
     } = options
 
     // Use specific logos if provided, otherwise fall back to logoUrl for both sides
     const leftLogo = leftLogoUrl
     const rightLogo = rightLogoUrl
 
-    const doc = new jsPDF()
+    // Create PDF with specified orientation
+    const orientationParam = orientation === 'landscape' ? 'l' : 'p'
+    const doc = new jsPDF(orientationParam)
 
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
@@ -468,7 +472,7 @@ export class ExportUtils {
       // Check for page break
       if (currentY + maxCellHeight > pageHeight - margin - 15) {
         await drawPageFooter(pageNumber, Math.ceil(data.length / 25))
-        doc.addPage()
+        doc.addPage(orientationParam as 'p' | 'l')
         pageNumber++
         await drawPageHeader()
         currentY = headerHeight + 15
