@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { incidentsApi, teamsApi, staffManagementApi } from '../../../../utils/api';
+import { incidentsApi, teamsApi, staffManagementApi, adminNotificationsApi } from '../../../../utils/api';
 import ExportPreviewModal from '../../../../components/base/ExportPreviewModal';
 import { ExportUtils } from '../../../../utils/exportUtils';
 import type { ExportColumn } from '../../../../utils/exportUtils';
@@ -125,6 +125,7 @@ const ViewIncidents: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [newIncidentIds, setNewIncidentIds] = useState<Set<number>>(new Set());
 
 
   // Helper function to check if assignment button should be disabled
@@ -160,7 +161,42 @@ const ViewIncidents: React.FC = () => {
     fetchIncidents();
     fetchTeams();
     fetchStaff();
+    fetchNewIncidentNotifications();
   }, []);
+
+  const fetchNewIncidentNotifications = async () => {
+    try {
+      const response = await adminNotificationsApi.getNotifications({
+        unread_only: true,
+        type: 'incident',
+        limit: 100 // Get all unread incident notifications
+      });
+
+      console.log('📢 Fetching new incident notifications:', response);
+      
+      if (response?.success && response?.notifications) {
+        // Extract incident IDs from unread notifications
+        const incidentIds = new Set<number>();
+        response.notifications.forEach((notif: any) => {
+          // Check both related_type and type field
+          if ((notif.related_type === 'incident' || notif.type === 'incident') && notif.related_id && !notif.is_read) {
+            const incidentId = Number(notif.related_id);
+            if (!isNaN(incidentId)) {
+              incidentIds.add(incidentId);
+            }
+          }
+        });
+        console.log('✅ New incident IDs found:', Array.from(incidentIds));
+        setNewIncidentIds(incidentIds);
+      } else {
+        console.log('⚠️ No new incident notifications or invalid response:', response);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching new incident notifications:', error);
+      // Don't fail silently - set empty set
+      setNewIncidentIds(new Set());
+    }
+  };
 
   const fetchIncidents = async () => {
     try {
@@ -223,6 +259,8 @@ const ViewIncidents: React.FC = () => {
       });
 
       setIncidents(mapped);
+      // Refresh new incident notifications when incidents are refetched
+      fetchNewIncidentNotifications();
     } catch (error) {
       console.error('Error fetching incidents:', error);
       setError('Failed to load incidents. Please try again.');
@@ -626,6 +664,62 @@ const ViewIncidents: React.FC = () => {
       return !!(incident.assignedTeamName || incident.allAssignedTeams || incident.assignedStaffName);
     };
     
+    // Helper function to check if incident is new (has unread notification)
+    const isNew = (incident: Incident) => {
+      return newIncidentIds.has(incident.id);
+    };
+    
+    // Get dates for comparison
+    const aDate = new Date(a.dateReported).getTime();
+    const bDate = new Date(b.dateReported).getTime();
+    
+    // PINAKA-UNA: New incidents with unread notifications (sorted by newest date first within new group)
+    const aIsNew = isNew(a);
+    const bIsNew = isNew(b);
+    
+    if (aIsNew !== bIsNew) {
+      return aIsNew ? -1 : 1; // New incidents first
+    }
+    
+    // If both are new, sort by date (newest first)
+    if (aIsNew && bIsNew) {
+      const dateDiff = bDate - aDate;
+      if (dateDiff !== 0) return dateDiff;
+      // If same date and both new, sort by priority
+      const priorityDiff = priorityOrder[a.priorityLevel] - priorityOrder[b.priorityLevel];
+      if (priorityDiff !== 0) return priorityDiff;
+    }
+    
+    // If no new incidents detected, prioritize by date first (newest reports should appear first)
+    // This ensures new reports always appear at the top even if notification system isn't working
+    if (newIncidentIds.size === 0) {
+      // Sort by date first (newest first)
+      const dateDiff = bDate - aDate;
+      if (dateDiff !== 0) return dateDiff;
+      
+      // Then by validation and assignment status
+      const hasAssignmentA = hasAssignment(a);
+      const hasAssignmentB = hasAssignment(b);
+      
+      // Unvalidated without assignment should come first (new reports)
+      if (a.validationStatus === 'unvalidated' && !hasAssignmentA && 
+          !(b.validationStatus === 'unvalidated' && !hasAssignmentB)) {
+        return -1;
+      }
+      if (b.validationStatus === 'unvalidated' && !hasAssignmentB && 
+          !(a.validationStatus === 'unvalidated' && !hasAssignmentA)) {
+        return 1;
+      }
+      
+      // Then by priority
+      const priorityDiff = priorityOrder[a.priorityLevel] - priorityOrder[b.priorityLevel];
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // Finally by status
+      return statusOrder[a.status] - statusOrder[b.status];
+    }
+    
+    // For non-new incidents that have new incidents in the list, use validation priority
     // Custom validation priority based on assignment status
     // Workflow: Report → Validate → Assign → Process
     // 1. Validated + walang assignment (PINAKA-PRIORITY - ready to assign, need immediate action)
@@ -642,20 +736,20 @@ const ViewIncidents: React.FC = () => {
       return 6;
     };
     
-    // First sort by custom validation priority (validated + walang assignment nasa una para ma-assign agad)
+    // Sort by validation priority
     const validationDiff = getValidationPriority(a) - getValidationPriority(b);
     if (validationDiff !== 0) return validationDiff;
     
-    // Within same validation group, sort by incident status
-    const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-    if (statusDiff !== 0) return statusDiff;
-    
-    // Within same status, sort by priority (critical first)
+    // Within same validation group, sort by priority (critical first)
     const priorityDiff = priorityOrder[a.priorityLevel] - priorityOrder[b.priorityLevel];
     if (priorityDiff !== 0) return priorityDiff;
     
-    // Within same status and priority, sort by date (newest first)
-    return new Date(b.dateReported).getTime() - new Date(a.dateReported).getTime();
+    // Within same validation and priority, sort by date (newest first)
+    const dateDiff = bDate - aDate;
+    if (dateDiff !== 0) return dateDiff;
+    
+    // Finally, sort by incident status
+    return statusOrder[a.status] - statusOrder[b.status];
   });
 
   const getPriorityColor = (priority: Incident['priorityLevel']) => {
@@ -767,7 +861,7 @@ const ViewIncidents: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
@@ -778,6 +872,22 @@ const ViewIncidents: React.FC = () => {
               <p className="text-xl font-bold text-gray-900">{incidents.length}</p>
             </div>
           </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border-2 border-red-300 p-4 relative">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-notification-badge-line text-white"></i>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">New Reports</p>
+              <p className="text-xl font-bold text-red-600">{newIncidentIds.size}</p>
+            </div>
+          </div>
+          {newIncidentIds.size > 0 && (
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+              <span className="text-white text-xs font-bold">{newIncidentIds.size}</span>
+            </div>
+          )}
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
@@ -946,6 +1056,11 @@ const ViewIncidents: React.FC = () => {
                     <h4 className="text-lg font-medium text-gray-900">
                       {getIncidentTypeText(incident.type)} - #{incident.id}
                     </h4>
+                    {newIncidentIds.has(incident.id) && (
+                      <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white border border-red-600 animate-pulse">
+                        NEW
+                      </span>
+                    )}
                     <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(incident.priorityLevel)}`}>
                       {incident.priorityLevel.toUpperCase()}
                     </span>
@@ -1016,14 +1131,58 @@ const ViewIncidents: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2 ml-4">
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedIncident(incident);
                       setShowIncidentModal(true);
+                      
+                      // Mark incident notification as read when viewing
+                      if (newIncidentIds.has(incident.id)) {
+                        try {
+                          // Fetch notifications for this incident
+                          const response = await adminNotificationsApi.getNotifications({
+                            type: 'incident',
+                            limit: 100
+                          });
+                          
+                          if (response?.success && response?.notifications) {
+                            // Find and mark as read all unread notifications for this incident
+                            const incidentNotifications = response.notifications.filter((notif: any) => 
+                              notif.related_type === 'incident' && 
+                              notif.related_id === incident.id && 
+                              !notif.is_read
+                            );
+                            
+                            // Mark all as read
+                            for (const notif of incidentNotifications) {
+                              try {
+                                await adminNotificationsApi.markAsRead(notif.id);
+                              } catch (error) {
+                                console.error('Error marking notification as read:', error);
+                              }
+                            }
+                            
+                            // Update local state - remove from new incidents
+                            setNewIncidentIds(prev => {
+                              const updated = new Set(prev);
+                              updated.delete(incident.id);
+                              return updated;
+                            });
+                            
+                            // Refresh notifications to get updated state
+                            fetchNewIncidentNotifications();
+                          }
+                        } catch (error) {
+                          console.error('Error marking incident notification as read:', error);
+                        }
+                      }
                     }}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors"
+                    className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors relative"
                   >
                     <i className="ri-eye-line mr-1"></i>
                     View
+                    {newIncidentIds.has(incident.id) && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                    )}
                   </button>
                   <button
                     onClick={() => {
