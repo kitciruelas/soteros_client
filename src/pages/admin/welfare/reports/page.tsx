@@ -19,13 +19,13 @@ interface WelfareSettings {
 }
 
 interface WelfareReport {
-  report_id: number;
+  report_id?: number | null;
   user_id: number;
-  setting_id: number;
-  status: 'safe' | 'needs_help';
-  additional_info?: string;
-  submitted_at: string;
-  created_at: string;
+  setting_id?: number | null;
+  status?: 'safe' | 'needs_help' | null;
+  additional_info?: string | null;
+  submitted_at?: string | null;
+  created_at?: string;
   user_name?: string;
   user_email?: string;
   first_name?: string;
@@ -66,13 +66,23 @@ const exportReportColumns: ExportColumn[] = [
   { 
     key: 'status', 
     label: 'Status',
-    format: (value: string) => value === 'safe' ? 'Safe' : 'Needs Help'
+    format: (value: string, row: any) => {
+      if (!value || !row.report_id) return 'No Report';
+      return value === 'safe' ? 'Safe' : 'Needs Help';
+    }
   },
-  { key: 'additional_info', label: 'Additional Info' },
+  { 
+    key: 'additional_info', 
+    label: 'Additional Info',
+    format: (value: string, row: any) => value || (row.report_id ? 'N/A' : '')
+  },
   {
     key: 'submitted_at',
     label: 'Submitted At',
-    format: (value: string) => new Date(value).toLocaleString()
+    format: (value: string, row: any) => {
+      if (!value || !row.report_id) return 'N/A';
+      return new Date(value).toLocaleString();
+    }
   }
 ];
 
@@ -109,7 +119,7 @@ export default function WelfareReportsPage() {
       
       if (response.success) {
         const reportsData = response.reports || []
-        console.log('Loaded reports:', reportsData)
+        console.log('Loaded reports (all general_users):', reportsData.length)
         setReports(reportsData)
       }
     } catch (error: any) {
@@ -159,11 +169,13 @@ export default function WelfareReportsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString()
   }
 
-  const getReportStatusColor = (status: string) => {
+  const getReportStatusColor = (status: string | null | undefined, hasReport: boolean) => {
+    if (!hasReport || !status) return 'bg-gray-100 text-gray-800';
     switch (status) {
       case 'safe': return 'bg-green-100 text-green-800';
       case 'needs_help': return 'bg-red-100 text-red-800';
@@ -171,12 +183,18 @@ export default function WelfareReportsPage() {
     }
   }
 
-  const getReportStatusIcon = (status: string) => {
+  const getReportStatusIcon = (status: string | null | undefined, hasReport: boolean) => {
+    if (!hasReport || !status) return 'ri-time-line';
     switch (status) {
       case 'safe': return 'ri-check-circle-line';
       case 'needs_help': return 'ri-error-warning-line';
       default: return 'ri-question-line';
     }
+  }
+
+  const getReportStatusText = (status: string | null | undefined, hasReport: boolean) => {
+    if (!hasReport || !status) return 'No Report Submitted';
+    return status === 'safe' ? 'Safe' : 'Needs Help';
   }
 
   return (
@@ -185,7 +203,7 @@ export default function WelfareReportsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Welfare Check Reports</h1>
-          <p className="text-gray-600 mt-1">View and manage welfare check submissions</p>
+          <p className="text-gray-600 mt-1">View all users and their welfare check submissions</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
@@ -257,48 +275,59 @@ export default function WelfareReportsPage() {
         ) : reports.length === 0 ? (
           <div className="text-center py-12">
             <i className="ri-file-list-line text-4xl text-gray-300"></i>
-            <p className="text-gray-500 mt-2">No welfare reports found</p>
+            <p className="text-gray-500 mt-2">No users found</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {reports.map((report, index) => (
-              <div key={report.report_id || index} className="p-6 hover:bg-gray-50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-medium text-gray-900">
-                        {report.first_name} {report.last_name}
-                      </h4>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getReportStatusColor(report.status)}`}>
-                        <i className={`mr-1 ${getReportStatusIcon(report.status)}`}></i>
-                        {report.status === 'safe' ? 'Safe' : 'Needs Help'}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 mb-2">{report.email}</p>
-                    {(report.address || report.city || report.state || report.zip_code) && (
-                      <div className="mb-2">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Address:</p>
-                        <p className="text-sm text-gray-600">
-                          {[report.address, report.city, report.state, report.zip_code]
-                            .filter(Boolean)
-                            .join(', ') || 'N/A'}
-                        </p>
+            {reports.map((report, index) => {
+              const hasReport = !!report.report_id;
+              return (
+                <div key={report.user_id || report.report_id || index} className="p-6 hover:bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h4 className="text-lg font-medium text-gray-900">
+                          {report.first_name || ''} {report.last_name || ''}
+                        </h4>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getReportStatusColor(report.status, hasReport)}`}>
+                          <i className={`mr-1 ${getReportStatusIcon(report.status, hasReport)}`}></i>
+                          {getReportStatusText(report.status, hasReport)}
+                        </span>
                       </div>
-                    )}
-                    {report.additional_info && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Additional Info:</p>
-                        <p className="text-sm text-gray-600">{report.additional_info}</p>
-                      </div>
-                    )}
-                    <div className="flex items-center text-sm text-gray-500 mt-2">
-                      <i className="ri-time-line mr-1"></i>
-                      Submitted: {formatDate(report.submitted_at)}
+                      <p className="text-gray-600 mb-2">{report.email || 'N/A'}</p>
+                      {(report.address || report.city || report.state || report.zip_code) && (
+                        <div className="mb-2">
+                          <p className="text-sm font-medium text-gray-700 mb-1">Address:</p>
+                          <p className="text-sm text-gray-600">
+                            {[report.address, report.city, report.state, report.zip_code]
+                              .filter(Boolean)
+                              .join(', ') || 'N/A'}
+                          </p>
+                        </div>
+                      )}
+                      {hasReport && report.additional_info && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-gray-700 mb-1">Additional Info:</p>
+                          <p className="text-sm text-gray-600">{report.additional_info}</p>
+                        </div>
+                      )}
+                      {hasReport && report.submitted_at && (
+                        <div className="flex items-center text-sm text-gray-500 mt-2">
+                          <i className="ri-time-line mr-1"></i>
+                          Submitted: {formatDate(report.submitted_at)}
+                        </div>
+                      )}
+                      {!hasReport && (
+                        <div className="flex items-center text-sm text-gray-400 mt-2">
+                          <i className="ri-information-line mr-1"></i>
+                          No welfare report submitted yet
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

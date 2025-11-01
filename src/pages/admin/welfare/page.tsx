@@ -470,14 +470,7 @@ export default function AdminWelfareManagement() {
             <i className="ri-download-line mr-2"></i>
             Export All ({totalSettings})
           </button>
-          <button
-            onClick={() => navigate('/admin/welfare/reports')}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
-            title="View all welfare reports"
-          >
-            <i className="ri-file-list-3-line mr-2"></i>
-            View All Reports
-          </button>
+          
         </div>
       </div>
 
