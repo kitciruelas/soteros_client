@@ -1130,58 +1130,78 @@ const StaffIncidentsPage: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="p-3 sm:p-4 md:p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="p-4 sm:p-6 md:p-8 overflow-y-auto max-h-[calc(90vh-80px)] bg-gray-50">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {/* Left Column */}
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   {/* Description */}
-                  <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <i className="ri-file-text-line text-blue-600"></i>
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Description</h3>
+                  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-file-text-line text-blue-600 text-lg"></i>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">Description</h3>
                     </div>
-                    <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{selectedIncident.description}</p>
+                    <p className="text-gray-700 leading-relaxed text-sm sm:text-base pl-14">{selectedIncident.description}</p>
                   </div>
 
                   {/* Location */}
-                  <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <i className="ri-map-pin-line text-red-600"></i>
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Location</h3>
+                  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-map-pin-line text-red-600 text-lg"></i>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">Location</h3>
                     </div>
-                    <p className="text-gray-700 mb-2 text-sm sm:text-base break-words">
-                      {selectedIncident.resolvedLocation || selectedIncident.location}
-                    </p>
-                    {selectedIncident.resolvedLocation &&
-                      selectedIncident.resolvedLocation !== selectedIncident.location && (
-                        <p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded break-all">
-                          Coordinates: {Number(selectedIncident.latitude).toFixed(4)},{" "}
-                          {Number(selectedIncident.longitude).toFixed(4)}
-                        </p>
-                      )}
+                    <div className="pl-14">
+                      <p className="text-gray-800 mb-2 text-sm sm:text-base font-medium break-words">
+                        {selectedIncident.resolvedLocation || selectedIncident.location}
+                      </p>
+                      {selectedIncident.resolvedLocation &&
+                        selectedIncident.resolvedLocation !== selectedIncident.location && (
+                          <div className="mt-2 p-2 bg-gray-100 rounded-lg border border-gray-200">
+                            <p className="text-xs text-gray-600 font-mono break-all">
+                              <span className="font-semibold">Coordinates:</span> {Number(selectedIncident.latitude).toFixed(4)},{" "}
+                              {Number(selectedIncident.longitude).toFixed(4)}
+                            </p>
+                          </div>
+                        )}
+                    </div>
                   </div>
 
                   {/* Assignment */}
-                  <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <i className="ri-team-line text-green-600"></i>
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Assignment</h3>
+                  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-team-line text-green-600 text-lg"></i>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">Assignment</h3>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      {getAssignmentBadge(selectedIncident)}
+                    <div className="pl-14 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {getAssignmentBadge(selectedIncident)}
+                      </div>
                       {selectedIncident.assigned_team_name && (
-                        <div className="flex items-center space-x-1">
-                          <i className="ri-team-line text-gray-400"></i>
-                          <span className="text-xs sm:text-sm text-gray-700 break-words">
+                        <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                          <i className="ri-team-line text-blue-600"></i>
+                          <span className="text-sm font-medium text-gray-800 break-words">
                             {selectedIncident.assigned_team_name}
                           </span>
                         </div>
                       )}
                       {selectedIncident.assigned_staff_name && (
-                        <div className="flex items-center space-x-1">
-                          <i className="ri-user-line text-gray-400"></i>
-                          <span className="text-xs sm:text-sm text-gray-700 break-words">
+                        <div className="flex items-center space-x-2 p-2 bg-purple-50 rounded-lg border border-purple-100">
+                          <i className="ri-user-line text-purple-600"></i>
+                          <span className="text-sm font-medium text-gray-800 break-words">
                             {selectedIncident.assigned_staff_name}
+                          </span>
+                        </div>
+                      )}
+                      {selectedIncident.all_assigned_teams && (
+                        <div className="flex flex-col space-y-1 p-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                          <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Multiple Teams</span>
+                          <span className="text-sm font-medium text-gray-800 break-words">
+                            {selectedIncident.all_assigned_teams}
                           </span>
                         </div>
                       )}
@@ -1190,106 +1210,123 @@ const StaffIncidentsPage: React.FC = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   {/* Priority & Status */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4">
-                    <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <i className="ri-flag-line text-orange-600"></i>
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Priority</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="ri-flag-line text-orange-600 text-lg"></i>
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-base sm:text-lg">Priority</h3>
                       </div>
-                      <span
-                        className={`inline-flex px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold rounded-full border ${getPriorityColor(selectedIncident.priority_level)}`}
-                      >
-                        {selectedIncident.priority_level.charAt(0).toUpperCase() +
-                          selectedIncident.priority_level.slice(1)}
-                      </span>
+                      <div className="pl-14">
+                        <span
+                          className={`inline-flex px-3 py-1.5 text-sm font-bold rounded-full border ${getPriorityColor(selectedIncident.priority_level)}`}
+                        >
+                          {selectedIncident.priority_level.charAt(0).toUpperCase() +
+                            selectedIncident.priority_level.slice(1)}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <i className="ri-time-line text-purple-600"></i>
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Status</h3>
+                    <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="ri-time-line text-purple-600 text-lg"></i>
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-base sm:text-lg">Status</h3>
                       </div>
-                      <span
-                        className={`inline-flex px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold rounded-full border ${getStatusColor(selectedIncident.status)}`}
-                      >
-                        {getStatusText(selectedIncident.status)}
-                      </span>
+                      <div className="pl-14">
+                        <span
+                          className={`inline-flex px-3 py-1.5 text-sm font-bold rounded-full border ${getStatusColor(selectedIncident.status)}`}
+                        >
+                          {getStatusText(selectedIncident.status)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Reporter */}
-                  <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <i className="ri-user-line text-indigo-600"></i>
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Reporter</h3>
+                  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-user-line text-indigo-600 text-lg"></i>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">Reporter</h3>
                     </div>
-                    {selectedIncident.reporter_type === "guest" ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <i className="ri-user-line text-indigo-600 text-xs sm:text-sm"></i>
-                          </div>
-                          <div>
-                            <div className="text-xs sm:text-sm font-medium text-gray-900">
-                              {selectedIncident.guest_name || "Unknown Guest"}
+                    <div className="pl-14">
+                      {selectedIncident.reporter_type === "guest" ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <i className="ri-user-line text-indigo-600"></i>
                             </div>
-                            <div className="text-xs text-gray-500">Guest Reporter</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3 pt-3 border-t border-gray-200">
-                          <div>
-                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Guest ID</div>
-                            <div className="text-xs sm:text-sm text-gray-900">{selectedIncident.guest_id || "N/A"}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Incident ID</div>
-                            <div className="text-xs sm:text-sm text-gray-900">{selectedIncident.incident_id}</div>
-                          </div>
-                          <div className="col-span-1 sm:col-span-2">
-                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</div>
-                            <div className="text-xs sm:text-sm text-gray-900 break-all">
-                              {selectedIncident.guest_contact || "N/A"}
+                            <div>
+                              <div className="text-sm font-bold text-gray-900">
+                                {selectedIncident.guest_name || "Unknown Guest"}
+                              </div>
+                              <div className="text-xs text-indigo-600 font-medium">Guest Reporter</div>
                             </div>
                           </div>
+                          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200">
+                            <div className="bg-gray-50 p-2 rounded-lg">
+                              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Guest ID</div>
+                              <div className="text-sm font-medium text-gray-900">{selectedIncident.guest_id || "N/A"}</div>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded-lg">
+                              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Incident ID</div>
+                              <div className="text-sm font-medium text-gray-900">#{selectedIncident.incident_id}</div>
+                            </div>
+                            <div className="col-span-2 bg-gray-50 p-2 rounded-lg">
+                              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Contact</div>
+                              <div className="text-sm font-medium text-gray-900 break-all">
+                                {selectedIncident.guest_contact || "N/A"}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <i className="ri-user-line text-indigo-600 text-xs sm:text-sm"></i>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <i className="ri-user-line text-indigo-600"></i>
+                            </div>
+                            <div className="text-gray-800 font-bold text-base">
+                              {selectedIncident.reporter_name}
+                            </div>
                           </div>
-                          <div className="text-gray-700 font-medium text-sm sm:text-base">
-                            {selectedIncident.reporter_name}
-                          </div>
+                          {selectedIncident.reporter_phone && (
+                            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                              <i className="ri-phone-line text-gray-600"></i>
+                              <span className="text-sm font-medium text-gray-700 break-all">
+                                {selectedIncident.reporter_phone}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {selectedIncident.reporter_phone && (
-                          <div className="text-xs sm:text-sm text-gray-500 pl-8 sm:pl-10 break-all">
-                            📞 {selectedIncident.reporter_phone}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* Dates */}
-                  <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <i className="ri-calendar-line text-gray-600"></i>
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Timeline</h3>
+                  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-calendar-line text-gray-600 text-lg"></i>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">Timeline</h3>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm text-gray-600">Reported:</span>
-                        <span className="text-xs sm:text-sm font-medium text-gray-900">
+                    <div className="pl-14 space-y-3">
+                      <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-100">
+                        <span className="text-sm font-medium text-gray-600">Reported:</span>
+                        <span className="text-sm font-bold text-gray-900">
                           {new Date(selectedIncident.date_reported).toLocaleDateString()}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm text-gray-600">Time:</span>
-                        <span className="text-xs sm:text-sm font-medium text-gray-900">
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
+                        <span className="text-sm font-medium text-gray-600">Time:</span>
+                        <span className="text-sm font-bold text-gray-900">
                           {new Date(selectedIncident.date_reported).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -1297,9 +1334,9 @@ const StaffIncidentsPage: React.FC = () => {
                         </span>
                       </div>
                       {selectedIncident.date_resolved && (
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                          <span className="text-xs sm:text-sm text-gray-600">Resolved:</span>
-                          <span className="text-xs sm:text-sm font-medium text-green-600">
+                        <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100 pt-3 border-t-2 border-green-200">
+                          <span className="text-sm font-medium text-gray-600">Resolved:</span>
+                          <span className="text-sm font-bold text-green-700">
                             {new Date(selectedIncident.date_resolved).toLocaleDateString()}
                           </span>
                         </div>
@@ -1332,10 +1369,15 @@ const StaffIncidentsPage: React.FC = () => {
                 if (attachments.length === 0) return null;
 
                 return (
-                  <div className="bg-gray-50 rounded-lg p-3 md:p-4 mt-4 md:mt-6">
-                    <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">
-                      Attachments ({attachments.length})
-                    </h3>
+                  <div className="bg-white rounded-xl p-4 md:p-5 mt-4 md:mt-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-attachment-line text-amber-600 text-lg"></i>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">
+                        Attachments <span className="text-sm font-normal text-gray-500">({attachments.length})</span>
+                      </h3>
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                       {attachments.map((url, index) => {
                         const isCloudinary = url.startsWith('http://') || url.startsWith('https://');
@@ -1410,20 +1452,24 @@ const StaffIncidentsPage: React.FC = () => {
 
               {/* Remarks */}
               {selectedIncident.remarks && (
-                <div className="bg-blue-50 rounded-lg p-3 md:p-4 mt-4 md:mt-6 border border-blue-200">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <i className="ri-chat-1-line text-blue-600"></i>
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Staff Remarks</h3>
+                <div className="bg-white rounded-xl p-4 md:p-5 mt-4 md:mt-6 shadow-sm border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i className="ri-chat-1-line text-blue-600 text-lg"></i>
+                    </div>
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg">Staff Remarks</h3>
                   </div>
-                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base whitespace-pre-wrap">
-                    {selectedIncident.remarks}
-                  </p>
+                  <div className="pl-14">
+                    <p className="text-gray-800 leading-relaxed text-sm sm:text-base whitespace-pre-wrap bg-white p-3 rounded-lg border border-blue-100">
+                      {selectedIncident.remarks}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 px-3 sm:px-4 md:px-6 py-3 md:py-4 border-t border-gray-200">
+            <div className="bg-white px-4 sm:px-6 md:px-8 py-4 md:py-5 border-t border-gray-200 shadow-sm">
               <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                 <button
                   onClick={() => {
@@ -1431,10 +1477,10 @@ const StaffIncidentsPage: React.FC = () => {
                     openUpdateModal(selectedIncident)
                   }}
                   disabled={selectedIncident.status === "resolved" || selectedIncident.status === "closed"}
-                  className={`w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm ${
                     selectedIncident.status === "resolved" || selectedIncident.status === "closed"
-                      ? "bg-gray-400 text-white cursor-not-allowed"
-                      : "bg-green-600 text-white hover:bg-green-700"
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                      : "bg-green-600 text-white hover:bg-green-700 hover:shadow-md"
                   }`}
                 >
                   <i className="ri-edit-line mr-2"></i>
@@ -1444,7 +1490,7 @@ const StaffIncidentsPage: React.FC = () => {
                 </button>
                 <button
                   onClick={closeIncidentModal}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow-md"
                 >
                   <i className="ri-close-line mr-2"></i>
                   Close
