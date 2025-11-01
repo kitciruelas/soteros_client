@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { incidentsApi, teamsApi, staffManagementApi, adminNotificationsApi } from '../../../../utils/api';
 import ExportPreviewModal from '../../../../components/base/ExportPreviewModal';
 import { ExportUtils } from '../../../../utils/exportUtils';
 import type { ExportColumn } from '../../../../utils/exportUtils';
 import { useToast } from '../../../../components/base/Toast';
 import IncidentMapModal from '../../../../components/IncidentMapModal';
+import websocketService, { type NotificationData } from '../../../../services/websocketService';
 
 interface Incident {
   id: number;
@@ -126,6 +127,7 @@ const ViewIncidents: React.FC = () => {
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [newIncidentIds, setNewIncidentIds] = useState<Set<number>>(new Set());
+  const wsHandlersSetup = useRef(false);
 
 
   // Helper function to check if assignment button should be disabled
@@ -156,6 +158,84 @@ const ViewIncidents: React.FC = () => {
     
     return false;
   };
+
+  // Set up WebSocket listeners (only once)
+  useEffect(() => {
+    if (!wsHandlersSetup.current) {
+      wsHandlersSetup.current = true;
+      
+      // Handler for new incident notifications
+      const handleNewIncidentRealTime = (incidentData: NotificationData) => {
+        console.log('🚨 Real-time new incident received in ViewIncidents:', incidentData);
+        
+        const incidentId = Number(incidentData.id || incidentData.incident_id);
+        if (!isNaN(incidentId)) {
+          // Add to new incidents set
+          setNewIncidentIds(prev => {
+            const updated = new Set(prev);
+            updated.add(incidentId);
+            return updated;
+          });
+          
+          // Refresh incidents list to include the new incident
+          setTimeout(() => {
+            fetchIncidents();
+            fetchNewIncidentNotifications();
+          }, 500); // Small delay to ensure backend has saved the incident
+          
+          // Show toast notification
+          showToast({
+            type: 'info',
+            message: `New ${incidentData.incident_type || 'incident'} reported at ${incidentData.location || 'unknown location'}`
+          });
+        }
+      };
+      
+      // Handler for incident updates
+      const handleIncidentUpdateRealTime = (incidentData: NotificationData) => {
+        console.log('🔄 Real-time incident update received in ViewIncidents:', incidentData);
+        
+        const incidentId = Number(incidentData.id || incidentData.incident_id);
+        if (!isNaN(incidentId)) {
+          // Refresh incidents list to get updated data
+          setTimeout(() => {
+            fetchIncidents();
+          }, 300);
+        }
+      };
+      
+      // Register WebSocket event handlers
+      websocketService.on('new_incident', handleNewIncidentRealTime);
+      websocketService.on('incident_updated', handleIncidentUpdateRealTime);
+      websocketService.on('new_admin_notification', (notificationData: any) => {
+        // Handle admin notification for incidents
+        if (notificationData.related_type === 'incident' && notificationData.related_id) {
+          const incidentId = Number(notificationData.related_id);
+          if (!isNaN(incidentId)) {
+            setNewIncidentIds(prev => {
+              const updated = new Set(prev);
+              updated.add(incidentId);
+              return updated;
+            });
+            // Refresh to get the new incident
+            setTimeout(() => {
+              fetchIncidents();
+              fetchNewIncidentNotifications();
+            }, 500);
+          }
+        }
+      });
+      
+      console.log('✅ WebSocket listeners set up for ViewIncidents page');
+    }
+    
+    // Cleanup function
+    return () => {
+      // Note: We don't remove listeners here because WebSocket service is shared
+      // and other components (like AdminLayout) might still need them
+      // The handlers will still work even if component unmounts
+    };
+  }, []); // Empty deps - only set up once
 
   useEffect(() => {
     fetchIncidents();
