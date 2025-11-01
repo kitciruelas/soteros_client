@@ -30,6 +30,7 @@ interface Incident {
   assignedTeamIds?: string; // New field for multiple team IDs
   allAssignedTeams?: string; // New field for all assigned team names
   attachment?: string; // Added attachment field for filenames
+  remarks?: string;
   dateReported: string;
   dateResolved?: string;
 }
@@ -54,6 +55,11 @@ interface Staff {
 
 // Export columns configuration for incidents - essential information only
 const incidentExportColumns: ExportColumn[] = [
+  {
+    key: 'id',
+    label: 'ID',
+    format: (value: number) => value ? `#${value}` : ''
+  },
   {
     key: 'dateReported',
     label: 'Date Reported',
@@ -92,19 +98,8 @@ const incidentExportColumns: ExportColumn[] = [
     key: 'reportedBy',
     label: 'Reported By',
     format: (value: string, row: any) => {
-      // Check reporterType field if available
-      if (row.reporterType === 'guest') {
-        return 'Guest';
-      }
-      if (row.reporterType === 'user') {
-        return 'User';
-      }
-      // Fallback: check if it's a guest by checking reporter_type in row
-      if (row.reporter_type === 'guest') {
-        return 'Guest';
-      }
-      // Default to User
-      return 'User';
+      if (value) return value;
+      return row.reporterName || 'Unknown';
     }
   },
   {
@@ -115,6 +110,11 @@ const incidentExportColumns: ExportColumn[] = [
       if (row.assignedTeamName) return row.assignedTeamName;
       return 'Unassigned';
     }
+  },
+  {
+    key: 'remarks',
+    label: 'Remarks',
+    format: (value: string) => value || ''
   }
 ];
 
@@ -427,6 +427,7 @@ const ViewIncidents: React.FC = () => {
           assignedTeamIds: row.assigned_team_ids || undefined, // New field for multiple team IDs
           allAssignedTeams: row.all_assigned_teams || undefined, // New field for all assigned team names
           attachment: row.attachment || undefined, // Added attachment field
+          remarks: row.remarks || undefined,
           dateReported,
           dateResolved: undefined,
         };
@@ -986,7 +987,8 @@ const ViewIncidents: React.FC = () => {
       const options = {
         filename: 'incidents_report',
         title,
-        includeTimestamp: true
+        includeTimestamp: true,
+        orientation: 'landscape' as const
       };
 
       await ExportUtils.exportToPDF(filteredIncidents, incidentExportColumns, options);
