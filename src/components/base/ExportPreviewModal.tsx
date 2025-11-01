@@ -107,11 +107,91 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
                   <tbody className="divide-y divide-gray-200">
                     {previewData.map((row, idx) => (
                       <tr key={idx} className="hover:bg-gray-50 transition-colors duration-150">
-                        {columns.map((col) => (
-                          <td key={col.key} className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
-                            {row[col.key] || "-"}
-                          </td>
-                        ))}
+                        {columns.map((col) => {
+                          const cellValue = row[col.key];
+                          
+                          // Special handling for attachment column to show image preview
+                          if (col.key === 'attachment' && cellValue && cellValue !== 'No' && cellValue !== '-') {
+                            // Try to extract image URLs from the data
+                            const rawAttachment = (data[idx] as any)?.attachment;
+                            if (rawAttachment) {
+                              try {
+                                // Parse JSON array format
+                                const parsed = JSON.parse(rawAttachment);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                  // Find first image
+                                  const firstImage = parsed.find((url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url));
+                                  if (firstImage) {
+                                    const isCloudinary = firstImage.startsWith('http://') || firstImage.startsWith('https://');
+                                    return (
+                                      <td key={col.key} className="px-4 py-3 text-sm">
+                                        <div className="flex items-center space-x-2">
+                                          <img 
+                                            src={isCloudinary ? firstImage : `/uploads/incidents/${firstImage}`}
+                                            alt="Attachment preview"
+                                            className="w-12 h-12 object-cover rounded border border-gray-300"
+                                            onError={(e) => {
+                                              (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                          />
+                                          <span className="text-gray-900">{cellValue}</span>
+                                        </div>
+                                      </td>
+                                    );
+                                  }
+                                }
+                              } catch {
+                                // Not JSON, check if comma-separated
+                                if (rawAttachment.includes(',')) {
+                                  const files = rawAttachment.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+                                  const firstImage = files.find((url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url));
+                                  if (firstImage) {
+                                    const isCloudinary = firstImage.startsWith('http://') || firstImage.startsWith('https://');
+                                    return (
+                                      <td key={col.key} className="px-4 py-3 text-sm">
+                                        <div className="flex items-center space-x-2">
+                                          <img 
+                                            src={isCloudinary ? firstImage : `/uploads/incidents/${firstImage}`}
+                                            alt="Attachment preview"
+                                            className="w-12 h-12 object-cover rounded border border-gray-300"
+                                            onError={(e) => {
+                                              (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                          />
+                                          <span className="text-gray-900">{cellValue}</span>
+                                        </div>
+                                      </td>
+                                    );
+                                  }
+                                } else if (/\.(jpg|jpeg|png|gif|webp)$/i.test(rawAttachment)) {
+                                  const isCloudinary = rawAttachment.startsWith('http://') || rawAttachment.startsWith('https://');
+                                  return (
+                                    <td key={col.key} className="px-4 py-3 text-sm">
+                                      <div className="flex items-center space-x-2">
+                                        <img 
+                                          src={isCloudinary ? rawAttachment : `/uploads/incidents/${rawAttachment}`}
+                                          alt="Attachment preview"
+                                          className="w-12 h-12 object-cover rounded border border-gray-300"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                          }}
+                                        />
+                                        <span className="text-gray-900">{cellValue}</span>
+                                      </div>
+                                    </td>
+                                  );
+                                }
+                              }
+                            }
+                          }
+                          
+                          // Default cell rendering
+                          return (
+                            <td key={col.key} className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+                              {cellValue || "-"}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>

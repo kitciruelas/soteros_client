@@ -6,6 +6,7 @@ export interface ExportColumn {
   key: string
   label: string
   format?: (value: any, row?: any) => string
+  renderAsImage?: boolean // For PDF exports, render cell as image if value is a valid image URL
 }
 
 export interface ExportOptions {
