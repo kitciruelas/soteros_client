@@ -224,7 +224,7 @@ export default function IncidentReportPage() {
       location: '',
       latitude: null,
       longitude: null,
-      priorityLevel: '',
+      priorityLevel: 'critical',
       safetyStatus: '',
       guestName: '',
       guestContact: '',
@@ -529,6 +529,9 @@ export default function IncidentReportPage() {
   // Render incident form sections (shared between authenticated and guest users)
   const renderIncidentFormSections = () => (
     <>
+      {/* Hidden Priority Level Field - Always Critical */}
+      <input type="hidden" name="priorityLevel" value="critical" />
+      
       {/* Incident Type Section */}
       <div className="space-y-6">
         <div className="border-b border-gray-200 pb-4">
@@ -753,51 +756,6 @@ export default function IncidentReportPage() {
         </div>
       </div>
 
-      {/* Priority Level Section */}
-      <div className="space-y-6">
-        <div className="border-b border-gray-200 pb-4">
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-alarm-warning-line text-orange-600"></i>
-            </div>
-            Priority Level
-          </h3>
-          <p className="text-gray-600 mt-2">How urgent is this incident?</p>
-        </div>
-
-        <div>
-          <label htmlFor="priorityLevel" className="block text-sm font-semibold text-gray-700 mb-3">
-            <i className="ri-alarm-warning-line mr-2 text-orange-600"></i>
-            Priority Level <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i className="ri-alarm-warning-line text-gray-400"></i>
-            </div>
-            <select
-              id="priorityLevel"
-              name="priorityLevel"
-              value={fields.priorityLevel.value}
-              onChange={(e) => setValue('priorityLevel', e.target.value)}
-              className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all appearance-none bg-white ${
-                fields.priorityLevel.error ? 'border-red-300' : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select priority level...</option>
-              <option value="low">&#128994; Low Priority - Non-urgent, can wait</option>
-              <option value="medium">&#128993; Medium Priority - Moderate urgency</option>
-              <option value="high">&#128308; High Priority - Urgent attention needed</option>
-              <option value="critical">&#128683; Critical - Immediate response required</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <i className="ri-arrow-down-s-line text-gray-400"></i>
-            </div>
-          </div>
-          {fields.priorityLevel.touched && fields.priorityLevel.error && (
-            <p className="text-red-600 text-sm mt-2">{fields.priorityLevel.error}</p>
-          )}
-        </div>
-      </div>
 
       {/* Safety Status Section */}
       <div className="space-y-6">
