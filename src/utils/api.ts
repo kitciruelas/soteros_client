@@ -116,6 +116,17 @@ export const getAuthToken = (): string | null => {
     console.log('No adminToken found in localStorage');
   }
   
+  // Check for staff token (legacy support)
+  const staffToken = localStorage.getItem('staffToken');
+  if (staffToken && staffToken.length > 10) {
+    console.log('Using legacy staffToken, length:', staffToken.length);
+    return staffToken;
+  } else if (staffToken) {
+    console.warn('staffToken found but too short:', staffToken.length);
+  } else {
+    console.log('No staffToken found in localStorage');
+  }
+  
   // Check for regular user token (legacy support)
   const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
   if (userToken && userToken.length > 10) {
@@ -125,6 +136,19 @@ export const getAuthToken = (): string | null => {
     console.warn('userToken found but too short:', userToken.length);
   } else {
     console.log('No userToken found in localStorage');
+  }
+  
+  // Also check sessionStorage for legacy tokens
+  const sessionStaffToken = sessionStorage.getItem('staffToken');
+  if (sessionStaffToken && sessionStaffToken.length > 10) {
+    console.log('Using staffToken from sessionStorage, length:', sessionStaffToken.length);
+    return sessionStaffToken;
+  }
+  
+  const sessionToken = sessionStorage.getItem('token');
+  if (sessionToken && sessionToken.length > 10) {
+    console.log('Using token from sessionStorage, length:', sessionToken.length);
+    return sessionToken;
   }
   
   console.log('No valid token found in any storage location');
@@ -139,6 +163,17 @@ export const clearAuthDataOnError = (): void => {
   localStorage.removeItem('userInfo');
   sessionStorage.removeItem('userInfo');
   localStorage.removeItem('adminToken');
+  localStorage.removeItem('staffToken');
+  sessionStorage.removeItem('staffToken');
+  localStorage.removeItem('token');
+  localStorage.removeItem('userToken');
+  sessionStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('staff');
+  localStorage.removeItem('admin');
+  sessionStorage.removeItem('user');
+  sessionStorage.removeItem('staff');
+  sessionStorage.removeItem('admin');
   
   // Dispatch event to notify components
   window.dispatchEvent(new Event('authStateChanged'));
