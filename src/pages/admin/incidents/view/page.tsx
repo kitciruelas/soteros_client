@@ -20,6 +20,7 @@ interface Incident {
   validationStatus: 'unvalidated' | 'validated' | 'rejected';
   validationNotes?: string;
   reportedBy: string;
+  reporterType?: 'guest' | 'user';
   reporterPhone?: string;
   assignedTo?: string;
   assignedTeamId?: number | null;
@@ -60,9 +61,12 @@ const incidentExportColumns: ExportColumn[] = [
   },
   { key: 'type', label: 'Type', format: (value: string) => value.toUpperCase() },
   {
-    key: 'priorityLevel',
-    label: 'Priority',
-    format: (value: string) => value?.charAt(0).toUpperCase() + value?.slice(1) || ''
+    key: 'validationStatus',
+    label: 'Validation',
+    format: (value: string) => {
+      if (!value) return 'Unvalidated';
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
   },
   {
     key: 'status',
@@ -82,20 +86,35 @@ const incidentExportColumns: ExportColumn[] = [
   {
     key: 'description',
     label: 'Description',
-    format: (value: string) => value?.length > 50 ? `${value.substring(0, 50)}...` : value || ''
+    format: (value: string) => value || ''
   },
   {
     key: 'reportedBy',
     label: 'Reported By',
     format: (value: string, row: any) => {
-      if (value) return value;
-      return row.reporterName || 'Unknown';
+      // Check reporterType field if available
+      if (row.reporterType === 'guest') {
+        return 'Guest';
+      }
+      if (row.reporterType === 'user') {
+        return 'User';
+      }
+      // Fallback: check if it's a guest by checking reporter_type in row
+      if (row.reporter_type === 'guest') {
+        return 'Guest';
+      }
+      // Default to User
+      return 'User';
     }
   },
   {
-    key: 'assignedTeamName',
-    label: 'Team',
-    format: (value: string) => value || 'Unassigned'
+    key: 'allAssignedTeams',
+    label: 'Assigned Team',
+    format: (value: string, row: any) => {
+      if (value) return value;
+      if (row.assignedTeamName) return row.assignedTeamName;
+      return 'Unassigned';
+    }
   }
 ];
 
@@ -396,6 +415,7 @@ const ViewIncidents: React.FC = () => {
           reportedBy: row.reporter_type === 'guest'
             ? String(row.guest_name ?? 'Unknown Guest')
             : String(row.reporter_name ?? row.reported_by ?? ''),
+          reporterType: (row.reporter_type === 'guest' ? 'guest' : 'user') as Incident['reporterType'],
           reporterPhone: row.reporter_type === 'guest'
             ? (row.guest_contact ? String(row.guest_contact) : undefined)
             : (row.reporter_phone ? String(row.reporter_phone) : undefined),
