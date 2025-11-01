@@ -1,10 +1,11 @@
 
+import { useState } from "react"
 import type React from "react"
 
 interface ExportPreviewModalProps {
   open: boolean
   onClose: () => void
-  onExportPDF: (orientation?: 'portrait' | 'landscape') => void
+  onExportPDF: (orientation?: 'portrait' | 'landscape') => void | Promise<void>
   onExportCSV: () => void
   onExportExcel: () => void
   data: any[]
@@ -26,10 +27,43 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
   orientation = 'portrait',
   onOrientationChange,
 }) => {
+  const [isExporting, setIsExporting] = useState<'pdf' | 'csv' | 'excel' | null>(null)
+  
   if (!open) return null
 
   // Show only first 5 rows for preview
   const previewData = data.slice(0, 5)
+  
+  const handleExportPDF = async () => {
+    setIsExporting('pdf')
+    try {
+      await onExportPDF(orientation)
+    } finally {
+      setIsExporting(null)
+    }
+  }
+  
+  const handleExportCSV = async () => {
+    setIsExporting('csv')
+    try {
+      onExportCSV()
+      // Small delay to ensure state is visible
+      setTimeout(() => setIsExporting(null), 300)
+    } catch (error) {
+      setIsExporting(null)
+    }
+  }
+  
+  const handleExportExcel = async () => {
+    setIsExporting('excel')
+    try {
+      onExportExcel()
+      // Small delay to ensure state is visible
+      setTimeout(() => setIsExporting(null), 300)
+    } catch (error) {
+      setIsExporting(null)
+    }
+  }
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -218,35 +252,63 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
             <button
               onClick={onClose}
               className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium"
+              disabled={isExporting !== null}
             >
               Cancel
             </button>
 
             <button
-              onClick={onExportCSV}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2"
-              disabled={data.length === 0}
+              onClick={handleExportCSV}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={data.length === 0 || isExporting !== null}
             >
-              <i className="ri-file-text-line"></i>
-              Export CSV
+              {isExporting === 'csv' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Exporting CSV...
+                </>
+              ) : (
+                <>
+                  <i className="ri-file-text-line"></i>
+                  Export CSV
+                </>
+              )}
             </button>
 
             <button
-              onClick={onExportExcel}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2"
-              disabled={data.length === 0}
+              onClick={handleExportExcel}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={data.length === 0 || isExporting !== null}
             >
-              <i className="ri-file-excel-line"></i>
-              Export Excel
+              {isExporting === 'excel' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Exporting Excel...
+                </>
+              ) : (
+                <>
+                  <i className="ri-file-excel-line"></i>
+                  Export Excel
+                </>
+              )}
             </button>
 
             <button
-              onClick={() => onExportPDF(orientation)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2"
-              disabled={data.length === 0}
+              onClick={handleExportPDF}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={data.length === 0 || isExporting !== null}
             >
-              <i className="ri-file-pdf-line"></i>
-              Export PDF ({orientation === 'portrait' ? 'Portrait' : 'Landscape'})
+              {isExporting === 'pdf' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Exporting PDF...
+                </>
+              ) : (
+                <>
+                  <i className="ri-file-pdf-line"></i>
+                  Export PDF ({orientation === 'portrait' ? 'Portrait' : 'Landscape'})
+                </>
+              )}
             </button>
           </div>
         </div>
