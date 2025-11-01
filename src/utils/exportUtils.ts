@@ -17,6 +17,7 @@ export interface ExportOptions {
   logoUrl?: string
   leftLogoUrl?: string
   rightLogoUrl?: string
+  orientation?: 'portrait' | 'landscape'
 }
 
 export class ExportUtils {
@@ -64,13 +65,18 @@ export class ExportUtils {
       logoUrl = "/images/partners/MDRRMO.png",
       leftLogoUrl = "/images/partners/lgu-pt.png",
       rightLogoUrl = "/images/partners/MDRRMO.png",
+      orientation = "portrait",
     } = options
 
     // Use specific logos if provided, otherwise fall back to logoUrl for both sides
     const leftLogo = leftLogoUrl
     const rightLogo = rightLogoUrl
 
-    const doc = new jsPDF()
+    const doc = new jsPDF({
+      orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    })
 
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()

@@ -1,10 +1,10 @@
 
-import type React from "react"
+import React, { useState } from "react"
 
 interface ExportPreviewModalProps {
   open: boolean
   onClose: () => void
-  onExportPDF: () => void
+  onExportPDF: (orientation?: 'portrait' | 'landscape') => void
   onExportCSV: () => void
   onExportExcel: () => void
   data: any[]
@@ -22,6 +22,8 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
   columns,
   title,
 }) => {
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait')
+
   if (!open) return null
 
   // Show only first 5 rows for preview
@@ -93,11 +95,40 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <i className="ri-information-line"></i>
-            <span>
-              Total records to export: <strong className="text-gray-900">{data.length}</strong>
-            </span>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <i className="ri-information-line"></i>
+              <span>
+                Total records to export: <strong className="text-gray-900">{data.length}</strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-700">PDF Orientation:</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setOrientation('portrait')}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                    orientation === 'portrait'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <i className="ri-file-line"></i>
+                  Portrait
+                </button>
+                <button
+                  onClick={() => setOrientation('landscape')}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                    orientation === 'landscape'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <i className="ri-file-line"></i>
+                  Landscape
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -127,12 +158,12 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
             </button>
 
             <button
-              onClick={onExportPDF}
+              onClick={() => onExportPDF(orientation)}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center gap-2"
               disabled={data.length === 0}
             >
               <i className="ri-file-pdf-line"></i>
-              Export PDF
+              Export PDF ({orientation === 'landscape' ? 'Landscape' : 'Portrait'})
             </button>
           </div>
         </div>
