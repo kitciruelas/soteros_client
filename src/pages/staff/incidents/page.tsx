@@ -99,12 +99,17 @@ const StaffIncidentsPage: React.FC = () => {
   console.log("👥 Current staff team ID:", currentStaffTeamId)
 
   useEffect(() => {
-    if (currentStaffId) {
+    // Only fetch if we have both staff ID and authentication
+    if (currentStaffId && authState.isAuthenticated) {
       fetchIncidents()
       fetchTeams()
       fetchAvailableStaff()
+    } else if (!authState.isAuthenticated) {
+      console.warn('⚠️ User is not authenticated - skipping data fetch');
+    } else if (!currentStaffId) {
+      console.warn('⚠️ No staff ID available - skipping data fetch');
     }
-  }, [currentStaffId])
+  }, [currentStaffId, authState.isAuthenticated])
 
   useEffect(() => {
     filterIncidents()
@@ -169,6 +174,13 @@ const StaffIncidentsPage: React.FC = () => {
 
   const fetchIncidents = async () => {
     try {
+      // Check authentication before making request
+      const currentAuthState = getAuthState()
+      if (!currentAuthState.isAuthenticated) {
+        console.error("❌ User is not authenticated - cannot fetch incidents")
+        return
+      }
+
       console.log("🔍 Fetching incidents for staff ID:", currentStaffId)
 
       // Use the new staff-specific endpoint
@@ -494,6 +506,21 @@ const StaffIncidentsPage: React.FC = () => {
       setIsUpdating(true)
       setEmailStatus(null)
 
+      // Check authentication before making request
+      const currentAuthState = getAuthState()
+      if (!currentAuthState.isAuthenticated || currentAuthState.userType !== 'staff') {
+        console.error("❌ User is not authenticated as staff - cannot update incident")
+        addNotification("Authentication required. Please log in again.", "error")
+        return
+      }
+
+      // Validate that notes (remarks) is not empty
+      if (!notes || !notes.trim()) {
+        addNotification("Remarks are required when updating incident status.", "error")
+        setIsUpdating(false)
+        return
+      }
+
       console.log("🔄 Updating incident:", { incidentId, status, notes })
 
       // Call the update API
@@ -501,13 +528,18 @@ const StaffIncidentsPage: React.FC = () => {
 
       console.log("✅ Update response:", response)
 
-      // Update local state
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update incident')
+      }
+
+      // Update local state with both status and remarks
       setIncidents((prev) =>
         prev.map((incident) => {
           if (incident.incident_id === incidentId) {
             return {
               ...incident,
               status: status,
+              remarks: notes, // Also update remarks field
             }
           }
           return incident
@@ -538,20 +570,17 @@ const StaffIncidentsPage: React.FC = () => {
     } catch (error) {
       console.error("❌ Error updating incident:", error)
 
-      // Show error notification
-      const notificationId = Date.now().toString()
-      setNotifications((prev) => [
-        ...prev,
-        {
-          id: notificationId,
-          message: "Failed to update incident",
-          type: "error",
-        },
-      ])
-
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
-      }, 3000)
+      // Show error notification with detailed message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to update incident. Please try again."
+      
+      // Check if it's an authentication error
+      if (errorMessage.includes('Authentication') || errorMessage.includes('token') || errorMessage.includes('401')) {
+        addNotification("Authentication failed. Please log in again.", "error")
+      } else {
+        addNotification(errorMessage, "error")
+      }
     } finally {
       setIsUpdating(false)
     }

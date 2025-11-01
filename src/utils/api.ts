@@ -57,29 +57,41 @@ export interface PaginatedResponse<T> {
 
 // Get auth token from localStorage with enhanced error handling
 export const getAuthToken = (): string | null => {
-  console.log('Getting auth token from storage...');
+  console.log('🔑 Getting auth token from storage...');
   
   // Check localStorage first
   const userInfo = localStorage.getItem('userInfo');
   if (userInfo) {
     try {
       const parsed = JSON.parse(userInfo);
-      console.log('userInfo found in localStorage:', { 
+      console.log('📦 userInfo found in localStorage:', { 
         hasToken: !!parsed.token, 
         tokenLength: parsed.token ? parsed.token.length : 0,
-        userType: parsed.userType || parsed.role 
+        userType: parsed.userType || parsed.role,
+        id: parsed.id || parsed.user_id || parsed.staff_id || parsed.admin_id
       });
       if (parsed.token && typeof parsed.token === 'string' && parsed.token.length > 10) {
-        console.log('Token found in localStorage userInfo');
+        console.log('✅ Token found in localStorage userInfo');
         return parsed.token;
       } else {
-        console.warn('userInfo exists but token is missing or invalid');
+        console.warn('⚠️ userInfo exists but token is missing or invalid:', {
+          hasToken: !!parsed.token,
+          tokenType: typeof parsed.token,
+          tokenLength: parsed.token ? parsed.token.length : 0
+        });
+        // Try to see if there are other token fields
+        if (parsed.accessToken) {
+          console.log('ℹ️ Found accessToken field, trying that...');
+          if (typeof parsed.accessToken === 'string' && parsed.accessToken.length > 10) {
+            return parsed.accessToken;
+          }
+        }
       }
     } catch (e) {
-      console.error('Error parsing userInfo from localStorage:', e);
+      console.error('❌ Error parsing userInfo from localStorage:', e);
     }
   } else {
-    console.log('No userInfo found in localStorage');
+    console.log('ℹ️ No userInfo found in localStorage');
   }
   
   // Check sessionStorage as fallback
@@ -87,22 +99,22 @@ export const getAuthToken = (): string | null => {
   if (sessionUserInfo) {
     try {
       const parsed = JSON.parse(sessionUserInfo);
-      console.log('userInfo found in sessionStorage:', { 
+      console.log('📦 userInfo found in sessionStorage:', { 
         hasToken: !!parsed.token, 
         tokenLength: parsed.token ? parsed.token.length : 0,
         userType: parsed.userType || parsed.role 
       });
       if (parsed.token && typeof parsed.token === 'string' && parsed.token.length > 10) {
-        console.log('Token found in sessionStorage userInfo');
+        console.log('✅ Token found in sessionStorage userInfo');
         return parsed.token;
       } else {
-        console.warn('sessionStorage userInfo exists but token is missing or invalid');
+        console.warn('⚠️ sessionStorage userInfo exists but token is missing or invalid');
       }
     } catch (e) {
-      console.error('Error parsing userInfo from sessionStorage:', e);
+      console.error('❌ Error parsing userInfo from sessionStorage:', e);
     }
   } else {
-    console.log('No userInfo found in sessionStorage');
+    console.log('ℹ️ No userInfo found in sessionStorage');
   }
   
   // Fallback to check for admin token (legacy support)
@@ -151,7 +163,15 @@ export const getAuthToken = (): string | null => {
     return sessionToken;
   }
   
-  console.log('No valid token found in any storage location');
+  console.warn('❌ No valid token found in any storage location');
+  console.warn('📋 Debug info - checking all storage keys:');
+  const allKeys = ['userInfo', 'staffToken', 'adminToken', 'token', 'userToken', 'staff', 'user', 'admin'];
+  allKeys.forEach(key => {
+    const local = localStorage.getItem(key);
+    const session = sessionStorage.getItem(key);
+    if (local) console.log(`  localStorage.${key}:`, local.substring(0, 50) + '...');
+    if (session) console.log(`  sessionStorage.${key}:`, session.substring(0, 50) + '...');
+  });
   return null;
 };
 
@@ -190,8 +210,10 @@ const createHeaders = (): HeadersInit => {
     // Always add the token and let the backend validate it
     // Don't try to guess expiration on frontend - backend will return proper error codes
     headers['Authorization'] = `Bearer ${token}`;
-    console.log('Authorization header set with token');
+    console.log('Authorization header set with token (length:', token.length, ')');
   } else {
+    console.warn('⚠️ No token found - request will be sent without Authorization header');
+    console.warn('⚠️ This may cause 401 errors. User may need to log in again.');
   }
   
   return headers;
@@ -314,7 +336,14 @@ export const apiRequest = async <T = any>(
 
       // Only clear auth data if NOT a login endpoint
       if (!endpoint.includes('/auth/login/')) {
-        clearAuthDataOnError();
+        // Check if token exists before clearing - if no token, we've already cleared
+        const hadToken = !!getAuthToken();
+        if (hadToken) {
+          console.warn('🔄 Token was present but invalid - clearing auth data');
+          clearAuthDataOnError();
+        } else {
+          console.warn('⚠️ No token found and got 401 - auth data may have been already cleared');
+        }
         // Throw specific error for authentication issues
         throw new Error(errorData.message || 'Authentication failed. Please log in again.');
       }
@@ -981,9 +1010,13 @@ export const incidentsApi = {
     });
   },
   updateIncidentStatus: async (incidentId: number, payload: { status: string; notes?: string }) => {
+    console.log('📤 Updating incident status:', { incidentId, payload });
     return apiRequest<{ success: boolean; message: string }>(`/incidents/${incidentId}/update-status`, {
       method: 'PUT',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        status: payload.status,
+        notes: payload.notes || '' // Ensure notes is always sent, even if empty string
+      }),
     });
   },
 };
