@@ -56,7 +56,6 @@ const StaffIncidentsPage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [priorityFilter, setPriorityFilter] = useState<string>("all")
   const [assignmentFilter, setAssignmentFilter] = useState<string>("all") // 'all', 'individual', 'team'
   const [viewMode, setViewMode] = useState<"active" | "history">("active") // 'active' for unresolved, 'history' for resolved
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
@@ -113,7 +112,21 @@ const StaffIncidentsPage: React.FC = () => {
 
   useEffect(() => {
     filterIncidents()
-  }, [incidents, searchTerm, statusFilter, priorityFilter, assignmentFilter, viewMode])
+  }, [incidents, searchTerm, statusFilter, assignmentFilter, viewMode])
+
+  // Format assignment for export
+  const formatAssignment = (incident: Incident) => {
+    if (incident.all_assigned_teams) {
+      return incident.all_assigned_teams
+    }
+    if (incident.assigned_team_name) {
+      return incident.assigned_team_name
+    }
+    if (incident.assigned_staff_name) {
+      return incident.assigned_staff_name
+    }
+    return "No assignment"
+  }
 
   // Export columns configuration
   const exportColumns: ExportColumn[] = [
@@ -123,7 +136,8 @@ const StaffIncidentsPage: React.FC = () => {
     { key: "resolvedLocation", label: "Location" },
     { key: "reporter_name", label: "Reporter" },
     { key: "reporter_type", label: "Reporter Type" },
-    { key: "assigned_team_name", label: "Assigned Team" },
+    { key: "assignment", label: "Assigned To", format: (value, incident) => formatAssignment(incident) },
+    { key: "remarks", label: "Notes", format: (value) => value || "No notes" },
     { key: "date_reported", label: "Date Reported", format: (value) => ExportUtils.formatDateTime(value) },
     { key: "updated_at", label: "Date Resolved", format: (value) => (value ? ExportUtils.formatDateTime(value) : "") },
   ]
@@ -343,11 +357,6 @@ const StaffIncidentsPage: React.FC = () => {
     // Status filter (only applies within the view mode)
     if (statusFilter !== "all") {
       filtered = filtered.filter((incident) => incident.status === statusFilter)
-    }
-
-    // Priority filter
-    if (priorityFilter !== "all") {
-      filtered = filtered.filter((incident) => incident.priority_level === priorityFilter)
     }
 
     // Assignment filter
@@ -853,22 +862,6 @@ const StaffIncidentsPage: React.FC = () => {
                       <option value="closed">Closed</option>
                     </>
                   )}
-                </select>
-              </div>
-
-              {/* Priority Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="low">Low</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
                 </select>
               </div>
 
