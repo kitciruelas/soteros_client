@@ -963,7 +963,7 @@ const ViewIncidents: React.FC = () => {
   };
 
   // Handle export with preview
-  const handleExport = async (orientation: 'portrait' | 'landscape' = 'portrait') => {
+  const handleExport = async () => {
     if (filteredIncidents.length === 0) return;
 
     setIsExporting(true);
@@ -987,8 +987,7 @@ const ViewIncidents: React.FC = () => {
       const options = {
         filename: 'incidents_report',
         title,
-        includeTimestamp: true,
-        orientation: orientation
+        includeTimestamp: true
       };
 
       await ExportUtils.exportToPDF(filteredIncidents, incidentExportColumns, options);

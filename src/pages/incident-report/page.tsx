@@ -929,7 +929,7 @@ export default function IncidentReportPage() {
 
       {/* Enhanced Hero Section for Guests */}
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-indigo-600/5"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 to-orange-600/5"></div>
           <div className="absolute inset-0 opacity-40">
             <div className="absolute inset-0" style={{
               backgroundImage: `radial-gradient(circle at 25px 25px, rgba(156, 146, 172, 0.05) 2px, transparent 0)`,
@@ -941,13 +941,13 @@ export default function IncidentReportPage() {
             <div className="text-center max-w-4xl mx-auto">
               {/* Enhanced Icon */}
               <div className="relative inline-flex items-center justify-center mb-8">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
-                <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
+                <div className="relative w-20 h-20 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
                   <i className="ri-error-warning-line text-3xl text-white"></i>
                 </div>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight">
+              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-red-900 to-orange-900 bg-clip-text text-transparent mb-6 leading-tight">
                 Report an Incident
               </h1>
               <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
@@ -956,16 +956,16 @@ export default function IncidentReportPage() {
               </p>
 
               {/* Enhanced Info Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm mb-8">
-              <div className="flex items-center justify-center text-blue-800">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <i className="ri-information-line text-blue-600"></i>
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm mb-8">
+              <div className="flex items-center justify-center text-red-800">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                  <i className="ri-information-line text-red-600"></i>
                   </div>
                   <p className="font-semibold text-lg">
                   Guest reporting available - No account required
                   </p>
                 </div>
-              <p className="text-blue-600 text-sm mt-2 opacity-80">
+              <p className="text-red-600 text-sm mt-2 opacity-80">
                 You can submit incident reports without creating an account. Creating an account helps us track your reports better.
                 </p>
               </div>
@@ -1163,7 +1163,7 @@ export default function IncidentReportPage() {
 
       {/* Enhanced Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-indigo-600/5"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 to-orange-600/5"></div>
         <div className="absolute inset-0 opacity-40">
           <div className="absolute inset-0" style={{
             backgroundImage: `radial-gradient(circle at 25px 25px, rgba(156, 146, 172, 0.05) 2px, transparent 0)`,
@@ -1175,13 +1175,13 @@ export default function IncidentReportPage() {
           <div className="text-center max-w-4xl mx-auto">
             {/* Enhanced Icon */}
             <div className="relative inline-flex items-center justify-center mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
-              <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
+              <div className="relative w-20 h-20 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
                 <i className="ri-error-warning-line text-3xl text-white"></i>
               </div>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-red-900 to-orange-900 bg-clip-text text-transparent mb-6 leading-tight">
               Report an Incident
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
@@ -1190,16 +1190,16 @@ export default function IncidentReportPage() {
             </p>
 
             {/* Enhanced Info Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-center text-blue-800">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <i className="ri-information-line text-blue-600"></i>
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
+              <div className="flex items-center justify-center text-red-800">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                  <i className="ri-information-line text-red-600"></i>
                 </div>
                 <p className="font-semibold text-lg">
                   Your report helps us respond quickly to emergencies
                 </p>
               </div>
-              <p className="text-blue-600 text-sm mt-2 opacity-80">
+              <p className="text-red-600 text-sm mt-2 opacity-80">
                 All reports are treated with urgency and confidentiality
               </p>
             </div>
