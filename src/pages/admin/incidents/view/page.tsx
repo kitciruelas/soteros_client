@@ -1132,7 +1132,7 @@ const ViewIncidents: React.FC = () => {
             <div key={incident.id} className="p-6 hover:bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <h4 className="text-lg font-medium text-gray-900">
                       {getIncidentTypeText(incident.type)} - #{incident.id}
                     </h4>
@@ -1154,11 +1154,20 @@ const ViewIncidents: React.FC = () => {
                         <span className="ml-1 text-xs">(Rejected)</span>
                       )}
                     </span>
-                    {/* Reporter Badge - Prominently displayed */}
-                    {newIncidentIds.has(incident.id) && (
-                      <span className="px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg flex items-center space-x-1">
-                        <i className="ri-user-line"></i>
-                        <span>{incident.reportedBy}</span>
+                    {/* Reporter Badge - Prominently displayed for NEW incidents */}
+                    {newIncidentIds.has(incident.id) && incident.reportedBy && (
+                      <span className="px-3 py-1.5 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg flex items-center gap-1.5 whitespace-nowrap">
+                        <i className="ri-user-fill text-sm"></i>
+                        <span className="font-semibold">
+                          {incident.reportedBy}
+                        </span>
+                        {incident.reporterPhone && (
+                          <>
+                            <span className="text-blue-200 mx-0.5">•</span>
+                            <i className="ri-phone-fill text-xs"></i>
+                            <span className="text-xs">{incident.reporterPhone}</span>
+                          </>
+                        )}
                       </span>
                     )}
                   </div>
