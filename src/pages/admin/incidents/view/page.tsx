@@ -114,17 +114,16 @@ const incidentExportColumns: ExportColumn[] = [
       // Parse attachments - handle both JSON array and comma-separated formats
       try {
         const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.length > 0 ? `Yes (${parsed.length})` : 'No';
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.join(', ');
         }
       } catch {
         // Not JSON, check if comma-separated
         if (value.includes(',')) {
-          const files = value.split(',').map(s => s.trim()).filter(s => s);
-          return files.length > 0 ? `Yes (${files.length})` : 'No';
+          return value;
         }
       }
-      return value ? 'Yes' : 'No';
+      return value ? value : 'No';
     }
   }
 ];
