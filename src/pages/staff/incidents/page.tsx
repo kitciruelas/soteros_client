@@ -264,15 +264,22 @@ const StaffIncidentsPage: React.FC = () => {
     setGeocodingInProgress((prev) => ({ ...prev, [cacheKey]: true }))
 
     try {
-      // Use our backend proxy for geocoding
+      // Use our backend proxy for geocoding - use full API URL
+      const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+      const token = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo') || '{}').token : null;
+      
+      const headers: HeadersInit = {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(
-        `/api/geocoding/reverse?lat=${lat}&lon=${lng}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        }
+        `${API_BASE_URL}/geocoding/reverse?lat=${lat}&lon=${lng}`,
+        { headers }
       )
 
       if (!response.ok) {
