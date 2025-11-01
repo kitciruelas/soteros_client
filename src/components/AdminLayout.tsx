@@ -38,6 +38,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     severity?: 'info' | 'warning' | 'high' | 'critical';
     actionUrl?: string | null;
     notificationId?: number;
+    relatedId?: number;
+    incidentId?: number;
   }>>([]);
   const [notificationSound, setNotificationSound] = useState<HTMLAudioElement | null>(null);
 
@@ -94,6 +96,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const priority = notificationData.priority_level || 'medium';
     const severity = notificationData.severity || 'info';
     
+    // Extract related ID (could be incident_id, report_id, etc.)
+    const relatedId = notificationData.related_id || notificationData.incident_id || notificationData.report_id;
+    const incidentId = notifType === 'incident' ? relatedId : undefined;
+    
     // Add to floating notifications
     addFloatingNotification({
       id: `notification-${notificationData.id}-${Date.now()}`,
@@ -104,6 +110,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       severity: severity as 'info' | 'warning' | 'high' | 'critical',
       actionUrl: notificationData.action_url || null,
       notificationId: notificationData.id,
+      relatedId: relatedId,
+      incidentId: incidentId,
       timestamp: Date.now()
     });
 
@@ -676,6 +684,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     severity?: 'info' | 'warning' | 'high' | 'critical';
     actionUrl?: string | null | undefined;
     notificationId?: number;
+    relatedId?: number;
+    incidentId?: number;
     timestamp?: number;
   }) => {
     const newFloatingNotif = {
@@ -941,9 +951,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                   markAsRead(idString);
                                 }
                                 if (isWelfare) {
-                                  navigate('/admin/welfare');
+                                  // Navigate to welfare page, optionally with report ID
+                                  const reportId = notif.report_id || notif.id?.toString().replace('welfare_', '');
+                                  if (reportId) {
+                                    navigate(`/admin/welfare?report_id=${reportId}`);
+                                  } else {
+                                    navigate('/admin/welfare');
+                                  }
                                 } else {
-                                  navigate('/admin/incidents/view');
+                                  // Navigate directly to the specific incident detail page
+                                  const incidentId = notif.incident_id || notif.id || notif.related_id;
+                                  if (incidentId) {
+                                    navigate(`/admin/incidents/view/${incidentId}`);
+                                  } else {
+                                    navigate('/admin/incidents/view');
+                                  }
                                 }
                                 setShowNotifDropdown(false);
                               }}
@@ -1208,22 +1230,48 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 markAsRead(String(notification.notificationId));
               }
               
-              // Navigate based on action URL or type
+              // Navigate based on action URL or type with ID
               if (notification.actionUrl) {
-                navigate(notification.actionUrl);
+                // If actionUrl includes a placeholder, replace it with the actual ID
+                let url = notification.actionUrl;
+                if (notification.incidentId && url.includes('{id}')) {
+                  url = url.replace('{id}', String(notification.incidentId));
+                } else if (notification.relatedId && url.includes('{id}')) {
+                  url = url.replace('{id}', String(notification.relatedId));
+                }
+                navigate(url);
               } else {
                 switch (notification.type) {
                   case 'welfare':
-                    navigate('/admin/welfare');
+                    // Navigate to welfare with report ID if available
+                    if (notification.relatedId) {
+                      navigate(`/admin/welfare?report_id=${notification.relatedId}`);
+                    } else {
+                      navigate('/admin/welfare');
+                    }
                     break;
                   case 'incident':
-                    navigate('/admin/incidents/view');
+                    // Navigate directly to the specific incident detail page
+                    if (notification.incidentId || notification.relatedId) {
+                      const incidentId = notification.incidentId || notification.relatedId;
+                      navigate(`/admin/incidents/view/${incidentId}`);
+                    } else {
+                      navigate('/admin/incidents/view');
+                    }
                     break;
                   case 'alert':
-                    navigate('/admin/alerts');
+                    if (notification.relatedId) {
+                      navigate(`/admin/alerts?alert_id=${notification.relatedId}`);
+                    } else {
+                      navigate('/admin/alerts');
+                    }
                     break;
                   case 'safety_protocol':
-                    navigate('/admin/safety-protocols');
+                    if (notification.relatedId) {
+                      navigate(`/admin/safety-protocols?protocol_id=${notification.relatedId}`);
+                    } else {
+                      navigate('/admin/safety-protocols');
+                    }
                     break;
                   default:
                     navigate('/admin/dashboard');
