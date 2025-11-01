@@ -131,12 +131,9 @@ const StaffIncidentsPage: React.FC = () => {
   // Export columns configuration
   const exportColumns: ExportColumn[] = [
     { key: "incident_id", label: "Incident ID" },
-    { key: "incident_type", label: "Type", format: (value) => getIncidentTypeText(value) },
     { key: "description", label: "Description" },
-    { key: "resolvedLocation", label: "Location" },
-    { key: "reporter_name", label: "Reporter" },
-    { key: "reporter_type", label: "Reporter Type" },
-    { key: "assignment", label: "Assigned To", format: (value, incident) => formatAssignment(incident) },
+    { key: "reporter_name", label: "Reporter Name" },
+    { key: "assignment", label: "Assigned Team", format: (value, incident) => formatAssignment(incident) },
     { key: "remarks", label: "Notes", format: (value) => value || "No notes" },
     { key: "date_reported", label: "Date Reported", format: (value) => ExportUtils.formatDateTime(value) },
     { key: "updated_at", label: "Date Resolved", format: (value) => (value ? ExportUtils.formatDateTime(value) : "") },
@@ -1736,7 +1733,11 @@ const StaffIncidentsPage: React.FC = () => {
         onExportPDF={handleExportPDF}
         onExportCSV={handleExportCSV}
         onExportExcel={handleExportExcel}
-        data={filteredIncidents}
+        data={filteredIncidents.map((incident) => ({
+          ...incident,
+          assignment: formatAssignment(incident),
+          updated_at: incident.date_resolved,
+        }))}
         columns={exportColumns.map((col) => ({ key: col.key, label: col.label }))}
         title="Export Staff Incidents"
       />
