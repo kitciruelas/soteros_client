@@ -28,6 +28,7 @@ interface Incident {
   guest_contact?: string
   reporter_type?: "guest" | "user"
   attachment?: string | null
+  remarks?: string | null
   assigned_team_id?: number | null
   assigned_team_name?: string
   assigned_team_ids?: string // Comma-separated list of team IDs
@@ -1301,6 +1302,19 @@ const StaffIncidentsPage: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Remarks */}
+              {selectedIncident.remarks && (
+                <div className="bg-blue-50 rounded-lg p-3 md:p-4 mt-4 md:mt-6 border border-blue-200">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <i className="ri-chat-1-line text-blue-600"></i>
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Staff Remarks</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base whitespace-pre-wrap">
+                    {selectedIncident.remarks}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -1518,6 +1532,22 @@ const StaffIncidentsPage: React.FC = () => {
                     <option value="closed">Closed</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Remarks <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={updateNotes}
+                    onChange={(e) => setUpdateNotes(e.target.value)}
+                    placeholder="Enter remarks about this status update..."
+                    rows={4}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base resize-none"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Please provide details about this status update
+                  </p>
+                </div>
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
@@ -1533,9 +1563,9 @@ const StaffIncidentsPage: React.FC = () => {
                     if (!selectedIncident) return
                     handleUpdateIncident(selectedIncident.incident_id, updateStatus, updateNotes)
                   }}
-                  disabled={isUpdating || !updateStatus}
+                  disabled={isUpdating || !updateStatus || !updateNotes.trim()}
                   className={`w-full sm:w-auto px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center text-sm font-medium ${
-                    isUpdating || !updateStatus
+                    isUpdating || !updateStatus || !updateNotes.trim()
                       ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                       : "bg-green-600 text-white hover:bg-green-700"
                   }`}
