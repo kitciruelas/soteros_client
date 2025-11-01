@@ -80,16 +80,6 @@ const incidentExportColumns: ExportColumn[] = [
     format: (value: string) => value?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || ''
   },
   {
-    key: 'location',
-    label: 'Location',
-    format: (value: string, row: any) => {
-      if (value) return value;
-      // Extract location from description if not available
-      const match = row.description?.match(/Location:\s*([^\n]+)/i);
-      return match ? match[1].trim() : '';
-    }
-  },
-  {
     key: 'description',
     label: 'Description',
     format: (value: string) => value || ''
@@ -114,7 +104,28 @@ const incidentExportColumns: ExportColumn[] = [
   {
     key: 'remarks',
     label: 'Remarks',
-    format: (value: string) => value || ''
+    format: (value: string) => value || 'No'
+  },
+  {
+    key: 'attachment',
+    label: 'Attachment',
+    format: (value: string) => {
+      if (!value) return 'No';
+      // Parse attachments - handle both JSON array and comma-separated formats
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed.length > 0 ? `Yes (${parsed.length})` : 'No';
+        }
+      } catch {
+        // Not JSON, check if comma-separated
+        if (value.includes(',')) {
+          const files = value.split(',').map(s => s.trim()).filter(s => s);
+          return files.length > 0 ? `Yes (${files.length})` : 'No';
+        }
+      }
+      return value ? 'Yes' : 'No';
+    }
   }
 ];
 

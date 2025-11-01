@@ -567,7 +567,6 @@ export default function IncidentReportPage() {
               <option value="medical">&#128657; Medical Emergency</option>
               <option value="security">&#128737; Security Incident</option>
               <option value="accident">&#128165; Transport Accident</option>
-              <option value="natural">&#127783; Natural Disaster</option>
               <option value="other">&#9888; Other Emergency</option>
             </select>
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
