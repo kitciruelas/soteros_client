@@ -847,7 +847,6 @@ const StaffProfilePage: React.FC = () => {
                               inputClassName="w-full py-4 px-4 border-0 focus:ring-0 focus:outline-none bg-transparent text-gray-900 placeholder-gray-500"
                               buttonClassName="px-3 py-4 border-r border-gray-300 bg-gray-50 hover:bg-gray-100"
                               dropdownClassName="bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto"
-                              inputProps={{ required: true }}
                               placeholder="Enter your phone number"
                               disabled={!isEditing}
                             />
