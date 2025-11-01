@@ -584,8 +584,8 @@ export default function IncidentReportPage() {
       <div className="space-y-6">
         <div className="border-b border-gray-200 pb-4">
           <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-map-pin-line text-blue-600"></i>
+            <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-map-pin-line text-red-600"></i>
             </div>
             Location Information
           </h3>
@@ -604,7 +604,7 @@ export default function IncidentReportPage() {
                 onClick={() => setLocationMethod('manual')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   locationMethod === 'manual'
-                    ? 'bg-blue-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -641,11 +641,11 @@ export default function IncidentReportPage() {
             {/* Rosario Barangays Dropdown */}
             <div className="mt-2 mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                <i className="ri-map-pin-line mr-2 text-blue-600"></i>
+                <i className="ri-map-pin-line mr-2 text-red-600"></i>
                 Select Barangay (Rosario, Batangas)
               </label>
               <select
-                className="w-full px-3 py-3 border border-blue-200 rounded-lg text-sm text-blue-800 font-medium bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all mb-1"
+                className="w-full px-3 py-3 border border-red-200 rounded-lg text-sm text-red-800 font-medium bg-red-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all mb-1"
                 value={rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === fields.location.value) ? fields.location.value : ''}
                 onChange={e => {
                   const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
@@ -674,7 +674,7 @@ export default function IncidentReportPage() {
               <p className="text-gray-400 text-xs mt-1">Choose a barangay to quickly fill location and coordinates.</p>
             </div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              <i className="ri-map-pin-line mr-2 text-blue-600"></i>
+              <i className="ri-map-pin-line mr-2 text-red-600"></i>
               Location Description <span className="text-red-500">*</span>
             </label>
 
@@ -696,7 +696,7 @@ export default function IncidentReportPage() {
                     }
                   }
                 }}
-                className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all ${
                   fields.location.value && fields.location.value.includes('Barangay') 
                     ? 'border-green-300 bg-green-50 cursor-not-allowed' 
                     : 'border-gray-300'
@@ -715,7 +715,7 @@ export default function IncidentReportPage() {
               {/* Loading indicator for search */}
               {(isSearchingLocation || isReverseGeocoding) && (
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <i className="ri-loader-4-line animate-spin text-blue-600"></i>
+                  <i className="ri-loader-4-line animate-spin text-red-600"></i>
                 </div>
               )}
             </div>
@@ -924,7 +924,7 @@ export default function IncidentReportPage() {
 
   // Guest form section - show form for unauthenticated users
   const renderGuestForm = () => (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-100">
         <Navbar isAuthenticated={isAuthenticated} userData={userData || undefined} />
 
       {/* Enhanced Hero Section for Guests */}
@@ -1003,8 +1003,8 @@ export default function IncidentReportPage() {
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
                   <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                      <i className="ri-user-line text-blue-600"></i>
+                    <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                      <i className="ri-user-line text-red-600"></i>
                     </div>
                     Your Information
                   </h3>
@@ -1014,7 +1014,7 @@ export default function IncidentReportPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="guestName" className="block text-sm font-semibold text-gray-700 mb-3">
-                      <i className="ri-user-line mr-2 text-blue-600"></i>
+                      <i className="ri-user-line mr-2 text-red-600"></i>
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -1027,7 +1027,7 @@ export default function IncidentReportPage() {
                         name="guestName"
                         value={fields.guestName.value}
                         onChange={(e) => setValue('guestName', e.target.value)}
-                        className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                        className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all ${
                           fields.guestName.error ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Enter your full name"
@@ -1041,7 +1041,7 @@ export default function IncidentReportPage() {
 
                   <div>
                     <label htmlFor="guestContact" className="block text-sm font-semibold text-gray-700 mb-3">
-                      <i className="ri-phone-line mr-2 text-blue-600"></i>
+                      <i className="ri-phone-line mr-2 text-red-600"></i>
                       Contact Number <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -1056,7 +1056,7 @@ export default function IncidentReportPage() {
                           // Store the formatted value from PhoneInput
                           setValue('guestContact', value || '');
                         }}
-                        className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                        className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all ${
                           fields.guestContact.error ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Enter phone number"
@@ -1158,7 +1158,7 @@ export default function IncidentReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-100">
       <Navbar isAuthenticated={isAuthenticated} userData={userData || undefined} />
 
       {/* Enhanced Hero Section */}
