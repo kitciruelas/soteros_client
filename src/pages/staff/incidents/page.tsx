@@ -980,7 +980,7 @@ const StaffIncidentsPage: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Location</div>
-                          <p className="text-xs sm:text-sm text-gray-900 break-words">
+                          <div className="text-xs sm:text-sm text-gray-900 break-words">
                             {geocodingInProgress[`${incident.latitude},${incident.longitude}`] ? (
                               <div className="flex items-center">
                                 <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600 mr-2"></div>
@@ -989,7 +989,7 @@ const StaffIncidentsPage: React.FC = () => {
                             ) : (
                               incident.resolvedLocation || incident.location
                             )}
-                          </p>
+                          </div>
                         </div>
                       </div>
 
@@ -1471,12 +1471,12 @@ const StaffIncidentsPage: React.FC = () => {
                       </span>
                     </div>
                     {emailStatus.details && (
-                      <div className="mt-2 text-xs">
-                        {emailStatus.details.error && <p>Error: {emailStatus.details.error}</p>}
-                        {emailStatus.details.teamName && <p>Team: {emailStatus.details.teamName}</p>}
-                        {emailStatus.details.totalMembers && <p>Members: {emailStatus.details.totalMembers}</p>}
-                        {emailStatus.details.emailsSent && <p>Sent: {emailStatus.details.emailsSent}</p>}
-                        {emailStatus.details.emailsFailed && <p>Failed: {emailStatus.details.emailsFailed}</p>}
+                      <div className="mt-2 text-xs space-y-1">
+                        {emailStatus.details.error && <div>Error: {emailStatus.details.error}</div>}
+                        {emailStatus.details.teamName && <div>Team: {emailStatus.details.teamName}</div>}
+                        {emailStatus.details.totalMembers && <div>Members: {emailStatus.details.totalMembers}</div>}
+                        {emailStatus.details.emailsSent && <div>Sent: {emailStatus.details.emailsSent}</div>}
+                        {emailStatus.details.emailsFailed && <div>Failed: {emailStatus.details.emailsFailed}</div>}
                       </div>
                     )}
                   </div>

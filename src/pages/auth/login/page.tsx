@@ -112,6 +112,7 @@ export default function LoginPage() {
 
         if (data && data.success) {
           console.log("Staff login successful:", data)
+          console.log("Staff token received:", data.token ? "Yes" : "No")
           userData = {
             ...data.staff,
             role: "staff",
@@ -119,6 +120,12 @@ export default function LoginPage() {
             token: data.token, // Add the token to user data
           }
           userType = "staff"
+          
+          // Also store staffToken as fallback for legacy support
+          if (data.token) {
+            localStorage.setItem("staffToken", data.token)
+            console.log("✅ Staff token stored in localStorage as staffToken")
+          }
         } else {
           console.log("Staff login also failed, trying admin login...")
 
@@ -149,9 +156,15 @@ export default function LoginPage() {
       if (userData) {
         setShowSuccessMessage(true)
         console.log(`Login successful for ${userType} user:`, userData)
+        console.log(`Token in userData:`, userData.token ? "Present" : "Missing")
 
         // Store user data in localStorage for persistent login across browser tabs
         localStorage.setItem("userInfo", JSON.stringify(userData))
+        console.log("✅ UserInfo stored in localStorage:", {
+          hasToken: !!userData.token,
+          tokenLength: userData.token ? userData.token.length : 0,
+          userType: userData.userType || userData.role
+        })
 
         // If remember me is checked, store email for auto-fill
         if (formData.rememberMe) {
