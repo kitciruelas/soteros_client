@@ -987,8 +987,7 @@ const ViewIncidents: React.FC = () => {
       const options = {
         filename: 'incidents_report',
         title,
-        includeTimestamp: true,
-        orientation: 'landscape' as const
+        includeTimestamp: true
       };
 
       await ExportUtils.exportToPDF(filteredIncidents, incidentExportColumns, options);
