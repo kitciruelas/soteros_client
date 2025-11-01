@@ -884,27 +884,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                             <i className="ri-notification-3-line mr-2 text-blue-600"></i>
                             Incident Alerts
                           </h3>
-                          {/* WebSocket Connection Status */}
-                          <div className="ml-3 flex items-center">
-                            {wsConnectionStatus === 'connected' && (
-                              <div className="flex items-center text-green-600 text-xs">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-                                <span className="font-medium">Live</span>
-                              </div>
-                            )}
-                            {wsConnectionStatus === 'connecting' && (
-                              <div className="flex items-center text-yellow-600 text-xs">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse mr-1"></div>
-                                <span className="font-medium">Connecting...</span>
-                              </div>
-                            )}
-                            {wsConnectionStatus === 'disconnected' && (
-                              <div className="flex items-center text-red-600 text-xs">
-                                <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
-                                <span className="font-medium">Off</span>
-                              </div>
-                            )}
-                          </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <button

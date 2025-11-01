@@ -1030,7 +1030,7 @@ const ViewIncidents: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
@@ -1080,19 +1080,6 @@ const ViewIncidents: React.FC = () => {
               <p className="text-sm text-gray-600">Resolved</p>
               <p className="text-xl font-bold text-gray-900">
                 {incidents.filter(i => i.status === 'resolved').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-alarm-warning-line text-orange-600"></i>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">High Priority</p>
-              <p className="text-xl font-bold text-gray-900">
-                {incidents.filter(i => i.priorityLevel === 'high' || i.priorityLevel === 'critical').length}
               </p>
             </div>
           </div>
@@ -1323,8 +1310,8 @@ const ViewIncidents: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2 ml-4">
-                  {/* Read/Unread Button */}
-                  {newIncidentIds.has(incident.id) ? (
+                  {/* Mark as Read Button - Only show for unread incidents */}
+                  {newIncidentIds.has(incident.id) && (
                     <button
                       onClick={() => markIncidentAsRead(incident.id)}
                       className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-lg hover:bg-green-200 transition-colors flex items-center"
@@ -1332,26 +1319,6 @@ const ViewIncidents: React.FC = () => {
                     >
                       <i className="ri-check-line mr-1"></i>
                       Mark Read
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        // Add back to unread (local state only - notifications remain read on backend)
-                        setNewIncidentIds(prev => {
-                          const updated = new Set(prev);
-                          updated.add(incident.id);
-                          return updated;
-                        });
-                        showToast({ 
-                          type: 'info', 
-                          message: `Incident #${incident.id} marked as unread (local)` 
-                        });
-                      }}
-                      className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors flex items-center"
-                      title="Mark as unread (local)"
-                    >
-                      <i className="ri-mail-unread-line mr-1"></i>
-                      Mark Unread
                     </button>
                   )}
                   <button
