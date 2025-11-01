@@ -30,12 +30,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [newNotificationCount, setNewNotificationCount] = useState(0);
   const [floatingNotifications, setFloatingNotifications] = useState<Array<{
     id: string;
-    type: 'incident' | 'welfare';
+    type: 'incident' | 'welfare' | 'alert' | 'safety_protocol' | 'system' | 'team' | 'staff';
     title: string;
     message: string;
     timestamp: number;
     priority: 'low' | 'medium' | 'high' | 'critical';
+    severity?: 'info' | 'warning' | 'high' | 'critical';
+    actionUrl?: string | null;
+    notificationId?: number;
   }>>([]);
+  const [notificationSound, setNotificationSound] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const authState = getAuthState();
@@ -55,6 +59,144 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     window.addEventListener('authStateChanged', handleAuthStateChange);
     return () => window.removeEventListener('authStateChanged', handleAuthStateChange);
   }, []);
+
+  // Initialize notification sound
+  useEffect(() => {
+    // Create audio element for notification sound
+    const audio = new Audio('/sounds/notification.mp3');
+    audio.volume = 0.5;
+    audio.preload = 'auto';
+    setNotificationSound(audio);
+    
+    // Fallback: try to load notification sound, if it fails, create a simple beep
+    audio.addEventListener('error', () => {
+      console.log('Notification sound file not found, using fallback');
+      // Create a simple beep using Web Audio API
+    });
+    
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+    };
+  }, []);
+
+  // Handle new admin notifications from the unified API
+  const handleNewAdminNotification = React.useCallback((notificationData: any) => {
+    console.log('📬 New admin notification received:', notificationData);
+    
+    // Increment new notification counter
+    setNewNotificationCount(prev => prev + 1);
+    
+    // Determine notification type and priority
+    const notifType = notificationData.type || 'system';
+    const priority = notificationData.priority_level || 'medium';
+    const severity = notificationData.severity || 'info';
+    
+    // Add to floating notifications
+    addFloatingNotification({
+      id: `notification-${notificationData.id}-${Date.now()}`,
+      type: notifType as any,
+      title: notificationData.title || 'New Notification',
+      message: notificationData.message || '',
+      priority: priority as 'low' | 'medium' | 'high' | 'critical',
+      severity: severity as 'info' | 'warning' | 'high' | 'critical',
+      actionUrl: notificationData.action_url || null,
+      notificationId: notificationData.id,
+      timestamp: Date.now()
+    });
+
+    // Update notifications list
+    fetchNotifications();
+
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+      const browserNotif = new Notification(notificationData.title || 'New Notification', {
+        body: notificationData.message || '',
+        icon: '/images/Slogo.png',
+        tag: `notification-${notificationData.id}`,
+        badge: '/images/Slogo.png',
+        requireInteraction: priority === 'critical' || priority === 'high'
+      });
+      
+      // Auto-close after 5 seconds for low priority, 10 seconds for high/critical
+      const autoCloseTime = (priority === 'critical' || priority === 'high') ? 10000 : 5000;
+      setTimeout(() => browserNotif.close(), autoCloseTime);
+    }
+
+    // Play notification sound
+    if (notificationSound) {
+      try {
+        notificationSound.currentTime = 0;
+        notificationSound.play().catch(err => {
+          console.log('Could not play notification sound:', err);
+        });
+      } catch (error) {
+        console.log('Error playing notification sound:', error);
+      }
+    } else {
+      // Fallback: Use Web Audio API for a simple beep
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Different frequencies based on priority
+        const frequencies: Record<string, number> = {
+          'critical': 800,
+          'high': 600,
+          'medium': 400,
+          'low': 300
+        };
+        
+        oscillator.frequency.value = frequencies[priority] || 400;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } catch (error) {
+        console.log('Could not create audio context:', error);
+      }
+    }
+  }, [notificationSound]);
+
+  // Poll for new notifications every 30 seconds as backup
+  useEffect(() => {
+    let lastNotificationId = 0;
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await adminNotificationsApi.getNotifications({ 
+          limit: 5,
+          unread_only: true
+        });
+        
+        if (response.success && Array.isArray(response.notifications)) {
+          // Check for new notifications
+          const newNotifications = response.notifications.filter((notif: any) => 
+            notif.id > lastNotificationId && !notif.is_read
+          );
+          
+          if (newNotifications.length > 0) {
+            lastNotificationId = Math.max(...newNotifications.map((n: any) => n.id));
+            
+            // Show pop-up for each new notification
+            newNotifications.forEach((notif: any) => {
+              handleNewAdminNotification(notif);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error polling for notifications:', error);
+      }
+    }, 30000); // Poll every 30 seconds
+    
+    return () => clearInterval(pollInterval);
+  }, [handleNewAdminNotification]);
 
   // Initialize WebSocket connection and fetch notifications on mount
   useEffect(() => {
@@ -89,6 +231,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           websocketService.on('new_welfare_report', handleNewWelfareReport);
           websocketService.on('incident_updated', handleIncidentUpdate);
           websocketService.on('welfare_updated', handleWelfareUpdate);
+          // Add handler for general admin notifications
+          websocketService.on('new_admin_notification', handleNewAdminNotification);
           
           console.log('WebSocket connected for real-time notifications');
         } catch (error) {
@@ -136,6 +280,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       websocketService.off('new_welfare_report', handleNewWelfareReport);
       websocketService.off('incident_updated', handleIncidentUpdate);
       websocketService.off('welfare_updated', handleWelfareUpdate);
+      websocketService.off('new_admin_notification', handleNewAdminNotification);
     };
   }, []);
 
@@ -346,6 +491,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   };
 
+
   // Fetch notifications from unified admin notifications API
   const fetchNotifications = async () => {
     setIsLoadingNotifications(true);
@@ -523,22 +669,31 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Floating notification functions
   const addFloatingNotification = (notification: {
     id: string;
-    type: 'incident' | 'welfare';
+    type: 'incident' | 'welfare' | 'alert' | 'safety_protocol' | 'system' | 'team' | 'staff';
     title: string;
     message: string;
     priority: 'low' | 'medium' | 'high' | 'critical';
+    severity?: 'info' | 'warning' | 'high' | 'critical';
+    actionUrl?: string | null | undefined;
+    notificationId?: number;
+    timestamp?: number;
   }) => {
     const newFloatingNotif = {
       ...notification,
-      timestamp: Date.now()
+      timestamp: notification.timestamp || Date.now()
     };
     
     setFloatingNotifications(prev => [...prev, newFloatingNotif]);
     
-    // Auto-dismiss after 5 seconds
+    // Auto-dismiss based on priority
+    // Critical/High: 10 seconds, Medium: 7 seconds, Low: 5 seconds
+    const dismissTime = 
+      (notification.priority === 'critical' || notification.priority === 'high') ? 10000 :
+      notification.priority === 'medium' ? 7000 : 5000;
+    
     setTimeout(() => {
       removeFloatingNotification(newFloatingNotif.id);
-    }, 5000);
+    }, dismissTime);
   };
 
   const removeFloatingNotification = (id: string) => {
@@ -944,70 +1099,176 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </main>
         </div>
 
-        {/* Floating Notifications */}
-        <div className="fixed top-4 right-4 z-[9999] space-y-3">
+        {/* Enhanced Floating Notifications */}
+        <div className="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
           {floatingNotifications.map((notification, index) => {
-            const getPriorityStyles = (priority: string) => {
+            const getPriorityStyles = (priority: string, severity?: string) => {
+              // Use severity for more granular styling
+              if (severity === 'critical') {
+                return {
+                  bg: 'bg-gradient-to-r from-red-600 to-red-700',
+                  border: 'border-red-800',
+                  text: 'text-white',
+                  shadow: 'shadow-2xl shadow-red-500/50',
+                  glow: 'ring-2 ring-red-400 ring-opacity-75'
+                };
+              }
+              if (severity === 'high') {
+                return {
+                  bg: 'bg-gradient-to-r from-orange-600 to-orange-700',
+                  border: 'border-orange-800',
+                  text: 'text-white',
+                  shadow: 'shadow-2xl shadow-orange-500/50',
+                  glow: 'ring-2 ring-orange-400 ring-opacity-75'
+                };
+              }
+              
               switch (priority) {
                 case 'critical':
-                  return 'bg-red-500 border-red-600 text-white';
+                  return {
+                    bg: 'bg-gradient-to-r from-red-600 to-red-700',
+                    border: 'border-red-800',
+                    text: 'text-white',
+                    shadow: 'shadow-2xl shadow-red-500/50',
+                    glow: 'ring-2 ring-red-400 ring-opacity-75'
+                  };
                 case 'high':
-                  return 'bg-orange-500 border-orange-600 text-white';
+                  return {
+                    bg: 'bg-gradient-to-r from-orange-600 to-orange-700',
+                    border: 'border-orange-800',
+                    text: 'text-white',
+                    shadow: 'shadow-2xl shadow-orange-500/50',
+                    glow: 'ring-2 ring-orange-400 ring-opacity-75'
+                  };
                 case 'medium':
-                  return 'bg-blue-500 border-blue-600 text-white';
+                  return {
+                    bg: 'bg-gradient-to-r from-blue-600 to-blue-700',
+                    border: 'border-blue-800',
+                    text: 'text-white',
+                    shadow: 'shadow-xl shadow-blue-500/30',
+                    glow: ''
+                  };
                 case 'low':
-                  return 'bg-green-500 border-green-600 text-white';
+                  return {
+                    bg: 'bg-gradient-to-r from-green-600 to-green-700',
+                    border: 'border-green-800',
+                    text: 'text-white',
+                    shadow: 'shadow-lg shadow-green-500/30',
+                    glow: ''
+                  };
                 default:
-                  return 'bg-gray-500 border-gray-600 text-white';
+                  return {
+                    bg: 'bg-gradient-to-r from-gray-600 to-gray-700',
+                    border: 'border-gray-800',
+                    text: 'text-white',
+                    shadow: 'shadow-lg shadow-gray-500/30',
+                    glow: ''
+                  };
               }
             };
 
             const getIcon = (type: string, priority: string) => {
-              if (type === 'welfare') return 'ri-heart-pulse-line';
+              const iconMap: Record<string, string> = {
+                'welfare': 'ri-heart-pulse-line',
+                'incident': 'ri-fire-line',
+                'alert': 'ri-alarm-warning-line',
+                'safety_protocol': 'ri-shield-check-line',
+                'system': 'ri-settings-3-line',
+                'team': 'ri-team-line',
+                'staff': 'ri-user-star-line'
+              };
+              
+              if (type && iconMap[type]) return iconMap[type];
               if (priority === 'critical') return 'ri-alarm-warning-line';
               if (priority === 'high') return 'ri-fire-line';
               return 'ri-notification-3-line';
+            };
+
+            const getTypeLabel = (type: string) => {
+              const labels: Record<string, string> = {
+                'incident': 'INCIDENT',
+                'welfare': 'WELFARE',
+                'alert': 'ALERT',
+                'safety_protocol': 'SAFETY',
+                'system': 'SYSTEM',
+                'team': 'TEAM',
+                'staff': 'STAFF'
+              };
+              return labels[type] || 'NOTIFICATION';
+            };
+
+            const styles = getPriorityStyles(notification.priority, notification.severity);
+            const dismissTime = 
+              (notification.priority === 'critical' || notification.priority === 'high') ? 10000 :
+              notification.priority === 'medium' ? 7000 : 5000;
+
+            const handleNotificationClick = () => {
+              // Mark as read if notificationId exists
+              if (notification.notificationId) {
+                markAsRead(String(notification.notificationId));
+              }
+              
+              // Navigate based on action URL or type
+              if (notification.actionUrl) {
+                navigate(notification.actionUrl);
+              } else {
+                switch (notification.type) {
+                  case 'welfare':
+                    navigate('/admin/welfare');
+                    break;
+                  case 'incident':
+                    navigate('/admin/incidents/view');
+                    break;
+                  case 'alert':
+                    navigate('/admin/alerts');
+                    break;
+                  case 'safety_protocol':
+                    navigate('/admin/safety-protocols');
+                    break;
+                  default:
+                    navigate('/admin/dashboard');
+                }
+              }
+              
+              removeFloatingNotification(notification.id);
+              setShowNotifDropdown(false);
             };
 
             return (
               <div
                 key={notification.id}
                 className={`
-                  ${getPriorityStyles(notification.priority)}
-                  max-w-sm w-full rounded-lg shadow-2xl border-2 p-4 transform transition-all duration-500 ease-in-out
-                  animate-slide-in-right hover:scale-105 cursor-pointer
+                  ${styles.bg}
+                  ${styles.border}
+                  ${styles.text}
+                  ${styles.shadow}
+                  ${styles.glow}
+                  max-w-sm w-full rounded-xl border-2 p-5 transform transition-all duration-500 ease-out
+                  cursor-pointer hover:scale-[1.02] hover:shadow-2xl
+                  animate-slide-in-right
                   ${notification.priority === 'critical' || notification.priority === 'high' ? 'animate-pulse' : ''}
                 `}
                 style={{
-                  animationDelay: `${index * 100}ms`,
-                  transform: `translateX(${index * 10}px)`
+                  animation: `slideInRight 0.5s ease-out ${index * 100}ms both`,
                 }}
-                onClick={() => {
-                  if (notification.type === 'welfare') {
-                    navigate('/admin/welfare');
-                  } else {
-                    navigate('/admin/incidents/view');
-                  }
-                  removeFloatingNotification(notification.id);
+                onClick={handleNotificationClick}
+                onMouseEnter={(e) => {
+                  // Pause auto-dismiss on hover
+                  const card = e.currentTarget;
+                  card.style.animationPlayState = 'paused';
                 }}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    <div className="flex-shrink-0">
-                      <i className={`${getIcon(notification.type, notification.priority)} text-xl`}></i>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg bg-white bg-opacity-20 ${styles.shadow}`}>
+                      <i className={`${getIcon(notification.type, notification.priority)} text-2xl`}></i>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-sm mb-1 truncate">
-                        {notification.title}
-                      </h4>
-                      <p className="text-xs opacity-90 leading-relaxed line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs opacity-75">
-                          {new Date(notification.timestamp).toLocaleTimeString()}
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
+                          {getTypeLabel(notification.type)}
                         </span>
-                        <span className="text-xs font-bold uppercase tracking-wide">
+                        <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-20 px-2 py-1 rounded">
                           {notification.priority}
                         </span>
                       </div>
@@ -1016,20 +1277,43 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (notification.notificationId) {
+                        markAsRead(String(notification.notificationId));
+                      }
                       removeFloatingNotification(notification.id);
                     }}
-                    className="flex-shrink-0 ml-2 p-1 rounded-full hover:bg-black hover:bg-opacity-20 transition-colors"
+                    className="flex-shrink-0 p-1.5 rounded-full hover:bg-white hover:bg-opacity-30 transition-colors"
                   >
-                    <i className="ri-close-line text-sm"></i>
+                    <i className="ri-close-line text-lg"></i>
                   </button>
                 </div>
                 
-                {/* Progress bar for auto-dismiss */}
-                <div className="mt-3 h-1 bg-black bg-opacity-20 rounded-full overflow-hidden">
+                <div className="mb-3">
+                  <h4 className="font-bold text-base mb-2 leading-tight">
+                    {notification.title}
+                  </h4>
+                  <p className="text-sm opacity-95 leading-relaxed line-clamp-3">
+                    {notification.message}
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between text-xs opacity-90 mb-3">
+                  <span className="flex items-center">
+                    <i className="ri-time-line mr-1"></i>
+                    {new Date(notification.timestamp).toLocaleTimeString()}
+                  </span>
+                  <span className="flex items-center font-semibold">
+                    <i className="ri-arrow-right-line mr-1"></i>
+                    View Details
+                  </span>
+                </div>
+                
+                {/* Enhanced Progress bar for auto-dismiss */}
+                <div className="h-1.5 bg-white bg-opacity-20 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-white bg-opacity-50 rounded-full animate-progress-bar"
+                    className="h-full bg-white bg-opacity-70 rounded-full"
                     style={{
-                      animation: 'progress-bar 5s linear forwards'
+                      animation: `progressBar ${dismissTime}ms linear forwards`
                     }}
                   ></div>
                 </div>
@@ -1037,6 +1321,33 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             );
           })}
         </div>
+        
+        {/* Add CSS animations */}
+        <style>{`
+          @keyframes slideInRight {
+            from {
+              transform: translateX(400px);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          
+          @keyframes progressBar {
+            from {
+              width: 100%;
+            }
+            to {
+              width: 0%;
+            }
+          }
+          
+          .animate-slide-in-right {
+            animation: slideInRight 0.5s ease-out both;
+          }
+        `}</style>
       </div>
     </AdminAuthGuard>
   );
