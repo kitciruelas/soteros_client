@@ -513,6 +513,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             return {
               ...notif,
               id: `welfare_${notif.related_id || notif.id}`,
+              notificationId: notif.id, // Preserve original notification ID for API calls
               report_id: notif.related_id,
               title: notif.title,
               description: notif.message,
@@ -530,6 +531,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             ...notif,
             id: notif.related_id || notif.id,
             incident_id: notif.related_id,
+            notificationId: notif.id, // Preserve original notification ID for API calls
             incident_type: metadata.incident_type || notif.title.replace(/^[^\s]+\s+/, ''),
             description: notif.message,
             location: metadata.location || 'Unknown',
@@ -544,11 +546,37 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         setNotifications(transformedIncidents);
         setWelfareReports(welfareReports);
 
-        // Clean up read notifications that are no longer in the list
-        const currentIds = new Set(response.notifications.map((notif: any) => String(notif.id)));
+        // Update read notifications based on API response and preserve existing read state
+        // Store read state using the same ID format as transformed notifications
+        const transformedIds = new Set<string>();
+        transformedIncidents.forEach((incident: any) => {
+          transformedIds.add(String(incident.id || incident.incident_id));
+        });
+        welfareReports.forEach((report: any) => {
+          transformedIds.add(String(report.id));
+        });
+
         setReadNotifications(prev => {
-          const cleaned = new Set([...prev].filter(id => currentIds.has(id)));
-          return cleaned;
+          const updated = new Set([...prev].filter(id => transformedIds.has(id)));
+          
+          // Add notifications that are marked as read in the database using transformed IDs
+          response.notifications.forEach((notif: any) => {
+            if (notif.is_read) {
+              // Use the same ID format as transformed notifications
+              if (notif.type === 'incident') {
+                const transformedId = String(notif.related_id || notif.id);
+                updated.add(transformedId);
+              } else if (notif.type === 'welfare') {
+                const transformedId = String(`welfare_${notif.related_id || notif.id}`);
+                updated.add(transformedId);
+              } else {
+                // Fallback to original ID
+                updated.add(String(notif.id));
+              }
+            }
+          });
+          
+          return updated;
         });
       }
     } catch (error) {
@@ -605,9 +633,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const idString = String(notificationId);
     setReadNotifications(prev => new Set([...prev, idString]));
     
+    // Find the notification to get the original notification ID for API call
+    const allNotifs = [...notifications, ...welfareReports];
+    const notif = allNotifs.find((n: any) => 
+      String(n.id || n.incident_id) === idString || String(n.notificationId) === idString
+    );
+    
+    // Use original notification ID for API call, fallback to provided ID
+    const originalId = notif?.notificationId || notif?.id || notificationId;
+    
     // Also mark as read in the database
     try {
-      await adminNotificationsApi.markAsRead(Number(notificationId));
+      await adminNotificationsApi.markAsRead(Number(originalId));
       console.log('✅ Notification marked as read in database');
     } catch (error) {
       console.error('❌ Failed to mark notification as read in database:', error);
@@ -624,6 +661,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     try {
       await adminNotificationsApi.markAllAsRead();
       console.log('✅ All notifications marked as read in database');
+      // Refetch notifications to sync with database state
+      await fetchNotifications();
     } catch (error) {
       console.error('❌ Failed to mark all notifications as read in database:', error);
       // Keep local state updated even if API call fails
