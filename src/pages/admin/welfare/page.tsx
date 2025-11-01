@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { apiRequest } from "../../../utils/api"
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import { ConfirmModal } from '../../../components/base/Modal';
@@ -16,25 +17,6 @@ interface WelfareSettings {
   messageWhenDisabled: string
   createdAt?: string
   updatedAt?: string
-}
-
-interface WelfareReport {
-  report_id: number;
-  user_id: number;
-  setting_id: number;
-  status: 'safe' | 'needs_help';
-  additional_info?: string;
-  submitted_at: string;
-  created_at: string;
-  user_name?: string;
-  user_email?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
 }
 
 interface WelfareStats {
@@ -69,47 +51,9 @@ const exportColumns: ExportColumn[] = [
   }
 ];
 
-const exportReportColumns: ExportColumn[] = [
-  { 
-    key: 'first_name', 
-    label: 'Name',
-    format: (_: string, row: any) => {
-      const fullName = `${row.first_name || ''} ${row.last_name || ''}`.trim();
-      return fullName || row.user_name || 'N/A';
-    }
-  },
-  { 
-    key: 'email', 
-    label: 'Email',
-    format: (value: string, row: any) => value || row.user_email || 'N/A'
-  },
-  { 
-    key: 'address', 
-    label: 'Address',
-    format: (_: string, row: any) => {
-      const addressParts = [];
-      if (row.address) addressParts.push(row.address);
-      if (row.city) addressParts.push(row.city);
-      if (row.state) addressParts.push(row.state);
-      if (row.zip_code) addressParts.push(row.zip_code);
-      return addressParts.length > 0 ? addressParts.join(', ') : 'N/A';
-    }
-  },
-  { 
-    key: 'status', 
-    label: 'Status',
-    format: (value: string) => value === 'safe' ? 'Safe' : 'Needs Help'
-  },
-  { key: 'additional_info', label: 'Additional Info' },
-  {
-    key: 'submitted_at',
-    label: 'Submitted At',
-    format: (value: string) => new Date(value).toLocaleString()
-  }
-];
-
 export default function AdminWelfareManagement() {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<WelfareSettings[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -119,15 +63,10 @@ export default function AdminWelfareManagement() {
   const [editingSettings, setEditingSettings] = useState<WelfareSettings | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [selectedSetting, setSelectedSetting] = useState<WelfareSettings | null>(null)
-  const [showReportsModal, setShowReportsModal] = useState(false)
-  const [reports, setReports] = useState<WelfareReport[]>([])
-  const [reportsLoading, setReportsLoading] = useState(false)
-  const [selectedSettingForReports, setSelectedSettingForReports] = useState<WelfareSettings | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [stats, setStats] = useState<WelfareStats | null>(null)
   const [showExportPreview, setShowExportPreview] = useState(false)
-  const [showReportsExportPreview, setShowReportsExportPreview] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalSettings, setTotalSettings] = useState(0)
@@ -214,30 +153,6 @@ export default function AdminWelfareManagement() {
     }
   }
 
-  const fetchReports = async (settingId?: number) => {
-    try {
-      setReportsLoading(true)
-      console.log('Fetching welfare reports for setting ID:', settingId)
-      const url = settingId ? `/admin/welfare/reports?setting_id=${settingId}` : '/admin/welfare/reports'
-      const response = await apiRequest(url)
-      console.log('Welfare reports response:', response)
-      
-      if (response.success) {
-        const reportsData = response.reports || []
-        console.log('Loaded reports:', reportsData)
-        console.log('Sample report data:', reportsData[0])
-        setReports(reportsData)
-      } else {
-        setMessage({ type: 'error', text: response.message || 'Failed to load welfare reports' })
-      }
-    } catch (error: any) {
-      console.error('Error fetching reports:', error)
-      setMessage({ type: 'error', text: error.message || 'Failed to load welfare reports. Please check if the backend server is running.' })
-    } finally {
-      setReportsLoading(false)
-    }
-  }
-
   const fetchAllSettings = async () => {
     try {
       const params: any = {
@@ -264,26 +179,6 @@ export default function AdminWelfareManagement() {
       }
     } catch (error: any) {
       console.error('❌ Error fetching all welfare settings:', error);
-      throw error;
-    }
-  };
-
-  const fetchAllReports = async () => {
-    try {
-      console.log('🔍 Fetching all welfare reports');
-
-      const response = await apiRequest('/admin/welfare/reports');
-
-      if (response.success) {
-        console.log('✅ Successfully fetched', response.reports?.length || 0, 'reports for export');
-        return response.reports || [];
-      } else {
-        const errorMsg = response.message || 'Failed to fetch all welfare reports';
-        console.error('❌ API returned error:', errorMsg);
-        throw new Error(errorMsg);
-      }
-    } catch (error: any) {
-      console.error('❌ Error fetching all welfare reports:', error);
       throw error;
     }
   };
@@ -508,22 +403,6 @@ export default function AdminWelfareManagement() {
     return isActive ? 'ri-check-circle-line' : 'ri-close-circle-line'
   }
 
-  const getReportStatusColor = (status: string) => {
-    switch (status) {
-      case 'safe': return 'bg-green-100 text-green-800';
-      case 'needs_help': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  }
-
-  const getReportStatusIcon = (status: string) => {
-    switch (status) {
-      case 'safe': return 'ri-check-circle-line';
-      case 'needs_help': return 'ri-error-warning-line';
-      default: return 'ri-question-line';
-    }
-  }
-
   // Filter settings based on search and filters
   const filteredSettings = settings.filter(setting => {
     const matchesSearch = searchTerm === '' || 
@@ -591,6 +470,14 @@ export default function AdminWelfareManagement() {
             <i className="ri-download-line mr-2"></i>
             Export All ({totalSettings})
           </button>
+          <button
+            onClick={() => navigate('/admin/welfare/reports')}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+            title="View all welfare reports"
+          >
+            <i className="ri-file-list-3-line mr-2"></i>
+            View All Reports
+          </button>
         </div>
       </div>
 
@@ -633,7 +520,10 @@ export default function AdminWelfareManagement() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div 
+          onClick={() => navigate('/admin/welfare/reports')}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:border-purple-300 transition-colors"
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
               <i className="ri-file-list-3-line text-purple-600"></i>
@@ -779,11 +669,7 @@ export default function AdminWelfareManagement() {
                       </button>
                     )}
                     <button
-                      onClick={() => {
-                        setSelectedSettingForReports(setting);
-                        fetchReports(setting.id);
-                        setShowReportsModal(true);
-                      }}
+                      onClick={() => navigate(`/admin/welfare/reports?setting_id=${setting.id}`)}
                       className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors"
                     >
                       <i className="ri-eye-line mr-1"></i>
@@ -868,112 +754,6 @@ export default function AdminWelfareManagement() {
           <i className="ri-settings-3-line text-4xl text-gray-400 mb-4"></i>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No settings found</h3>
           <p className="text-gray-600">Try adjusting your filters to see more results.</p>
-        </div>
-      )}
-
-      {/* Welfare Reports Modal */}
-      {showReportsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Welfare Check Reports
-                  {selectedSettingForReports && (
-                    <span className="text-sm font-normal text-gray-600 ml-2">
-                      - {selectedSettingForReports.title}
-                    </span>
-                  )}
-                </h3>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => setShowReportsExportPreview(true)}
-                    disabled={reports.length === 0}
-                    className={`px-3 py-2 rounded-lg transition-colors flex items-center text-sm ${
-                      reports.length === 0
-                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                        : 'bg-green-600 text-white hover:bg-green-700'
-                    }`}
-                    title={reports.length === 0 ? 'No data to export' : 'Export reports'}
-                  >
-                    <i className="ri-download-line mr-2"></i>
-                    Export ({reports.length})
-                  </button>
-                  <button
-                    onClick={() => setShowReportsModal(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <i className="ri-close-line text-xl"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-        <div className="p-6">
-              {reportsLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : reports.length === 0 ? (
-                <div className="text-center py-8">
-                  <i className="ri-file-list-line text-4xl text-gray-300"></i>
-                  <p className="text-gray-500 mt-2">No welfare reports found</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {reports.map((report, index) => (
-                    <div key={report.report_id || index} className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h4 className="text-lg font-medium text-gray-900">
-                              {report.first_name} {report.last_name}
-                            </h4>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getReportStatusColor(report.status)}`}>
-                              <i className={`mr-1 ${getReportStatusIcon(report.status)}`}></i>
-                              {report.status === 'safe' ? 'Safe' : 'Needs Help'}
-                            </span>
-                          </div>
-                          <p className="text-gray-600 mb-2">{report.email}</p>
-                          {(report.address || report.city || report.state || report.zip_code) && (
-                            <div className="mb-2">
-                              <p className="text-sm font-medium text-gray-700 mb-1">Address:</p>
-                              <p className="text-sm text-gray-600">
-                                {[report.address, report.city, report.state, report.zip_code]
-                                  .filter(Boolean)
-                                  .join(', ') || 'N/A'}
-                              </p>
-                            </div>
-                          )}
-                          {report.additional_info && (
-                            <p className="text-sm text-gray-700 mb-2">{report.additional_info}</p>
-                          )}
-                          <div className="flex items-center text-sm text-gray-500">
-                            <i className="ri-time-line mr-1"></i>
-                            Submitted: {formatDate(report.submitted_at)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowReportsModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => fetchReports(selectedSettingForReports?.id)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <i className="ri-refresh-line mr-2"></i>
-                Refresh
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1177,59 +957,6 @@ export default function AdminWelfareManagement() {
         title={`Welfare Settings Report (${totalSettings})`}
       />
 
-      {/* Export Preview Modal for Reports */}
-      <ExportPreviewModal
-        open={showReportsExportPreview}
-        onClose={() => setShowReportsExportPreview(false)}
-        onExportPDF={async () => {
-          try {
-            const allReports = await fetchAllReports();
-            ExportUtils.exportToPDF(allReports, exportReportColumns, {
-              filename: "welfare_reports_export",
-              title: `Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''}`,
-              includeTimestamp: true,
-            });
-            showToast({ type: "success", message: `All ${allReports.length} welfare reports exported to PDF successfully` });
-            setShowReportsExportPreview(false);
-          } catch (error) {
-            console.error('PDF export failed:', error);
-            showToast({ type: "error", message: "Failed to export welfare reports to PDF" });
-          }
-        }}
-        onExportCSV={async () => {
-          try {
-            const allReports = await fetchAllReports();
-            ExportUtils.exportToCSV(allReports, exportReportColumns, {
-              filename: "welfare_reports_export",
-              title: `Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''}`,
-              includeTimestamp: true,
-            });
-            showToast({ type: "success", message: `All ${allReports.length} welfare reports exported to CSV successfully` });
-            setShowReportsExportPreview(false);
-          } catch (error) {
-            console.error('CSV export failed:', error);
-            showToast({ type: "error", message: "Failed to export welfare reports to CSV" });
-          }
-        }}
-        onExportExcel={async () => {
-          try {
-            const allReports = await fetchAllReports();
-            ExportUtils.exportToExcel(allReports, exportReportColumns, {
-              filename: "welfare_reports_export",
-              title: `Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''}`,
-              includeTimestamp: true,
-            });
-            showToast({ type: "success", message: `All ${allReports.length} welfare reports exported to Excel successfully` });
-            setShowReportsExportPreview(false);
-          } catch (error) {
-            console.error('Excel export failed:', error);
-            showToast({ type: "error", message: "Failed to export welfare reports to Excel" });
-          }
-        }}
-        data={reports}
-        columns={exportReportColumns.map((col) => ({ key: col.key, label: col.label }))}
-        title={`Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''} (${reports.length})`}
-      />
     </div>
   )
 }

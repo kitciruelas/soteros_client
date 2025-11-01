@@ -1,0 +1,361 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { apiRequest } from "../../../../utils/api"
+import ExportPreviewModal from '../../../../components/base/ExportPreviewModal';
+import type { ExportColumn } from '../../../../utils/exportUtils';
+import ExportUtils from '../../../../utils/exportUtils';
+import { useToast } from '../../../../components/base/Toast';
+
+interface WelfareSettings {
+  id?: number
+  isActive: boolean
+  title: string
+  description: string
+  messageWhenDisabled: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+interface WelfareReport {
+  report_id: number;
+  user_id: number;
+  setting_id: number;
+  status: 'safe' | 'needs_help';
+  additional_info?: string;
+  submitted_at: string;
+  created_at: string;
+  user_name?: string;
+  user_email?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+}
+
+const exportReportColumns: ExportColumn[] = [
+  { 
+    key: 'first_name', 
+    label: 'Name',
+    format: (_: string, row: any) => {
+      const fullName = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+      return fullName || row.user_name || 'N/A';
+    }
+  },
+  { 
+    key: 'email', 
+    label: 'Email',
+    format: (value: string, row: any) => value || row.user_email || 'N/A'
+  },
+  { 
+    key: 'address', 
+    label: 'Address',
+    format: (_: string, row: any) => {
+      const addressParts = [];
+      if (row.address) addressParts.push(row.address);
+      if (row.city) addressParts.push(row.city);
+      if (row.state) addressParts.push(row.state);
+      if (row.zip_code) addressParts.push(row.zip_code);
+      return addressParts.length > 0 ? addressParts.join(', ') : 'N/A';
+    }
+  },
+  { 
+    key: 'status', 
+    label: 'Status',
+    format: (value: string) => value === 'safe' ? 'Safe' : 'Needs Help'
+  },
+  { key: 'additional_info', label: 'Additional Info' },
+  {
+    key: 'submitted_at',
+    label: 'Submitted At',
+    format: (value: string) => new Date(value).toLocaleString()
+  }
+];
+
+export default function WelfareReportsPage() {
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [reports, setReports] = useState<WelfareReport[]>([])
+  const [reportsLoading, setReportsLoading] = useState(false)
+  const [selectedSettingForReports, setSelectedSettingForReports] = useState<WelfareSettings | null>(null)
+  const [allSettings, setAllSettings] = useState<WelfareSettings[]>([])
+  const [showReportsExportPreview, setShowReportsExportPreview] = useState(false)
+  const [selectedSettingId, setSelectedSettingId] = useState<string>('')
+
+  const fetchAllSettings = useCallback(async () => {
+    try {
+      const response = await apiRequest('/admin/welfare/settings?limit=1000')
+      if (response.success) {
+        const settingsArray = Array.isArray(response.settings) ? response.settings : (response.settings ? [response.settings] : [])
+        setAllSettings(settingsArray)
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+    }
+  }, [])
+
+  const fetchReports = useCallback(async (settingId?: number) => {
+    try {
+      setReportsLoading(true)
+      console.log('Fetching welfare reports for setting ID:', settingId)
+      const url = settingId ? `/admin/welfare/reports?setting_id=${settingId}` : '/admin/welfare/reports'
+      const response = await apiRequest(url)
+      console.log('Welfare reports response:', response)
+      
+      if (response.success) {
+        const reportsData = response.reports || []
+        console.log('Loaded reports:', reportsData)
+        setReports(reportsData)
+      }
+    } catch (error: any) {
+      console.error('Error fetching reports:', error)
+      showToast({ type: 'error', message: error.message || 'Failed to load welfare reports' })
+    } finally {
+      setReportsLoading(false)
+    }
+  }, [showToast])
+
+  useEffect(() => {
+    fetchAllSettings()
+  }, [fetchAllSettings])
+
+  useEffect(() => {
+    if (allSettings.length > 0) {
+      const settingId = searchParams.get('setting_id');
+      if (settingId) {
+        setSelectedSettingId(settingId);
+        fetchReports(parseInt(settingId));
+        const setting = allSettings.find(s => s.id === parseInt(settingId));
+        setSelectedSettingForReports(setting || null);
+      } else {
+        fetchReports();
+        setSelectedSettingForReports(null);
+      }
+    }
+  }, [allSettings.length, searchParams, fetchReports])
+
+  const fetchAllReports = async () => {
+    try {
+      console.log('🔍 Fetching all welfare reports');
+
+      const response = await apiRequest('/admin/welfare/reports');
+
+      if (response.success) {
+        console.log('✅ Successfully fetched', response.reports?.length || 0, 'reports for export');
+        return response.reports || [];
+      } else {
+        const errorMsg = response.message || 'Failed to fetch all welfare reports';
+        console.error('❌ API returned error:', errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching all welfare reports:', error);
+      throw error;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString()
+  }
+
+  const getReportStatusColor = (status: string) => {
+    switch (status) {
+      case 'safe': return 'bg-green-100 text-green-800';
+      case 'needs_help': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  const getReportStatusIcon = (status: string) => {
+    switch (status) {
+      case 'safe': return 'ri-check-circle-line';
+      case 'needs_help': return 'ri-error-warning-line';
+      default: return 'ri-question-line';
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Welfare Check Reports</h1>
+          <p className="text-gray-600 mt-1">View and manage welfare check submissions</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => navigate('/admin/welfare')}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
+          >
+            <i className="ri-arrow-left-line mr-2"></i>
+            Back to Welfare
+          </button>
+          <button
+            onClick={() => setShowReportsExportPreview(true)}
+            disabled={reports.length === 0}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              reports.length === 0
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+            title={reports.length === 0 ? 'No data to export' : 'Export reports'}
+          >
+            <i className="ri-download-line mr-2"></i>
+            Export ({reports.length})
+          </button>
+        </div>
+      </div>
+
+      {/* Filter by Setting */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700">Filter by Setting:</label>
+          <select
+            value={selectedSettingId}
+            onChange={(e) => {
+              const settingId = e.target.value
+              setSelectedSettingId(settingId)
+              const parsedId = settingId ? parseInt(settingId) : undefined
+              fetchReports(parsedId)
+              // Update URL without navigation
+              if (settingId) {
+                navigate(`/admin/welfare/reports?setting_id=${settingId}`, { replace: true })
+              } else {
+                navigate('/admin/welfare/reports', { replace: true })
+              }
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All Settings</option>
+            {allSettings.map((setting) => (
+              <option key={setting.id} value={setting.id}>
+                {setting.title}
+              </option>
+            ))}
+          </select>
+          {selectedSettingForReports && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">
+                Currently viewing: <span className="font-medium">{selectedSettingForReports.title}</span>
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Reports List */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        {reportsLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="text-center py-12">
+            <i className="ri-file-list-line text-4xl text-gray-300"></i>
+            <p className="text-gray-500 mt-2">No welfare reports found</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {reports.map((report, index) => (
+              <div key={report.report_id || index} className="p-6 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h4 className="text-lg font-medium text-gray-900">
+                        {report.first_name} {report.last_name}
+                      </h4>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getReportStatusColor(report.status)}`}>
+                        <i className={`mr-1 ${getReportStatusIcon(report.status)}`}></i>
+                        {report.status === 'safe' ? 'Safe' : 'Needs Help'}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mb-2">{report.email}</p>
+                    {(report.address || report.city || report.state || report.zip_code) && (
+                      <div className="mb-2">
+                        <p className="text-sm font-medium text-gray-700 mb-1">Address:</p>
+                        <p className="text-sm text-gray-600">
+                          {[report.address, report.city, report.state, report.zip_code]
+                            .filter(Boolean)
+                            .join(', ') || 'N/A'}
+                        </p>
+                      </div>
+                    )}
+                    {report.additional_info && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium text-gray-700 mb-1">Additional Info:</p>
+                        <p className="text-sm text-gray-600">{report.additional_info}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center text-sm text-gray-500 mt-2">
+                      <i className="ri-time-line mr-1"></i>
+                      Submitted: {formatDate(report.submitted_at)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Export Preview Modal for Reports */}
+      <ExportPreviewModal
+        open={showReportsExportPreview}
+        onClose={() => setShowReportsExportPreview(false)}
+        onExportPDF={async () => {
+          try {
+            const allReports = await fetchAllReports();
+            ExportUtils.exportToPDF(allReports, exportReportColumns, {
+              filename: "welfare_reports_export",
+              title: `Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''}`,
+              includeTimestamp: true,
+            });
+            showToast({ type: "success", message: `All ${allReports.length} welfare reports exported to PDF successfully` });
+            setShowReportsExportPreview(false);
+          } catch (error) {
+            console.error('PDF export failed:', error);
+            showToast({ type: "error", message: "Failed to export welfare reports to PDF" });
+          }
+        }}
+        onExportCSV={async () => {
+          try {
+            const allReports = await fetchAllReports();
+            ExportUtils.exportToCSV(allReports, exportReportColumns, {
+              filename: "welfare_reports_export",
+              title: `Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''}`,
+              includeTimestamp: true,
+            });
+            showToast({ type: "success", message: `All ${allReports.length} welfare reports exported to CSV successfully` });
+            setShowReportsExportPreview(false);
+          } catch (error) {
+            console.error('CSV export failed:', error);
+            showToast({ type: "error", message: "Failed to export welfare reports to CSV" });
+          }
+        }}
+        onExportExcel={async () => {
+          try {
+            const allReports = await fetchAllReports();
+            ExportUtils.exportToExcel(allReports, exportReportColumns, {
+              filename: "welfare_reports_export",
+              title: `Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''}`,
+              includeTimestamp: true,
+            });
+            showToast({ type: "success", message: `All ${allReports.length} welfare reports exported to Excel successfully` });
+            setShowReportsExportPreview(false);
+          } catch (error) {
+            console.error('Excel export failed:', error);
+            showToast({ type: "error", message: "Failed to export welfare reports to Excel" });
+          }
+        }}
+        data={reports}
+        columns={exportReportColumns.map((col) => ({ key: col.key, label: col.label }))}
+        title={`Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''} (${reports.length})`}
+      />
+    </div>
+  )
+}

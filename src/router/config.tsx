@@ -39,6 +39,7 @@ import AdminProfilePage from "../pages/admin/profile/page";
 import TeamsManagement from "../pages/admin/teams/page";
 import AdminFeedbackPage from "../pages/admin/feedback/page";
 import AdminWelfarePage from "../pages/admin/welfare/page";
+import WelfareReportsPage from "../pages/admin/welfare/reports/page";
 import StaffDashboard from "../pages/staff/dashboard/page";
 import StaffIncidentsPage from "../pages/staff/incidents/page";
 import StaffIncidentsMapPage from "../pages/staff/incidents/map/page";
@@ -184,6 +185,10 @@ const routes: RouteObject[] = [
       {
         path: "welfare",
         element: <AdminWelfarePage />,
+      },
+      {
+        path: "welfare/reports",
+        element: <WelfareReportsPage />,
       },
       {
         path: "feedback",
