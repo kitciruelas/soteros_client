@@ -31,10 +31,6 @@ interface Incident {
   reporter_name?: string;
   reportedBy?: string;
   reporterPhone?: string;
-  reporter_type?: 'user' | 'guest';
-  guest_name?: string;
-  guest_contact?: string;
-  guest_id?: string;
   attachment?: string;
 }
 
@@ -81,16 +77,12 @@ const ViewIncidentDetails: React.FC = () => {
             assignedTeamName: foundIncident.assigned_team_name || foundIncident.assignedTeamName,
             assigned_staff_name: foundIncident.assigned_staff_name || foundIncident.assignedStaffName,
             assignedStaffName: foundIncident.assigned_staff_name || foundIncident.assignedStaffName,
-              assignedTeamIds: foundIncident.assigned_team_ids || foundIncident.assignedTeamIds,
-              allAssignedTeams: foundIncident.all_assigned_teams || foundIncident.allAssignedTeams,
-              reporter_name: foundIncident.reporter_name || foundIncident.reportedBy,
-              reportedBy: foundIncident.reporter_name || foundIncident.reportedBy || 'Unknown',
-              reporterPhone: foundIncident.reporter_phone || foundIncident.reporterPhone,
-              reporter_type: foundIncident.reporter_type || (foundIncident.reported_by ? 'user' : 'guest'),
-              guest_name: foundIncident.guest_name,
-              guest_contact: foundIncident.guest_contact,
-              guest_id: foundIncident.guest_id,
-              attachment: foundIncident.attachment
+            assignedTeamIds: foundIncident.assigned_team_ids || foundIncident.assignedTeamIds,
+            allAssignedTeams: foundIncident.all_assigned_teams || foundIncident.allAssignedTeams,
+            reporter_name: foundIncident.reporter_name || foundIncident.reportedBy,
+            reportedBy: foundIncident.reporter_name || foundIncident.reportedBy || 'Unknown',
+            reporterPhone: foundIncident.reporter_phone || foundIncident.reporterPhone,
+            attachment: foundIncident.attachment
           };
           
           setIncident(transformedIncident);
@@ -204,48 +196,6 @@ const ViewIncidentDetails: React.FC = () => {
           </div>
 
           <div className="px-6 py-6">
-            {/* Prominent Location Banner - Shows where the reporter reported from */}
-            {incident.latitude && incident.longitude && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-2 border-blue-400 rounded-xl shadow-lg">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 bg-blue-600 rounded-full p-3">
-                    <i className="ri-map-pin-3-fill text-white text-2xl"></i>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <h4 className="text-base font-bold text-blue-900 mb-2 flex items-center">
-                      📍 Incident Report Location
-                    </h4>
-                    <p className="text-sm text-blue-800 mb-3 leading-relaxed">
-                      This is where the reporter was located when they reported this incident. The exact coordinates are shown below.
-                    </p>
-                    {incident.location && incident.location !== 'Location not specified' ? (
-                      <div className="bg-white rounded-lg p-3 border border-blue-300 mb-2">
-                        <p className="text-xs font-medium text-blue-600 mb-1 flex items-center">
-                          <i className="ri-community-line mr-1"></i>
-                          Reported Address:
-                        </p>
-                        <p className="text-sm font-bold text-gray-900">{incident.location}</p>
-                      </div>
-                    ) : (
-                      <div className="bg-white rounded-lg p-3 border border-blue-300 mb-2">
-                        <p className="text-xs font-medium text-blue-600 mb-1">GPS Coordinates:</p>
-                        <p className="text-sm font-mono font-semibold text-gray-900">
-                          {incident.latitude.toFixed(6)}, {incident.longitude.toFixed(6)}
-                        </p>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => setShowMapModal(true)}
-                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium text-sm shadow-md hover:shadow-lg"
-                    >
-                      <i className="ri-map-2-line mr-2"></i>
-                      View on Interactive Map
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Incident Information */}
               <div className="space-y-4">
@@ -260,45 +210,35 @@ const ViewIncidentDetails: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Incident Location - Where the reporter reported from */}
+                {/* Location */}
                 <div>
                   <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
                     <i className="ri-map-pin-line mr-2 text-blue-600"></i>
-                    Incident Location
-                    <span className="ml-2 text-xs text-gray-500 font-normal">(Where incident was reported)</span>
+                    Location Information
                   </h4>
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 space-y-3 border-2 border-blue-300 shadow-sm">
+                  <div className="bg-blue-50 rounded-lg p-4 space-y-3 border border-blue-200">
                     {incident.location && incident.location !== 'Location not specified' && (
-                      <div className="bg-white rounded-lg p-3 border border-blue-200">
-                        <p className="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                          <i className="ri-community-line mr-1"></i>
-                          Reported Location:
-                        </p>
-                        <p className="text-sm font-semibold text-gray-900 leading-relaxed">{incident.location}</p>
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">Address:</p>
+                        <p className="text-sm font-semibold text-gray-900">{incident.location}</p>
                       </div>
                     )}
-                    <div className="bg-white rounded-lg p-3 border border-blue-200">
-                      <p className="text-xs font-medium text-gray-600 mb-2 flex items-center">
-                        <i className="ri-map-2-line mr-1"></i>
-                        GPS Coordinates:
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Latitude:</p>
-                          <p className="text-sm font-mono text-gray-900 font-semibold">{incident.latitude.toFixed(6)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Longitude:</p>
-                          <p className="text-sm font-mono text-gray-900 font-semibold">{incident.longitude.toFixed(6)}</p>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">Latitude:</p>
+                        <p className="text-sm font-mono text-gray-900">{incident.latitude.toFixed(6)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">Longitude:</p>
+                        <p className="text-sm font-mono text-gray-900">{incident.longitude.toFixed(6)}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => setShowMapModal(true)}
-                      className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center justify-center font-medium"
+                      className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium"
                     >
-                      <i className="ri-map-pin-3-line mr-2 text-lg"></i>
-                      View Location on Map
+                      <i className="ri-map-pin-line mr-2"></i>
+                      View on Map
                     </button>
                     <div className="flex gap-2 mt-2">
                       <button
@@ -306,8 +246,7 @@ const ViewIncidentDetails: React.FC = () => {
                           const url = `https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`;
                           window.open(url, '_blank');
                         }}
-                        className="flex-1 px-3 py-2 text-xs bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center border border-blue-300 shadow-sm hover:shadow"
-                        title="Open in Google Maps"
+                        className="flex-1 px-3 py-2 text-xs bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center border border-blue-300"
                       >
                         <i className="ri-external-link-line mr-1"></i>
                         Google Maps
@@ -317,8 +256,7 @@ const ViewIncidentDetails: React.FC = () => {
                           navigator.clipboard.writeText(`${incident.latitude}, ${incident.longitude}`);
                           alert('Coordinates copied to clipboard!');
                         }}
-                        className="flex-1 px-3 py-2 text-xs bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center border border-blue-300 shadow-sm hover:shadow"
-                        title="Copy coordinates"
+                        className="flex-1 px-3 py-2 text-xs bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center border border-blue-300"
                       >
                         <i className="ri-clipboard-line mr-1"></i>
                         Copy Coords
@@ -339,121 +277,20 @@ const ViewIncidentDetails: React.FC = () => {
                 </div>
               </div>
 
-              {/* Reporter Information */}
+              {/* Assignment Information */}
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                    <i className="ri-user-line mr-2 text-indigo-600"></i>
-                    Reporter Information
-                    <span className="ml-2 text-xs text-gray-500 font-normal">(Who reported this)</span>
-                  </h3>
-                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
-                    {incident.reporter_type === 'guest' ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i className="ri-user-line text-indigo-600 text-xl"></i>
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {incident.guest_name || 'Unknown Guest'}
-                            </div>
-                            <div className="text-xs text-indigo-600 font-medium mt-1">
-                              <span className="px-2 py-1 bg-indigo-100 rounded-full">Guest Reporter</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 gap-3 pt-3 border-t border-indigo-200">
-                          {incident.guest_contact && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                                <i className="ri-phone-line mr-1"></i>
-                                Contact Number
-                              </p>
-                              <p className="text-sm text-gray-900 font-medium">{incident.guest_contact}</p>
-                            </div>
-                          )}
-                          {incident.guest_id && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                                <i className="ri-id-card-line mr-1"></i>
-                                Guest ID
-                              </p>
-                              <p className="text-sm text-gray-900 font-mono">{incident.guest_id}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i className="ri-user-star-line text-blue-600 text-xl"></i>
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {incident.reporter_name || incident.reportedBy || 'Unknown User'}
-                            </div>
-                            <div className="text-xs text-blue-600 font-medium mt-1">
-                              <span className="px-2 py-1 bg-blue-100 rounded-full">Registered User</span>
-                            </div>
-                          </div>
-                        </div>
-                        {incident.reporterPhone && (
-                          <div className="pt-3 border-t border-blue-200">
-                            <p className="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                              <i className="ri-phone-line mr-1"></i>
-                              Contact Number
-                            </p>
-                            <p className="text-sm text-gray-900 font-medium">{incident.reporterPhone}</p>
-                          </div>
-                        )}
-                      </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Assignment Information</h3>
+                  <div className="space-y-2">
+                    {incident.assigned_team_name && (
+                      <p><strong>Assigned Team:</strong> {incident.assigned_team_name}</p>
                     )}
-                    <div className="mt-3 pt-3 border-t border-indigo-200">
-                      <p className="text-xs text-gray-500">
-                        <i className="ri-time-line mr-1"></i>
-                        Reported: {new Date(incident.date_reported || incident.dateReported || Date.now()).toLocaleString('en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Assignment Information */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2 flex items-center">
-                    <i className="ri-team-line mr-2 text-green-600"></i>
-                    Assignment Information
-                  </h3>
-                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                    <div className="space-y-2">
-                      {incident.allAssignedTeams ? (
-                        <div>
-                          <p className="text-xs font-medium text-gray-600 mb-1">Assigned Teams:</p>
-                          <p className="text-sm text-green-700 font-semibold">{incident.allAssignedTeams}</p>
-                        </div>
-                      ) : incident.assigned_team_name ? (
-                        <div>
-                          <p className="text-xs font-medium text-gray-600 mb-1">Assigned Team:</p>
-                          <p className="text-sm text-green-700 font-semibold">{incident.assigned_team_name}</p>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">No team assigned</p>
-                      )}
-                      {incident.assigned_staff_name && (
-                        <div className="mt-2 pt-2 border-t border-green-200">
-                          <p className="text-xs font-medium text-gray-600 mb-1">Assigned Staff:</p>
-                          <p className="text-sm text-purple-700 font-semibold">{incident.assigned_staff_name}</p>
-                        </div>
-                      )}
-                    </div>
+                    {incident.assigned_staff_name && (
+                      <p><strong>Assigned Staff:</strong> {incident.assigned_staff_name}</p>
+                    )}
+                    {incident.reporter_name && (
+                      <p><strong>Reported By:</strong> {incident.reporter_name}</p>
+                    )}
                   </div>
                 </div>
               </div>

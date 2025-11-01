@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { incidentsApi, teamsApi, staffManagementApi } from '../../../../utils/api';
 import ExportPreviewModal from '../../../../components/base/ExportPreviewModal';
 import { ExportUtils } from '../../../../utils/exportUtils';
@@ -100,7 +99,6 @@ const incidentExportColumns: ExportColumn[] = [
 ];
 
 const ViewIncidents: React.FC = () => {
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -1019,25 +1017,13 @@ const ViewIncidents: React.FC = () => {
                 <div className="flex items-center space-x-2 ml-4">
                   <button
                     onClick={() => {
-                      // Navigate to detail page to see full incident details including location
-                      navigate(`/admin/incidents/view/${incident.id}`);
-                    }}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors flex items-center"
-                    title="View full incident details with location information"
-                  >
-                    <i className="ri-eye-line mr-1"></i>
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => {
                       setSelectedIncident(incident);
                       setShowIncidentModal(true);
                     }}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors flex items-center"
-                    title="Quick view in modal"
+                    className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors"
                   >
-                    <i className="ri-file-list-line mr-1"></i>
-                    Quick View
+                    <i className="ri-eye-line mr-1"></i>
+                    View
                   </button>
                   <button
                     onClick={() => {
