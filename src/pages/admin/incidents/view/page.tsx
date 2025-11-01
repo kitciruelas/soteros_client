@@ -109,6 +109,7 @@ const ViewIncidents: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [readFilter, setReadFilter] = useState<string>('all'); // 'all', 'unread', 'read'
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -275,6 +276,81 @@ const ViewIncidents: React.FC = () => {
       console.error('❌ Error fetching new incident notifications:', error);
       // Don't fail silently - set empty set
       setNewIncidentIds(new Set());
+    }
+  };
+
+  // Mark incident as read (marks all notifications for this incident as read)
+  const markIncidentAsRead = async (incidentId: number) => {
+    try {
+      // Fetch all notifications for this incident
+      const response = await adminNotificationsApi.getNotifications({
+        type: 'incident',
+        limit: 100
+      });
+      
+      if (response?.success && response?.notifications) {
+        // Find and mark as read all unread notifications for this incident
+        const incidentNotifications = response.notifications.filter((notif: any) => 
+          (notif.related_type === 'incident' || notif.type === 'incident') && 
+          notif.related_id === incidentId && 
+          !notif.is_read
+        );
+        
+        // Mark all as read
+        for (const notif of incidentNotifications) {
+          try {
+            await adminNotificationsApi.markAsRead(notif.id);
+          } catch (error) {
+            console.error('Error marking notification as read:', error);
+          }
+        }
+        
+        // Update local state - remove from new incidents
+        setNewIncidentIds(prev => {
+          const updated = new Set(prev);
+          updated.delete(incidentId);
+          return updated;
+        });
+        
+        showToast({ 
+          type: 'success', 
+          message: `Incident #${incidentId} marked as read` 
+        });
+        
+        // Refresh notifications
+        fetchNewIncidentNotifications();
+      }
+    } catch (error) {
+      console.error('Error marking incident as read:', error);
+      showToast({ 
+        type: 'error', 
+        message: 'Failed to mark incident as read' 
+      });
+    }
+  };
+
+  // Mark all incidents as read
+  const markAllIncidentsAsRead = async () => {
+    try {
+      // Mark all unread incident notifications as read
+      await adminNotificationsApi.markAllAsRead();
+      
+      // Clear all new incident IDs
+      setNewIncidentIds(new Set());
+      
+      showToast({ 
+        type: 'success', 
+        message: 'All incidents marked as read' 
+      });
+      
+      // Refresh notifications
+      fetchNewIncidentNotifications();
+    } catch (error) {
+      console.error('Error marking all incidents as read:', error);
+      showToast({ 
+        type: 'error', 
+        message: 'Failed to mark all incidents as read' 
+      });
     }
   };
 
@@ -716,6 +792,9 @@ const ViewIncidents: React.FC = () => {
                          incident.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || incident.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || incident.priorityLevel === priorityFilter;
+    const matchesRead = readFilter === 'all' || 
+                       (readFilter === 'unread' && newIncidentIds.has(incident.id)) ||
+                       (readFilter === 'read' && !newIncidentIds.has(incident.id));
 
     // Date range filtering
     const matchesDateRange = (() => {
@@ -734,7 +813,7 @@ const ViewIncidents: React.FC = () => {
       return true;
     })();
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesDateRange;
+    return matchesSearch && matchesStatus && matchesPriority && matchesRead && matchesDateRange;
   }).sort((a, b) => {
     const statusOrder = { 'pending': 1, 'in_progress': 2, 'resolved': 3, 'closed': 4 };
     const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
@@ -915,6 +994,16 @@ const ViewIncidents: React.FC = () => {
           <p className="text-gray-600 mt-1">Monitor and manage reported incidents</p>
         </div>
         <div className="flex items-center space-x-3">
+          {newIncidentIds.size > 0 && (
+            <button
+              onClick={markAllIncidentsAsRead}
+              className="px-4 py-2 rounded-lg transition-colors flex items-center bg-blue-600 text-white hover:bg-blue-700"
+              title="Mark all new incidents as read"
+            >
+              <i className="ri-check-double-line mr-2"></i>
+              Mark All Read ({newIncidentIds.size})
+            </button>
+          )}
           <button
             onClick={() => setShowExportPreview(true)}
             disabled={filteredIncidents.length === 0 || isExporting}
@@ -1059,6 +1148,15 @@ const ViewIncidents: React.FC = () => {
               <option value="high">High</option>
               <option value="critical">Critical</option>
             </select>
+            <select
+              value={readFilter}
+              onChange={(e) => setReadFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Reports</option>
+              <option value="unread">Unread Only</option>
+              <option value="read">Read Only</option>
+            </select>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -1107,16 +1205,17 @@ const ViewIncidents: React.FC = () => {
               </div>
               <h3 className="text-2xl font-semibold text-gray-900 mb-2">No incidents found</h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || startDate || endDate
+                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || readFilter !== 'all' || startDate || endDate
                   ? "No incidents match your current search and filter criteria. Try adjusting your search or filters."
                   : "No incidents have been reported yet."}
               </p>
-              {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || startDate || endDate) && (
+              {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || readFilter !== 'all' || startDate || endDate) && (
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setStatusFilter('all');
                     setPriorityFilter('all');
+                    setReadFilter('all');
                     setStartDate('');
                     setEndDate('');
                   }}
@@ -1128,17 +1227,31 @@ const ViewIncidents: React.FC = () => {
               )}
             </div>
           ) : (
-            filteredIncidents.map((incident) => (
-            <div key={incident.id} className="p-6 hover:bg-gray-50">
+            filteredIncidents.map((incident) => {
+              const isUnread = newIncidentIds.has(incident.id);
+              return (
+            <div 
+              key={incident.id} 
+              className={`p-6 hover:bg-gray-50 transition-colors ${
+                isUnread ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-white'
+              }`}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <h4 className="text-lg font-medium text-gray-900">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h4 className={`text-lg font-medium ${isUnread ? 'text-blue-900 font-semibold' : 'text-gray-900'}`}>
                       {getIncidentTypeText(incident.type)} - #{incident.id}
                     </h4>
-                    {newIncidentIds.has(incident.id) && (
-                      <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white border border-red-600 animate-pulse">
+                    {isUnread && (
+                      <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white border border-red-600 animate-pulse flex items-center">
+                        <i className="ri-mail-unread-line mr-1"></i>
                         NEW
+                      </span>
+                    )}
+                    {!isUnread && (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-600 border border-gray-300 flex items-center">
+                        <i className="ri-mail-check-line mr-1"></i>
+                        READ
                       </span>
                     )}
                     <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(incident.priorityLevel)}`}>
@@ -1154,22 +1267,7 @@ const ViewIncidents: React.FC = () => {
                         <span className="ml-1 text-xs">(Rejected)</span>
                       )}
                     </span>
-                    {/* Reporter Badge - Prominently displayed for NEW incidents */}
-                    {newIncidentIds.has(incident.id) && incident.reportedBy && (
-                      <span className="px-3 py-1.5 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg flex items-center gap-1.5 whitespace-nowrap">
-                        <i className="ri-user-fill text-sm"></i>
-                        <span className="font-semibold">
-                          {incident.reportedBy}
-                        </span>
-                        {incident.reporterPhone && (
-                          <>
-                            <span className="text-blue-200 mx-0.5">•</span>
-                            <i className="ri-phone-fill text-xs"></i>
-                            <span className="text-xs">{incident.reporterPhone}</span>
-                          </>
-                        )}
-                      </span>
-                    )}
+
                   </div>
                   <p className="text-gray-600 mb-3">{incident.description}</p>
                   <div className="flex items-center text-sm text-gray-500 space-x-4">
@@ -1177,22 +1275,14 @@ const ViewIncidents: React.FC = () => {
                       <i className="ri-map-pin-line mr-1"></i>
                       {incident.location}
                     </span>
-                    {!newIncidentIds.has(incident.id) && (
-                      <span>
-                        <i className="ri-user-line mr-1"></i>
-                        Reported by: {incident.reportedBy}
-                      </span>
-                    )}
+                    <span>
+                      <i className="ri-user-line mr-1"></i>
+                      Reported by: {incident.reportedBy}
+                    </span>
                     <span>
                       <i className="ri-time-line mr-1"></i>
                       {new Date(incident.dateReported).toLocaleString()}
                     </span>
-                    {newIncidentIds.has(incident.id) && incident.reporterPhone && (
-                      <span className="text-blue-600 font-medium">
-                        <i className="ri-phone-line mr-1"></i>
-                        {incident.reporterPhone}
-                      </span>
-                    )}
                     {incident.allAssignedTeams && (
                       <span className="text-green-600">
                         <i className="ri-team-line mr-1"></i>
@@ -1233,6 +1323,37 @@ const ViewIncidents: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2 ml-4">
+                  {/* Read/Unread Button */}
+                  {newIncidentIds.has(incident.id) ? (
+                    <button
+                      onClick={() => markIncidentAsRead(incident.id)}
+                      className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-lg hover:bg-green-200 transition-colors flex items-center"
+                      title="Mark as read"
+                    >
+                      <i className="ri-check-line mr-1"></i>
+                      Mark Read
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        // Add back to unread (local state only - notifications remain read on backend)
+                        setNewIncidentIds(prev => {
+                          const updated = new Set(prev);
+                          updated.add(incident.id);
+                          return updated;
+                        });
+                        showToast({ 
+                          type: 'info', 
+                          message: `Incident #${incident.id} marked as unread (local)` 
+                        });
+                      }}
+                      className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors flex items-center"
+                      title="Mark as unread (local)"
+                    >
+                      <i className="ri-mail-unread-line mr-1"></i>
+                      Mark Unread
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       setSelectedIncident(incident);
@@ -1240,43 +1361,7 @@ const ViewIncidents: React.FC = () => {
                       
                       // Mark incident notification as read when viewing
                       if (newIncidentIds.has(incident.id)) {
-                        try {
-                          // Fetch notifications for this incident
-                          const response = await adminNotificationsApi.getNotifications({
-                            type: 'incident',
-                            limit: 100
-                          });
-                          
-                          if (response?.success && response?.notifications) {
-                            // Find and mark as read all unread notifications for this incident
-                            const incidentNotifications = response.notifications.filter((notif: any) => 
-                              notif.related_type === 'incident' && 
-                              notif.related_id === incident.id && 
-                              !notif.is_read
-                            );
-                            
-                            // Mark all as read
-                            for (const notif of incidentNotifications) {
-                              try {
-                                await adminNotificationsApi.markAsRead(notif.id);
-                              } catch (error) {
-                                console.error('Error marking notification as read:', error);
-                              }
-                            }
-                            
-                            // Update local state - remove from new incidents
-                            setNewIncidentIds(prev => {
-                              const updated = new Set(prev);
-                              updated.delete(incident.id);
-                              return updated;
-                            });
-                            
-                            // Refresh notifications to get updated state
-                            fetchNewIncidentNotifications();
-                          }
-                        } catch (error) {
-                          console.error('Error marking incident notification as read:', error);
-                        }
+                        await markIncidentAsRead(incident.id);
                       }
                     }}
                     className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors relative"
@@ -1284,7 +1369,7 @@ const ViewIncidents: React.FC = () => {
                     <i className="ri-eye-line mr-1"></i>
                     View
                     {newIncidentIds.has(incident.id) && (
-                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                     )}
                   </button>
                   <button
@@ -1338,7 +1423,8 @@ const ViewIncidents: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
           )}
         </div>
       </div>
