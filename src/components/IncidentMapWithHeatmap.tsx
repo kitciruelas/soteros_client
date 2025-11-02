@@ -39,13 +39,18 @@ L.Icon.Default.mergeOptions({
 const createCustomIcon = (priority: string, status: string) => {
   let color = "#6b7280" // default gray
 
-  // Base color on status only
-  if (status === "resolved" || status === "closed") {
-    color = "#10b981" // green for resolved
-  } else if (status === "in_progress") {
-    color = "#3b82f6" // blue for in progress
-  } else if (status === "pending") {
-    color = "#f59e0b" // amber for pending
+  // If critical priority, always red
+  if (priority === "critical") {
+    color = "#ef4444"
+  } else {
+    // For non-critical, base color on status
+    if (status === "resolved" || status === "closed") {
+      color = "#10b981" // green for resolved
+    } else if (status === "in_progress") {
+      color = "#3b82f6" // blue for in progress
+    } else if (status === "pending") {
+      color = "#f59e0b" // amber for pending
+    }
   }
 
   return L.divIcon({
@@ -214,11 +219,10 @@ const HeatmapController: React.FC<{
   const map = useMap()
 
   const priorityColors = {
-    low: "#10B981",
-   moderate: "#FFD966",
-high: "#E67E22",
-
     critical: "#EF4444",
+    low: "#10B981",
+    moderate: "#FFD966",
+    high: "#E67E22",
   }
 
   useEffect(() => {
@@ -249,21 +253,13 @@ high: "#E67E22",
 
         // Group incidents by priority
         const incidentsByPriority = {
-          low: incidents.filter(
+          critical: incidents.filter(
             (inc) =>
               inc.latitude &&
               inc.longitude &&
               !isNaN(Number(inc.latitude)) &&
               !isNaN(Number(inc.longitude)) &&
-              inc.priority_level === "low"
-          ),
-          moderate: incidents.filter(
-            (inc) =>
-              inc.latitude &&
-              inc.longitude &&
-              !isNaN(Number(inc.latitude)) &&
-              !isNaN(Number(inc.longitude)) &&
-              inc.priority_level === "moderate"
+              inc.priority_level === "critical"
           ),
           high: incidents.filter(
             (inc) =>
@@ -273,13 +269,21 @@ high: "#E67E22",
               !isNaN(Number(inc.longitude)) &&
               inc.priority_level === "high"
           ),
-          critical: incidents.filter(
+          moderate: incidents.filter(
             (inc) =>
               inc.latitude &&
               inc.longitude &&
               !isNaN(Number(inc.latitude)) &&
               !isNaN(Number(inc.longitude)) &&
-              inc.priority_level === "critical"
+              inc.priority_level === "moderate"
+          ),
+          low: incidents.filter(
+            (inc) =>
+              inc.latitude &&
+              inc.longitude &&
+              !isNaN(Number(inc.latitude)) &&
+              !isNaN(Number(inc.longitude)) &&
+              inc.priority_level === "low"
           ),
         }
 
