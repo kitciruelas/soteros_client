@@ -121,32 +121,42 @@ const BATANGAS_BOUNDS = {
 const DEFAULT_CENTER: [number, number] = [13.84542, 121.206189]
 
 // Rosario, Batangas boundary coordinates
-// Based on Google Maps and barangay locations - approximate municipal boundary
+// Based on Google Maps visible boundary (red dotted line) - accurate municipal boundary
 // Center: 13.8454343° N, 121.2063502° E | Area: 226.88 km²
 const ROSARIO_BOUNDARY: [number, number][] = [
-  [13.861, 121.172],   // Northwest - near Malaya/Macalamcam A
-  [13.860, 121.195],   // North - towards Balibago
-  [13.858, 121.220],   // North central - near Barangay A/B
-  [13.860, 121.245],   // Northeast - towards Natu
-  [13.861, 121.270],   // East central - towards Pinagsibaan
-  [13.860, 121.295],   // East - near Mabato/Macalamcam B
-  [13.858, 121.315],   // Northeast corner - Macalamcam B
-  [13.855, 121.328],   // East boundary - near Putingkahoy
-  [13.840, 121.333],   // Southeast - near Putingkahoy
-  [13.820, 121.335],   // South central east - towards Antipolo
-  [13.790, 121.330],   // South - near Matamis/Antipolo
-  [13.760, 121.325],   // Southwest - towards Calantas
-  [13.730, 121.315],   // South boundary - near Antipolo/Palakpak
-  [13.710, 121.300],   // Southwest corner
-  [13.707, 121.275],   // South - towards Palakpak
-  [13.710, 121.250],   // Southwest - towards Nasi
-  [13.720, 121.225],   // West south - towards Mabunga/Leviste
-  [13.735, 121.200],   // West central - towards Bayawang
-  [13.755, 121.180],   // West - near Colongan
-  [13.780, 121.172],   // Northwest - near Marilag/Malaya
-  [13.810, 121.172],   // West central north
-  [13.840, 121.172],   // Northwest - closing near Malaya
-  [13.861, 121.172],   // Close polygon
+  [13.8535, 121.172],   // Northwest - Malaya area
+  [13.856, 121.185],    // North - Quilib/Libato area
+  [13.857, 121.200],    // North - towards Barangay A/B
+  [13.858, 121.215],    // North central - Namuco area
+  [13.858, 121.230],    // Northeast - Natu area
+  [13.859, 121.245],    // Northeast - towards Pinagsibaan
+  [13.860, 121.260],    // East - Alupay area
+  [13.8606, 121.276],   // East - Mabato area
+  [13.8606, 121.292],   // East - Macalamcam A
+  [13.8606, 121.306],   // Northeast - Macalamcam B
+  [13.858, 121.318],    // East - Putingkahoy area
+  [13.855, 121.327],    // Southeast - Putingkahoy boundary
+  [13.850, 121.332],    // Southeast curve
+  [13.842, 121.335],    // South central east - towards Antipolo
+  [13.832, 121.336],    // South east - Antipolo area
+  [13.820, 121.333],    // South - Matamis area
+  [13.805, 121.330],    // South central - Calantas boundary
+  [13.788, 121.325],    // Southwest - Calantas area
+  [13.770, 121.318],    // Southwest - Palakpak boundary
+  [13.755, 121.310],    // Southwest - Palakpak area
+  [13.740, 121.300],    // South - Nasi boundary
+  [13.730, 121.288],    // Southwest - towards Nasi
+  [13.724, 121.275],    // Southwest - Mabunga area
+  [13.722, 121.260],    // West south - Leviste area
+  [13.725, 121.245],    // West - towards Bayawang
+  [13.735, 121.230],    // West central - Bayawang area
+  [13.750, 121.215],    // West - towards Itlugan
+  [13.765, 121.200],    // West - Colongan area
+  [13.780, 121.188],    // West - Marilag area
+  [13.795, 121.180],    // Northwest - towards Malaya
+  [13.815, 121.175],    // Northwest - Malaya area
+  [13.835, 121.172],    // Northwest curve
+  [13.8535, 121.172],   // Close polygon
 ]
 
 const LEGEND_FILTERS = {
