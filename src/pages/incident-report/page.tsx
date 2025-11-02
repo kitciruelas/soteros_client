@@ -500,12 +500,18 @@ export default function IncidentReportPage() {
       
       // Handle different types of errors
       let errorMessage = 'Network error. Please check your connection and try again.';
+      let errorTitle = 'Submission Failed';
       
       if (error.message) {
         if (error.message.includes('Missing required fields')) {
           errorMessage = error.message;
+          errorTitle = 'Validation Error';
         } else if (error.message.includes('Authentication failed')) {
           errorMessage = 'Authentication failed. Please log in again.';
+          errorTitle = 'Authentication Error';
+        } else if (error.message.includes('Daily submission limit reached')) {
+          errorMessage = error.message;
+          errorTitle = 'Daily Limit Reached';
         } else {
           errorMessage = error.message;
         }
@@ -513,9 +519,9 @@ export default function IncidentReportPage() {
       
       showToast({
         type: 'error',
-        title: 'Submission Failed',
+        title: errorTitle,
         message: errorMessage,
-        durationMs: 5000
+        durationMs: 6000
       });
     } finally {
       setIsSubmitting(false);
