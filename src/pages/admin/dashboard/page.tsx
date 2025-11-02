@@ -122,7 +122,7 @@ const AdminDashboard: React.FC = () => {
       '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
     ];
 
-    return peakHours.map((item, index) => {
+    return peakHours.map(item => {
       // Parse sample datetimes from the API response
       const sampleDatetimes = item.sample_datetimes ? item.sample_datetimes.split(',') : [];
       const mostRecentDatetime = sampleDatetimes[0] || item.latest_datetime;
@@ -189,33 +189,13 @@ const AdminDashboard: React.FC = () => {
         };
       };
 
+
       const mostRecent = formatDateTime(mostRecentDatetime);
       const earliest = formatDateTime(item.earliest_datetime);
       const latest = formatDateTime(item.latest_datetime);
       
       // Create consecutive date range from the compact format
       const consecutiveDateRange = formattedConsecutiveDates || mostRecent?.date || '';
-
-      // Create time range display - only show if within same hour and day
-      // Since data is grouped by hour, we only show time range if all incidents in that hour occurred on the same day
-      let timeRange = '';
-      if (earliest && latest) {
-        const earliestDate = new Date(item.earliest_datetime);
-        const latestDate = new Date(item.latest_datetime);
-        
-        // Check if they're in the same day and hour
-        const sameDay = earliestDate.getDate() === latestDate.getDate() &&
-                       earliestDate.getMonth() === latestDate.getMonth() &&
-                       earliestDate.getFullYear() === latestDate.getFullYear();
-        const sameHour = earliestDate.getHours() === latestDate.getHours() && 
-                         earliestDate.getHours() === item.hour;
-        
-        if (sameDay && sameHour && earliestDate.getMinutes() !== latestDate.getMinutes()) {
-          // Show minute range within the hour (e.g., "2:15 - 2:45 AM")
-          timeRange = `${earliestDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${latestDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-        }
-        // If no range (single minute or different days), leave empty
-      }
 
       return {
         name: hourLabels[item.hour] || `${item.hour}:00`,
@@ -232,7 +212,7 @@ const AdminDashboard: React.FC = () => {
         sampleTime: mostRecent?.time || '',
         sampleDateTime: mostRecent?.full || '',
         dateRange: consecutiveDateRange,
-        timeRange: timeRange,
+        timeRange: earliest?.time && latest?.time ? `${earliest.time} - ${latest.time}` : '',
         consecutiveDates: formattedConsecutiveDates.split(', '),
         earliestDateTime: item.earliest_datetime,
         latestDateTime: item.latest_datetime
