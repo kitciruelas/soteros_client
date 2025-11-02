@@ -120,26 +120,33 @@ const BATANGAS_BOUNDS = {
 
 const DEFAULT_CENTER: [number, number] = [13.84542, 121.206189]
 
-// Rosario, Batangas boundary coordinates (approximate polygon)
-// Based on municipal boundaries - creating a more realistic shape
+// Rosario, Batangas boundary coordinates
+// Based on Google Maps and barangay locations - approximate municipal boundary
+// Center: 13.8454343° N, 121.2063502° E | Area: 226.88 km²
 const ROSARIO_BOUNDARY: [number, number][] = [
-  [13.855, 121.16],   // West - near Malaya
-  [13.86, 121.175],   // Northwest curve
-  [13.87, 121.20],    // North
-  [13.865, 121.25],   // Northeast curve
-  [13.86, 121.30],    // East near Macalamcam
-  [13.86, 121.33],    // Northeast corner
-  [13.82, 121.35],    // East boundary
-  [13.76, 121.34],    // Southeast curve
-  [13.72, 121.32],    // Southeast near Antipolo
-  [13.71, 121.30],    // South boundary
-  [13.70, 121.25],    // Southwest curve
-  [13.71, 121.20],    // South
-  [13.72, 121.17],    // Southwest curve
-  [13.75, 121.16],    // West boundary curve
-  [13.78, 121.16],    // West
-  [13.82, 121.16],    // West curve
-  [13.855, 121.16],   // Close polygon
+  [13.861, 121.172],   // Northwest - near Malaya/Macalamcam A
+  [13.860, 121.195],   // North - towards Balibago
+  [13.858, 121.220],   // North central - near Barangay A/B
+  [13.860, 121.245],   // Northeast - towards Natu
+  [13.861, 121.270],   // East central - towards Pinagsibaan
+  [13.860, 121.295],   // East - near Mabato/Macalamcam B
+  [13.858, 121.315],   // Northeast corner - Macalamcam B
+  [13.855, 121.328],   // East boundary - near Putingkahoy
+  [13.840, 121.333],   // Southeast - near Putingkahoy
+  [13.820, 121.335],   // South central east - towards Antipolo
+  [13.790, 121.330],   // South - near Matamis/Antipolo
+  [13.760, 121.325],   // Southwest - towards Calantas
+  [13.730, 121.315],   // South boundary - near Antipolo/Palakpak
+  [13.710, 121.300],   // Southwest corner
+  [13.707, 121.275],   // South - towards Palakpak
+  [13.710, 121.250],   // Southwest - towards Nasi
+  [13.720, 121.225],   // West south - towards Mabunga/Leviste
+  [13.735, 121.200],   // West central - towards Bayawang
+  [13.755, 121.180],   // West - near Colongan
+  [13.780, 121.172],   // Northwest - near Marilag/Malaya
+  [13.810, 121.172],   // West central north
+  [13.840, 121.172],   // Northwest - closing near Malaya
+  [13.861, 121.172],   // Close polygon
 ]
 
 const LEGEND_FILTERS = {
