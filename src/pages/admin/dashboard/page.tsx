@@ -682,7 +682,6 @@ const AdminDashboard: React.FC = () => {
               Secure Access
             </div>
           </div>
-          <p className="text-gray-600 mt-1">Overview of emergency management system - All data is encrypted and access-controlled</p>
         </div>
         <div className="flex items-center space-x-3">
           <div className="relative group">
@@ -816,7 +815,13 @@ const AdminDashboard: React.FC = () => {
           }))}
           title="Most Common Incident Types"
           dataKey="count"
-          color="#ef4444"
+          color={{
+            medical: '#007BFF',
+            fire: '#DC3545',
+            accident: '#FD7E14',
+            security: '#6610F2',
+            other: '#6C757D'
+          }}
           height={300}
         />
 
@@ -976,11 +981,26 @@ const AdminDashboard: React.FC = () => {
 
           console.log('Available incident type keys:', allKeys);
 
+          // Create color array based on incident type order
+          const incidentTypeColors: { [key: string]: string } = {
+            medical: '#007BFF',
+            fire: '#DC3545',
+            accident: '#FD7E14',
+            security: '#6610F2',
+            other: '#6C757D'
+          };
+          
+          // Map stack keys to their corresponding colors
+          const colors = allKeys.map(key => 
+            incidentTypeColors[key.toLowerCase()] || '#6C757D'
+          );
+
           return (
             <StackedBarChart
               data={locationIncidents.length > 0 ? locationIncidents : []}
               title="Risky Areas by Barangay"
               stackKeys={allKeys}
+              colors={colors}
               height={400}
             />
           );

@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Cell,
 } from "recharts"
 
 interface DataPoint {
@@ -24,7 +25,7 @@ interface BarChartProps {
   data: DataPoint[] | StackedDataPoint[]
   title: string
   dataKey?: string
-  color?: string
+  color?: string | { [key: string]: string }  // Can be a single color or a color map
   height?: number
   stacked?: boolean
   stackKeys?: string[]
@@ -96,6 +97,16 @@ const BarChart: React.FC<BarChartProps> = React.memo(
     }
 
     const stackColors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#f97316", "#84cc16"]
+    
+    // Helper function to get color for each data point
+    const getBarColor = (entry: any) => {
+      if (typeof color === 'object' && color !== null) {
+        // Color is a map object
+        return color[entry.name] || color[entry.name.toLowerCase()] || '#6C757D';
+      }
+      // Color is a string
+      return color as string;
+    }
 
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
@@ -147,10 +158,14 @@ const BarChart: React.FC<BarChartProps> = React.memo(
               ) : (
                 <Bar
                   dataKey={dataKey}
-                  fill={color}
+                  fill={typeof color === 'string' ? color : undefined}
                   radius={[4, 4, 0, 0]}
                   className="hover:opacity-80 transition-opacity duration-200"
-                />
+                >
+                  {typeof color === 'object' && color !== null && (data as DataPoint[]).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+                  ))}
+                </Bar>
               )}
             </RechartsBarChart>
           </ResponsiveContainer>
