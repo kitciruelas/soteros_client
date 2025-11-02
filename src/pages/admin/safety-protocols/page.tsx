@@ -395,53 +395,15 @@ const SafetyProtocolsManagement: React.FC = () => {
   };
 
   const handleExportPDF = async (orientation: 'portrait' | 'landscape' = exportOrientation) => {
-    try {
-      const options = {
-        filename: 'SafetyProtocols',
-        title: getExportTitle(),
-        includeTimestamp: true,
-        orientation
-      };
-      await ExportUtils.exportToPDF(exportData, exportColumns, options);
-      setShowExportModal(false);
-      showToast({ type: 'success', message: 'Export successful' });
-    } catch (error) {
-      console.error('Export failed:', error);
-      showToast({ type: 'error', message: 'Export failed' });
-    }
+    const options = {
+      filename: 'SafetyProtocols',
+      title: getExportTitle(),
+      includeTimestamp: true,
+      orientation
+    };
+    await ExportUtils.exportToPDF(exportData, exportColumns, options);
   };
 
-  const handleExportCSV = () => {
-    try {
-      const options = {
-        filename: 'SafetyProtocols',
-        title: getExportTitle(),
-        includeTimestamp: true
-      };
-      ExportUtils.exportToCSV(exportData, exportColumns, options);
-      setShowExportModal(false);
-      showToast({ type: 'success', message: 'Export successful' });
-    } catch (error) {
-      console.error('Export failed:', error);
-      showToast({ type: 'error', message: 'Export failed' });
-    }
-  };
-
-  const handleExportExcel = () => {
-    try {
-      const options = {
-        filename: 'SafetyProtocols',
-        title: getExportTitle(),
-        includeTimestamp: true
-      };
-      ExportUtils.exportToExcel(exportData, exportColumns, options);
-      setShowExportModal(false);
-      showToast({ type: 'success', message: 'Export successful' });
-    } catch (error) {
-      console.error('Export failed:', error);
-      showToast({ type: 'error', message: 'Export failed' });
-    }
-  };
 
   const filteredProtocols = protocols.filter(protocol => {
     const matchesSearch = protocol.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -930,8 +892,24 @@ const SafetyProtocolsManagement: React.FC = () => {
           open={showExportModal}
           onClose={() => setShowExportModal(false)}
           onExportPDF={handleExportPDF}
-          onExportCSV={handleExportCSV}
-          onExportExcel={handleExportExcel}
+          onExportCSV={() => {
+            ExportUtils.exportToCSV(exportData, exportColumns, {
+              filename: 'SafetyProtocols',
+              title: getExportTitle(),
+              includeTimestamp: true
+            });
+            showToast({ type: 'success', message: 'Safety protocols data exported to CSV successfully' });
+            setShowExportModal(false);
+          }}
+          onExportExcel={() => {
+            ExportUtils.exportToExcel(exportData, exportColumns, {
+              filename: 'SafetyProtocols',
+              title: getExportTitle(),
+              includeTimestamp: true
+            });
+            showToast({ type: 'success', message: 'Safety protocols data exported to Excel successfully' });
+            setShowExportModal(false);
+          }}
           data={exportData}
           columns={exportColumns}
           title={getExportTitle()}
