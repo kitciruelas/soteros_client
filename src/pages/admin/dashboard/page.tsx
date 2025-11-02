@@ -68,7 +68,8 @@ const AdminDashboard: React.FC = () => {
   const [userTrend, setUserTrend] = useState<string | null>(null);
   const [incidentTypes, setIncidentTypes] = useState<IncidentTypeData[]>([]);
   const [priorityData, setPriorityData] = useState<PriorityData[]>([]);
-  const [welfareStats, setWelfareStats] = useState<{ safeReports: number; needsHelpReports: number; uniqueUsers: number } | null>(null);
+  const [welfareStats, setWelfareStats] = useState<{ safeReports: number; needsHelpReports: number; notSubmitted: number; uniqueUsers: number } | null>(null);
+  const [hasActiveWelfare, setHasActiveWelfare] = useState(false);
   const [locationIncidents, setLocationIncidents] = useState<Array<{ name: string; [key: string]: string | number }>>([]);
   const [monthlyIncidents, setMonthlyIncidents] = useState<MonthlyIncidentData[]>([]);
   const [trendsPeriod, setTrendsPeriod] = useState<'days' | 'weeks' | 'months'>('days');
@@ -275,7 +276,8 @@ const AdminDashboard: React.FC = () => {
   const exportWelfareData = () => {
     const welfareData = welfareStats ? [
       { status: 'Safe', count: welfareStats.safeReports },
-      { status: 'Needs Help', count: welfareStats.needsHelpReports }
+      { status: 'Needs Help', count: welfareStats.needsHelpReports },
+      { status: 'Not Submitted', count: welfareStats.notSubmitted }
     ] : [];
     
     const columns: ExportColumn[] = [
@@ -422,6 +424,12 @@ const AdminDashboard: React.FC = () => {
         metric: 'Needs Help',
         value: welfareStats.needsHelpReports,
         details: 'Welfare check - Needs Help reports'
+      });
+      allData.push({
+        section: 'Welfare Distribution',
+        metric: 'Not Submitted',
+        value: welfareStats.notSubmitted,
+        details: 'Welfare check - Not submitted'
       });
     }
 
@@ -621,15 +629,25 @@ const AdminDashboard: React.FC = () => {
       try {
         const welfareResponse = await apiRequest('/admin/welfare/stats');
         if (welfareResponse.success && welfareResponse.stats) {
-          setWelfareStats({
-            safeReports: welfareResponse.stats.safeReports || 0,
-            needsHelpReports: welfareResponse.stats.needsHelpReports || 0,
-            uniqueUsers: welfareResponse.stats.uniqueUsers || 0
-          });
+          // Check if there are active welfare settings
+          const hasActive = welfareResponse.stats.activeSettings > 0;
+          setHasActiveWelfare(hasActive);
+          
+          if (hasActive) {
+            setWelfareStats({
+              safeReports: welfareResponse.stats.safeReports || 0,
+              needsHelpReports: welfareResponse.stats.needsHelpReports || 0,
+              notSubmitted: welfareResponse.stats.notSubmitted || 0,
+              uniqueUsers: welfareResponse.stats.uniqueUsers || 0
+            });
+          } else {
+            setWelfareStats(null);
+          }
         }
       } catch (error) {
         console.warn('Welfare stats endpoint not available, using fallback data:', error);
         setWelfareStats(null);
+        setHasActiveWelfare(false);
       }
 
     } catch (error) {
@@ -833,7 +851,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 ${hasActiveWelfare ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-6`}>
         {/* Most Common Incident Types Chart */}
         <BarChart
           data={incidentTypes.map(item => ({
@@ -852,21 +870,25 @@ const AdminDashboard: React.FC = () => {
           height={300}
         />
 
-        {/* Welfare Chart */}
-        <PieChart
-          data={welfareStats ? [
-            { name: 'Safe', count: welfareStats.safeReports },
-            { name: 'Needs Help', count: welfareStats.needsHelpReports }
-          ] : []}
-          title="Welfare"
-          dataKey="count"
-          nameKey="name"
-          height={300}
-          colors={{
-            "Safe": "#10B981",
-            "Needs Help": "#EF4444"
-          }}
-        />
+        {/* Welfare Chart - Only show if there's an active welfare setting */}
+        {hasActiveWelfare && (
+          <PieChart
+            data={welfareStats ? [
+              { name: 'Safe', count: welfareStats.safeReports },
+              { name: 'Needs Help', count: welfareStats.needsHelpReports },
+              { name: 'Not Submitted', count: welfareStats.notSubmitted }
+            ] : []}
+            title="Welfare"
+            dataKey="count"
+            nameKey="name"
+            height={300}
+            colors={{
+              "Safe": "#10B981",
+              "Needs Help": "#EF4444",
+              "Not Submitted": "#6b7280"
+            }}
+          />
+        )}
       </div>
 
       {/* Monthly Trends Line Chart with Filter */}
