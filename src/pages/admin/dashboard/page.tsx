@@ -275,8 +275,7 @@ const AdminDashboard: React.FC = () => {
   const exportWelfareData = () => {
     const welfareData = welfareStats ? [
       { status: 'Safe', count: welfareStats.safeReports },
-      { status: 'Needs Help', count: welfareStats.needsHelpReports },
-      { status: 'Active', count: welfareStats.uniqueUsers }
+      { status: 'Needs Help', count: welfareStats.needsHelpReports }
     ] : [];
     
     const columns: ExportColumn[] = [
@@ -286,7 +285,7 @@ const AdminDashboard: React.FC = () => {
 
     setExportData(welfareData);
     setExportColumns(columns);
-    setExportTitle('Welfare Active Safe and Needs Help');
+    setExportTitle('Welfare');
     setShowExportModal(true);
   };
 
@@ -423,12 +422,6 @@ const AdminDashboard: React.FC = () => {
         metric: 'Needs Help',
         value: welfareStats.needsHelpReports,
         details: 'Welfare check - Needs Help reports'
-      });
-      allData.push({
-        section: 'Welfare Distribution',
-        metric: 'Active Users',
-        value: welfareStats.uniqueUsers,
-        details: 'Welfare check - Unique users'
       });
     }
 
@@ -859,21 +852,19 @@ const AdminDashboard: React.FC = () => {
           height={300}
         />
 
-        {/* Welfare Active Safe and Needs Help Chart */}
+        {/* Welfare Chart */}
         <PieChart
           data={welfareStats ? [
             { name: 'Safe', count: welfareStats.safeReports },
-            { name: 'Needs Help', count: welfareStats.needsHelpReports },
-            { name: 'Active', count: welfareStats.uniqueUsers }
+            { name: 'Needs Help', count: welfareStats.needsHelpReports }
           ] : []}
-          title="Welfare Active Safe and Needs Help"
+          title="Welfare"
           dataKey="count"
           nameKey="name"
           height={300}
           colors={{
             "Safe": "#10B981",
-            "Needs Help": "#EF4444",
-            "Active": "#3b82f6"
+            "Needs Help": "#EF4444"
           }}
         />
       </div>
