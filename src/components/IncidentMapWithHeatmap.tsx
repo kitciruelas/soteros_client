@@ -39,18 +39,13 @@ L.Icon.Default.mergeOptions({
 const createCustomIcon = (priority: string, status: string) => {
   let color = "#6b7280" // default gray
 
-  // If critical priority, always red
-  if (priority === "critical") {
-    color = "#ef4444"
-  } else {
-    // For non-critical, base color on status
-    if (status === "resolved" || status === "closed") {
-      color = "#10b981" // green for resolved
-    } else if (status === "in_progress") {
-      color = "#3b82f6" // blue for in progress
-    } else if (status === "pending") {
-      color = "#f59e0b" // amber for pending
-    }
+  // Base color on status only
+  if (status === "resolved" || status === "closed") {
+    color = "#10b981" // green for resolved
+  } else if (status === "in_progress") {
+    color = "#3b82f6" // blue for in progress
+  } else if (status === "pending") {
+    color = "#f59e0b" // amber for pending
   }
 
   return L.divIcon({
