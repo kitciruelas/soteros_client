@@ -122,7 +122,7 @@ const AdminDashboard: React.FC = () => {
       '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
     ];
 
-    return peakHours.map(item => {
+    return peakHours.map((item, index) => {
       // Parse sample datetimes from the API response
       const sampleDatetimes = item.sample_datetimes ? item.sample_datetimes.split(',') : [];
       const mostRecentDatetime = sampleDatetimes[0] || item.latest_datetime;
