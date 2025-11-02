@@ -64,6 +64,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             Time Range: {data.timeRange}
           </p>
         )}
+        {!data?.timeRange && data?.earliestDateTime && data?.latestDateTime && (
+          <div className="mt-1 space-y-0.5">
+            <p className="text-xs text-amber-600">
+              Earliest: {new Date(data.earliestDateTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+            </p>
+            <p className="text-xs text-blue-600">
+              Latest: {new Date(data.latestDateTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+            </p>
+          </div>
+        )}
       </div>
     )
   }
