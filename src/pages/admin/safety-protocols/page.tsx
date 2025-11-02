@@ -399,7 +399,7 @@ const SafetyProtocolsManagement: React.FC = () => {
       filename: 'SafetyProtocols',
       title: getExportTitle(),
       includeTimestamp: true,
-      orientation
+      orientation: orientation
     };
     await ExportUtils.exportToPDF(exportData, exportColumns, options);
   };

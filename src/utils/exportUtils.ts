@@ -365,7 +365,7 @@ export class ExportUtils {
 
     const availableWidth = pageWidth - 2 * margin
     const minColWidth = 20 // Increased minimum width for better readability
-    const maxColWidth = 50 // Increased maximum width
+    const maxColWidth = orientation === 'landscape' ? 120 : 50 // Larger max width for landscape orientation
 
     const colWidths: number[] = []
     headers.forEach((header, index) => {
