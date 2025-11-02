@@ -80,7 +80,7 @@ export class ExportUtils {
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
     const margin = 20 // Increased margin for better spacing
-    const headerHeight = 45 // Increased header height for better layout
+    const headerHeight = orientation === 'landscape' ? 35 : 45 // Smaller header for landscape
     let currentY = headerHeight
 
     const drawPageHeader = async () => {
@@ -258,12 +258,12 @@ export class ExportUtils {
 
     // Add title below header
     if (title && title !== "Data Export") {
-      currentY += 8
+      currentY += orientation === 'landscape' ? 4 : 8 // Less space for landscape
       doc.setFontSize(13)
       doc.setFont("helvetica", "bold")
       doc.setTextColor(17, 24, 39)
       doc.text(title, pageWidth / 2, currentY, { align: "center" })
-      currentY += 3
+      currentY += orientation === 'landscape' ? 2 : 3 // Less space for landscape
     }
 
     // Footer drawing function
@@ -450,7 +450,7 @@ export class ExportUtils {
     }
 
     let pageNumber = 1
-    currentY += 15 // More space before table
+    currentY += orientation === 'landscape' ? 10 : 15 // Less space for landscape
     currentY = drawTableHeader(currentY, pageNumber)
 
     doc.setFont("helvetica", "normal")
@@ -476,7 +476,7 @@ export class ExportUtils {
         doc.addPage(orientationParam as 'p' | 'l')
         pageNumber++
         await drawPageHeader()
-        currentY = headerHeight + 15
+        currentY = headerHeight + (orientation === 'landscape' ? 10 : 15)
         currentY = drawTableHeader(currentY, pageNumber)
         doc.setFontSize(7)
       }
