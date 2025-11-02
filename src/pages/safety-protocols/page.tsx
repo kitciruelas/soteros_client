@@ -647,15 +647,6 @@ const SafetyProtocolsPage: React.FC = () => {
                                             {fileUrl.split('/').pop()} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
                                           </span>
                                         </div>
-                                        <a
-                                          href={`${getFileUrl(fileUrl)}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-white/80 hover:text-white transition-colors flex-shrink-0 ml-2"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <i className="ri-download-line text-xl"></i>
-                                        </a>
                                       </div>
                                       {/* PDF Embed Preview */}
                                       <div className="pt-12 aspect-[4/3] bg-gray-50">
@@ -917,15 +908,6 @@ const SafetyProtocolsPage: React.FC = () => {
                                   </div>
                                   <div className="flex items-center space-x-2">
                                     <a
-                                      href={`${getFileUrl(fileUrl)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                                    >
-                                      <i className="ri-download-line"></i>
-                                      <span>Download</span>
-                                    </a>
-                                    <a
                                       href={`${getFileUrl(fileUrl)}#toolbar=1`}
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -957,22 +939,13 @@ const SafetyProtocolsPage: React.FC = () => {
                                       loading="lazy"
                                     />
                                   </div>
-                                  {/* Counter and download buttons overlay */}
+                                  {/* Counter and action buttons overlay */}
                                   {attachments.length > 1 && (
                                     <div className="absolute top-8 right-8 bg-black/70 backdrop-blur-sm text-white text-sm font-medium px-4 py-2 rounded-full">
                                       {fileIndex + 1}/{attachments.length}
                                     </div>
                                   )}
                                   <div className="absolute top-8 left-8 flex items-center space-x-2">
-                                    <a
-                                      href={`${getFileUrl(fileUrl)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="bg-black/70 backdrop-blur-sm hover:bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                                    >
-                                      <i className="ri-download-line"></i>
-                                      <span>Download</span>
-                                    </a>
                                     <a
                                       href={`${getFileUrl(fileUrl)}`}
                                       target="_blank"
@@ -995,15 +968,6 @@ const SafetyProtocolsPage: React.FC = () => {
                                       {fileName} {attachments.length > 1 && `(${fileIndex + 1}/${attachments.length})`}
                                     </span>
                                   </div>
-                                  <a
-                                    href={`${getFileUrl(fileUrl)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
-                                  >
-                                    <i className="ri-download-line"></i>
-                                    <span>Download File</span>
-                                  </a>
                                 </div>
                               </div>
                             )}
