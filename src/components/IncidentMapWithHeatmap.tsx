@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
@@ -119,73 +119,6 @@ const BATANGAS_BOUNDS = {
 }
 
 const DEFAULT_CENTER: [number, number] = [13.84542, 121.206189]
-
-// Rosario, Batangas boundary coordinates
-// Based on actual barangay coordinates - ensures all 49 barangays are within boundary
-// Verified against all barangay locations including Salao (easternmost) and Palakpak (southernmost)
-// Center: 13.8454343° N, 121.2063502° E | Area: 226.88 km²
-const ROSARIO_BOUNDARY: [number, number][] = [
-  [13.8535, 121.172],   // Northwest - Malaya (13.8535, 121.1720)
-  [13.8578, 121.1853],  // North - Santa Cruz (13.8599, 121.1853)
-  [13.8603, 121.2002],  // North - Quilib (13.8603, 121.2002)
-  [13.8599, 121.2039],  // North - San Roque (13.8518, 121.2039)
-  [13.857, 121.2104],   // North - Barangay A/B area
-  [13.858, 121.2216],   // North central - Bagong Pook (13.8402, 121.2216)
-  [13.858, 121.2329],   // Northeast - San Jose (13.8419, 121.2329)
-  [13.859, 121.2475],   // Northeast - San Carlos (13.8478, 121.2475)
-  [13.860, 121.2683],   // East - Natu (13.8420, 121.2683)
-  [13.860, 121.2855],   // East - Balibago (13.8512, 121.2855)
-  [13.8606, 121.2922],  // East - Alupay (13.8404, 121.2922)
-  [13.8606, 121.2913],  // East - Mabato (13.8144, 121.2913)
-  [13.8606, 121.3046],  // Northeast - Macalamcam A (13.8551, 121.3046)
-  [13.8606, 121.3141],  // Northeast - Pinagsibaan (13.8438, 121.3141)
-  [13.8606, 121.3265],  // Northeast - Macalamcam B (13.8606, 121.3265)
-  [13.8578, 121.3455],  // East - Salao (13.8578, 121.3455) - easternmost point
-  [13.855, 121.3455],   // Southeast - Salao boundary curve
-  [13.850, 121.344],    // Southeast - boundary curve
-  [13.842, 121.342],    // Southeast - Putingkahoy area (13.8349, 121.3227)
-  [13.835, 121.339],    // South east - towards San Isidro (13.8074, 121.3152)
-  [13.828, 121.336],    // South central east - towards Antipolo
-  [13.815, 121.335],    // South east - Antipolo boundary
-  [13.805, 121.333],    // South east - Matamis (13.7216, 121.3305)
-  [13.795, 121.332],    // South central - towards Antipolo
-  [13.785, 121.330],    // South - boundary curve
-  [13.775, 121.328],    // South central - Calantas boundary (13.7340, 121.3129)
-  [13.765, 121.325],    // Southwest - Calantas area
-  [13.755, 121.322],    // Southwest - Nasi area (13.7699, 121.3127)
-  [13.745, 121.318],    // Southwest - towards Tulos
-  [13.735, 121.315],    // Southwest - Nasi (13.7699, 121.3127)
-  [13.725, 121.312],    // Southwest - Tulos area (13.7231, 121.2971)
-  [13.715, 121.3096],    // South - approaching Antipolo
-  [13.7080, 121.3096],   // South - Antipolo (13.7080, 121.3096)
-  [13.7079, 121.3320],  // South - Palakpak (13.7079, 121.3320) - southernmost/easternmost south
-  [13.710, 121.330],    // Southwest curve from Palakpak
-  [13.715, 121.325],    // Southwest curve
-  [13.720, 121.320],    // Southwest - towards Tulos
-  [13.7231, 121.2971],   // Southwest - Tulos (13.7231, 121.2971)
-  [13.735, 121.2924],   // Southwest - Mabunga (13.7810, 121.2924)
-  [13.735, 121.2868],   // West south - Leviste (13.7694, 121.2868)
-  [13.745, 121.2798],   // West - Bayawang (13.7944, 121.2798)
-  [13.750, 121.2742],   // West - Maligaya (13.8182, 121.2742)
-  [13.755, 121.2649],   // West - Lumbangan (13.8122, 121.2649)
-  [13.760, 121.2589],   // West - Baybayin (13.8277, 121.2589)
-  [13.765, 121.2501],   // West - Cahigam (13.8021, 121.2501)
-  [13.768, 121.2399],   // West - Tiquiwan (13.8284, 121.2399)
-  [13.770, 121.2315],   // West - Mavalor (13.8177, 121.2315)
-  [13.775, 121.2351],   // West - Bulihan (13.7967, 121.2351)
-  [13.780, 121.2623],   // West - Mayuro (13.7944, 121.2623)
-  [13.785, 121.2122],   // West - Maalas-as (13.8112, 121.2122)
-  [13.790, 121.2036],   // West - Itlugan (13.8190, 121.2036)
-  [13.795, 121.1978],   // West - Namunga (13.8431, 121.1978)
-  [13.800, 121.1869],   // West - Timbugan (13.8095, 121.1869)
-  [13.805, 121.1852],   // West - Masaya (13.8383, 121.1852)
-  [13.810, 121.1764],   // West - San Ignacio (13.8335, 121.1764)
-  [13.815, 121.1762],   // West - Colongan (13.8114, 121.1762)
-  [13.820, 121.175],    // Northwest - towards Marilag
-  [13.835, 121.1764],   // Northwest - Marilag (13.8562, 121.1764)
-  [13.850, 121.172],    // Northwest - Malaya area
-  [13.8535, 121.172],   // Close polygon at Malaya
-]
 
 const LEGEND_FILTERS = {
   CRITICAL: "critical",
@@ -806,27 +739,6 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
               },
             }}
           />
-
-          {/* Rosario, Batangas Boundary */}
-          <Polygon
-            positions={ROSARIO_BOUNDARY}
-            pathOptions={{
-              color: "#2563eb",
-              fillColor: "#3b82f6",
-              fillOpacity: 0.15,
-              weight: 2.5,
-              opacity: 0.8,
-              dashArray: "10, 5",
-            }}
-          >
-            <Popup>
-              <div className="text-center">
-                <strong className="text-lg text-blue-600">Rosario, Batangas</strong>
-                <br />
-                <small className="text-gray-600">Municipality Boundary</small>
-              </div>
-            </Popup>
-          </Polygon>
 
           {/* User location marker */}
           {showUserLocation && userLocation && (
