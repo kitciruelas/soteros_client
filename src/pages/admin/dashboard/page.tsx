@@ -1,6 +1,6 @@
 // ...existing code...
 import React, { useState, useEffect } from 'react';
-import { adminDashboardApi } from '../../../utils/api';
+import { adminDashboardApi, apiRequest } from '../../../utils/api';
 import BarChart from '../../../components/charts/BarChart';
 import PieChart from '../../../components/charts/PieChart';
 import StackedBarChart from '../../../components/charts/StackedBarChart';
@@ -68,6 +68,7 @@ const AdminDashboard: React.FC = () => {
   const [userTrend, setUserTrend] = useState<string | null>(null);
   const [incidentTypes, setIncidentTypes] = useState<IncidentTypeData[]>([]);
   const [priorityData, setPriorityData] = useState<PriorityData[]>([]);
+  const [welfareStats, setWelfareStats] = useState<{ safeReports: number; needsHelpReports: number; uniqueUsers: number } | null>(null);
   const [locationIncidents, setLocationIncidents] = useState<Array<{ name: string; [key: string]: string | number }>>([]);
   const [monthlyIncidents, setMonthlyIncidents] = useState<MonthlyIncidentData[]>([]);
   const [trendsPeriod, setTrendsPeriod] = useState<'days' | 'weeks' | 'months'>('days');
@@ -271,15 +272,21 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
-  const exportPriorityData = () => {
+  const exportWelfareData = () => {
+    const welfareData = welfareStats ? [
+      { status: 'Safe', count: welfareStats.safeReports },
+      { status: 'Needs Help', count: welfareStats.needsHelpReports },
+      { status: 'Active', count: welfareStats.uniqueUsers }
+    ] : [];
+    
     const columns: ExportColumn[] = [
-      { key: 'priority', label: 'Priority Level' },
+      { key: 'status', label: 'Welfare Status' },
       { key: 'count', label: 'Count' }
     ];
 
-    setExportData(priorityData);
+    setExportData(welfareData);
     setExportColumns(columns);
-    setExportTitle('Priority Level Distribution');
+    setExportTitle('Welfare Active Safe and Needs Help');
     setShowExportModal(true);
   };
 
@@ -403,15 +410,27 @@ const AdminDashboard: React.FC = () => {
       });
     });
 
-    // Add priority data
-    priorityData.forEach(item => {
+    // Add welfare data
+    if (welfareStats) {
       allData.push({
-        section: 'Priority Distribution',
-        metric: item.priority,
-        value: item.count,
-        details: 'Priority level distribution'
+        section: 'Welfare Distribution',
+        metric: 'Safe',
+        value: welfareStats.safeReports,
+        details: 'Welfare check - Safe reports'
       });
-    });
+      allData.push({
+        section: 'Welfare Distribution',
+        metric: 'Needs Help',
+        value: welfareStats.needsHelpReports,
+        details: 'Welfare check - Needs Help reports'
+      });
+      allData.push({
+        section: 'Welfare Distribution',
+        metric: 'Active Users',
+        value: welfareStats.uniqueUsers,
+        details: 'Welfare check - Unique users'
+      });
+    }
 
     // Add trends data
     monthlyIncidents.forEach(item => {
@@ -605,6 +624,21 @@ const AdminDashboard: React.FC = () => {
         setLocationIncidents([]);
       }
 
+      // Try to fetch welfare stats, but don't fail if it doesn't work
+      try {
+        const welfareResponse = await apiRequest('/admin/welfare/stats');
+        if (welfareResponse.success && welfareResponse.stats) {
+          setWelfareStats({
+            safeReports: welfareResponse.stats.safeReports || 0,
+            needsHelpReports: welfareResponse.stats.needsHelpReports || 0,
+            uniqueUsers: welfareResponse.stats.uniqueUsers || 0
+          });
+        }
+      } catch (error) {
+        console.warn('Welfare stats endpoint not available, using fallback data:', error);
+        setWelfareStats(null);
+      }
+
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch dashboard statistics');
@@ -715,11 +749,11 @@ const AdminDashboard: React.FC = () => {
                   Incident Types
                 </button>
                 <button
-                  onClick={exportPriorityData}
+                  onClick={exportWelfareData}
                   className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 >
                   <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
-                  Priority Distribution
+                  Welfare Distribution
                 </button>
                 <button
                   onClick={exportTrendsData}
@@ -825,21 +859,21 @@ const AdminDashboard: React.FC = () => {
           height={300}
         />
 
-        {/* Priority Level Distribution Chart */}
+        {/* Welfare Active Safe and Needs Help Chart */}
         <PieChart
-          data={priorityData.map(item => ({
-            name: item.priority,
-            count: item.count
-          }))}
-          title="Priority Level Distribution"
+          data={welfareStats ? [
+            { name: 'Safe', count: welfareStats.safeReports },
+            { name: 'Needs Help', count: welfareStats.needsHelpReports },
+            { name: 'Active', count: welfareStats.uniqueUsers }
+          ] : []}
+          title="Welfare Active Safe and Needs Help"
           dataKey="count"
           nameKey="name"
           height={300}
           colors={{
-            low: "#10B981",
-            moderate: "#FFD966",
-            high: "#E67E22",
-            critical: "#EF4444"
+            "Safe": "#10B981",
+            "Needs Help": "#EF4444",
+            "Active": "#3b82f6"
           }}
         />
       </div>
