@@ -82,6 +82,7 @@ const AdminDashboard: React.FC = () => {
   
   // Export functionality
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [exportData, setExportData] = useState<any[]>([]);
   const [exportColumns, setExportColumns] = useState<ExportColumn[]>([]);
   const [exportTitle, setExportTitle] = useState('');
@@ -95,6 +96,24 @@ const AdminDashboard: React.FC = () => {
     };
     loadData();
   }, []);
+
+  // Close export dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showExportDropdown && !target.closest('.export-dropdown-container')) {
+        setShowExportDropdown(false);
+      }
+    };
+
+    if (showExportDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportDropdown]);
 
   // Reset limit when period changes to ensure valid combinations
   useEffect(() => {
@@ -241,6 +260,7 @@ const AdminDashboard: React.FC = () => {
 
   // Export functions
   const exportDashboardStats = () => {
+    setShowExportDropdown(false);
     const statsData = [
       { metric: 'Total Incidents', value: stats.totalIncidents },
       { metric: 'Active Incidents', value: stats.activeIncidents },
@@ -262,6 +282,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const exportIncidentTypes = () => {
+    setShowExportDropdown(false);
     const columns: ExportColumn[] = [
       { key: 'incident_type', label: 'Incident Type' },
       { key: 'count', label: 'Count' }
@@ -274,6 +295,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const exportWelfareData = () => {
+    setShowExportDropdown(false);
     const welfareData = welfareStats ? [
       { status: 'Safe', count: welfareStats.safeReports },
       { status: 'Needs Help', count: welfareStats.needsHelpReports },
@@ -292,6 +314,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const exportTrendsData = () => {
+    setShowExportDropdown(false);
     const columns: ExportColumn[] = [
       { key: 'period', label: 'Period' },
       { key: 'total_incidents', label: 'Total Incidents' },
@@ -306,6 +329,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const exportPeakHoursData = () => {
+    setShowExportDropdown(false);
     const formattedData = formatPeakHoursData(peakHoursData);
     const columns: ExportColumn[] = [
       { key: 'name', label: 'Hour' },
@@ -321,6 +345,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const exportLocationData = () => {
+    setShowExportDropdown(false);
     if (locationIncidents.length === 0) {
       showToast({ message: 'No location data available to export', type: 'warning' });
       return;
@@ -341,6 +366,7 @@ const AdminDashboard: React.FC = () => {
 
 
   const exportRecentActivity = () => {
+    setShowExportDropdown(false);
     if (recentActivity.length === 0) {
       showToast({ message: 'No recent activity available to export', type: 'warning' });
       return;
@@ -360,6 +386,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const exportAllData = () => {
+    setShowExportDropdown(false);
     // Combine all dashboard data into a comprehensive export
     const allData = [];
     
@@ -729,73 +756,78 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="relative group">
-            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+          <div className="relative export-dropdown-container">
+            <button 
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+            >
               <i className="ri-download-line mr-2"></i>
               Export Data
-              <i className="ri-arrow-down-s-line ml-1"></i>
+              <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
             </button>
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="py-2">
-                <button
-                  onClick={exportAllData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1"
-                >
-                  <i className="ri-download-cloud-line mr-3 text-green-600"></i>
-                  <span className="font-semibold">Export All Data</span>
-                </button>
-                <div className="px-2 py-1 text-xs text-gray-500 mb-2">Individual Exports:</div>
-                <button
-                  onClick={exportDashboardStats}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-bar-chart-line mr-3 text-blue-500"></i>
-                  Dashboard Statistics
-                </button>
-                <button
-                  onClick={exportIncidentTypes}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-pie-chart-line mr-3 text-red-500"></i>
-                  Incident Types
-                </button>
-                <button
-                  onClick={exportWelfareData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
-                  Welfare Distribution
-                </button>
-                <button
-                  onClick={exportTrendsData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-line-chart-line mr-3 text-green-500"></i>
-                  Trends Data
-                </button>
-                <button
-                  onClick={exportPeakHoursData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-time-line mr-3 text-yellow-500"></i>
-                  Peak Hours Analysis
-                </button>
-                <button
-                  onClick={exportLocationData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-map-pin-line mr-3 text-purple-500"></i>
-                  Location Data
-                </button>
-                <button
-                  onClick={exportRecentActivity}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <i className="ri-history-line mr-3 text-gray-500"></i>
-                  Recent Activity
-                </button>
+            {showExportDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="py-2">
+                  <button
+                    onClick={exportAllData}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1"
+                  >
+                    <i className="ri-download-cloud-line mr-3 text-green-600"></i>
+                    <span className="font-semibold">Export All Data</span>
+                  </button>
+                  <div className="px-2 py-1 text-xs text-gray-500 mb-2">Individual Exports:</div>
+                  <button
+                    onClick={exportDashboardStats}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-bar-chart-line mr-3 text-blue-500"></i>
+                    Dashboard Statistics
+                  </button>
+                  <button
+                    onClick={exportIncidentTypes}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-pie-chart-line mr-3 text-red-500"></i>
+                    Incident Types
+                  </button>
+                  <button
+                    onClick={exportWelfareData}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
+                    Welfare Distribution
+                  </button>
+                  <button
+                    onClick={exportTrendsData}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-line-chart-line mr-3 text-green-500"></i>
+                    Trends Data
+                  </button>
+                  <button
+                    onClick={exportPeakHoursData}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-time-line mr-3 text-yellow-500"></i>
+                    Peak Hours Analysis
+                  </button>
+                  <button
+                    onClick={exportLocationData}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-map-pin-line mr-3 text-purple-500"></i>
+                    Location Data
+                  </button>
+                  <button
+                    onClick={exportRecentActivity}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-history-line mr-3 text-gray-500"></i>
+                    Recent Activity
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <button
             onClick={fetchDashboardStats}
