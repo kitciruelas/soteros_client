@@ -878,7 +878,7 @@ const AdminDashboard: React.FC = () => {
               { name: 'Needs Help', count: welfareStats.needsHelpReports },
               { name: 'Not Submitted', count: welfareStats.notSubmitted }
             ] : []}
-            title="Welfare"
+            title="Welfare Status Overview"
             dataKey="count"
             nameKey="name"
             height={300}

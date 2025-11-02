@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
@@ -119,6 +119,28 @@ const BATANGAS_BOUNDS = {
 }
 
 const DEFAULT_CENTER: [number, number] = [13.84542, 121.206189]
+
+// Rosario, Batangas boundary coordinates (approximate polygon)
+// Based on municipal boundaries - creating a more realistic shape
+const ROSARIO_BOUNDARY: [number, number][] = [
+  [13.855, 121.16],   // West - near Malaya
+  [13.86, 121.175],   // Northwest curve
+  [13.87, 121.20],    // North
+  [13.865, 121.25],   // Northeast curve
+  [13.86, 121.30],    // East near Macalamcam
+  [13.86, 121.33],    // Northeast corner
+  [13.82, 121.35],    // East boundary
+  [13.76, 121.34],    // Southeast curve
+  [13.72, 121.32],    // Southeast near Antipolo
+  [13.71, 121.30],    // South boundary
+  [13.70, 121.25],    // Southwest curve
+  [13.71, 121.20],    // South
+  [13.72, 121.17],    // Southwest curve
+  [13.75, 121.16],    // West boundary curve
+  [13.78, 121.16],    // West
+  [13.82, 121.16],    // West curve
+  [13.855, 121.16],   // Close polygon
+]
 
 const LEGEND_FILTERS = {
   CRITICAL: "critical",
@@ -739,6 +761,27 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
               },
             }}
           />
+
+          {/* Rosario, Batangas Boundary */}
+          <Polygon
+            positions={ROSARIO_BOUNDARY}
+            pathOptions={{
+              color: "#2563eb",
+              fillColor: "#3b82f6",
+              fillOpacity: 0.15,
+              weight: 2.5,
+              opacity: 0.8,
+              dashArray: "10, 5",
+            }}
+          >
+            <Popup>
+              <div className="text-center">
+                <strong className="text-lg text-blue-600">Rosario, Batangas</strong>
+                <br />
+                <small className="text-gray-600">Municipality Boundary</small>
+              </div>
+            </Popup>
+          </Polygon>
 
           {/* User location marker */}
           {showUserLocation && userLocation && (
