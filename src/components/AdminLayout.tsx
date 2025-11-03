@@ -41,6 +41,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     notificationId?: number;
   }>>([]);
   const [notificationSound, setNotificationSound] = useState<HTMLAudioElement | null>(null);
+  const notificationQueue = useRef<Array<any>>([]);
+  const isProcessingQueue = useRef<boolean>(false);
+  const processNotificationQueueRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const authState = getAuthState();
@@ -83,9 +86,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     };
   }, []);
 
-  // Handle new admin notifications from the unified API
-  const handleNewAdminNotification = React.useCallback((notificationData: any) => {
-    console.log('📬 New admin notification received:', notificationData);
+  // Handle new admin notifications from the unified API - actually display the notification
+  const displayAdminNotification = React.useCallback((notificationData: any) => {
+    console.log('📬 Displaying admin notification:', notificationData);
     
     // Increment new notification counter
     setNewNotificationCount(prev => prev + 1);
@@ -166,6 +169,55 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     }
   }, [notificationSound]);
 
+  // Handle new admin notifications - queue them instead of displaying immediately
+  const handleNewAdminNotification = React.useCallback((notificationData: any) => {
+    // Add to queue
+    notificationQueue.current.push(notificationData);
+    
+    // Start processing queue if not already processing
+    if (!isProcessingQueue.current && processNotificationQueueRef.current) {
+      processNotificationQueueRef.current();
+    }
+  }, []);
+
+  // Process notification queue one at a time
+  const processNotificationQueue = React.useCallback(() => {
+    if (isProcessingQueue.current || notificationQueue.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueue.current = true;
+    const notification = notificationQueue.current.shift();
+    
+    if (notification) {
+      displayAdminNotification(notification);
+      
+      // Wait for notification to fully dismiss before processing next one
+      // Critical/High: 10 seconds, Medium: 7 seconds, Low: 5 seconds
+      // Add 500ms buffer to ensure previous notification is fully removed
+      const priority = notification.priority_level || 'medium';
+      const dismissTime = 
+        (priority === 'critical' || priority === 'high') ? 10000 :
+        priority === 'medium' ? 7000 : 5000;
+      
+      const delay = dismissTime + 500; // Add 500ms buffer
+      
+      setTimeout(() => {
+        isProcessingQueue.current = false;
+        if (processNotificationQueueRef.current) {
+          processNotificationQueueRef.current();
+        }
+      }, delay);
+    } else {
+      isProcessingQueue.current = false;
+    }
+  }, [displayAdminNotification]);
+
+  // Store processNotificationQueue in ref so it can be accessed from other functions
+  useEffect(() => {
+    processNotificationQueueRef.current = processNotificationQueue;
+  }, [processNotificationQueue]);
+
   // Poll for new notifications every 30 seconds as backup
   useEffect(() => {
     let lastNotificationId = 0;
@@ -185,10 +237,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           if (newNotifications.length > 0) {
             lastNotificationId = Math.max(...newNotifications.map((n: any) => n.id));
             
-            // Show pop-up for each new notification
-            newNotifications.forEach((notif: any) => {
-              handleNewAdminNotification(notif);
-            });
+            // Add notifications to queue - they will be processed one at a time
+            notificationQueue.current.push(...newNotifications);
+            
+            // Start processing queue if not already processing
+            if (!isProcessingQueue.current && processNotificationQueueRef.current) {
+              processNotificationQueueRef.current();
+            }
           }
         }
       } catch (error) {
@@ -395,23 +450,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       return prev;
     });
 
-    // Add floating notification
-    console.log('🎯 Adding floating notification for incident');
-    addFloatingNotification({
-      id: `incident-${incidentData.id || (incidentData as any).incident_id}`,
+    // Queue floating notification - it will be processed one at a time
+    console.log('🎯 Queuing floating notification for incident');
+    const notificationData = {
+      id: incidentData.id || (incidentData as any).incident_id,
       type: 'incident',
       title: 'New Incident Report',
       message: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
-      priority: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium'
-    });
-
-    // Show browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      new Notification('New Incident Report', {
-        body: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
-        icon: '/images/Slogo.png',
-        tag: `incident-${incidentData.id}`
-      });
+      priority_level: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium',
+      action_url: '/admin/incidents/view'
+    };
+    notificationQueue.current.push(notificationData);
+    
+    // Start processing queue if not already processing
+    if (!isProcessingQueue.current && processNotificationQueueRef.current) {
+      processNotificationQueueRef.current();
     }
   };
 
@@ -446,23 +499,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       return prev;
     });
 
-    // Add floating notification
-    console.log('🎯 Adding floating notification for welfare');
-    addFloatingNotification({
-      id: `welfare-${welfareData.report_id || welfareData.id}`,
+    // Queue floating notification - it will be processed one at a time
+    console.log('🎯 Queuing floating notification for welfare');
+    const notificationData = {
+      id: welfareData.report_id || welfareData.id,
       type: 'welfare',
       title: 'Welfare Check - Needs Help',
       message: `${welfareData.user_name || 'User'} needs assistance`,
-      priority: 'high'
-    });
-
-    // Show browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      new Notification('Welfare Check - Needs Help', {
-        body: `${welfareData.user_name || 'User'} needs assistance`,
-        icon: '/images/Slogo.png',
-        tag: `welfare-${welfareData.report_id || welfareData.id}`
-      });
+      priority_level: 'high' as 'high',
+      action_url: '/admin/welfare'
+    };
+    notificationQueue.current.push(notificationData);
+    
+    // Start processing queue if not already processing
+    if (!isProcessingQueue.current && processNotificationQueueRef.current) {
+      processNotificationQueueRef.current();
     }
   };
 
@@ -1290,9 +1341,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
                           {getTypeLabel(notification.type)}
-                        </span>
-                        <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-20 px-2 py-1 rounded">
-                          {notification.priority}
                         </span>
                       </div>
                     </div>
