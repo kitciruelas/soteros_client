@@ -330,31 +330,33 @@ export default function WelfareCheck() {
 
             {systemStatus?.isActive && showAnnouncement && (
               <div className="relative max-w-3xl mx-auto mb-8">
-                <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 shadow-lg overflow-hidden">
-                  <div className="relative px-5 py-4">
-                    <div className="flex items-start gap-4">
-                      <div className="mt-0.5 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                        <i className="ri-megaphone-line text-amber-600 text-lg"></i>
+                <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 shadow-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <i className="ri-megaphone-line text-amber-600 text-xl"></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-amber-800 flex items-center">
+                          Welfare Announcement
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setShowAnnouncement(false)}
+                          className="text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded-lg p-1.5 transition-all duration-200 flex-shrink-0"
+                          aria-label="Dismiss announcement"
+                        >
+                          <i className="ri-close-line text-lg"></i>
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-amber-800 mb-2">Welfare Announcement</div>
-                        <div className="space-y-1">
-                          <p className="text-amber-900 font-medium leading-snug text-base">
-                            {systemStatus?.title || 'Welfare Check'}
-                          </p>
-                          <p className="text-amber-700 text-sm leading-relaxed">
-                            {systemStatus?.description || 'Welfare check is currently active. Please submit your status to help responders.'}
-                          </p>
-                        </div>
+                      <div className="space-y-2">
+                        <p className="text-base font-semibold text-amber-900 leading-snug">
+                          {systemStatus?.title || 'Welfare Check'}
+                        </p>
+                        <p className="text-sm text-amber-700 leading-relaxed">
+                          {systemStatus?.description || 'Welfare check is currently active. Please submit your status to help responders.'}
+                        </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowAnnouncement(false)}
-                        className="flex-shrink-0 text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded-lg p-2 transition-all duration-200"
-                        aria-label="Dismiss announcement"
-                      >
-                        <i className="ri-close-line text-xl"></i>
-                      </button>
                     </div>
                   </div>
                 </div>
