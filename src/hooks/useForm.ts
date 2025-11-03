@@ -49,7 +49,8 @@ export default function useForm<T extends Record<string, any>>(
       return `${String(name)} must not exceed ${rules.maxLength} characters`;
     }
 
-    if (rules.pattern && typeof value === 'string' && !rules.pattern.test(value)) {
+    // Only validate pattern if value exists (skip for optional empty fields)
+    if (rules.pattern && typeof value === 'string' && value.trim() !== '' && !rules.pattern.test(value)) {
       return `${String(name)} format is invalid`;
     }
 

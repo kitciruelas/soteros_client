@@ -564,9 +564,36 @@ export default function ProfilePage() {
 
     // Validate all fields
     if (!validateAll()) {
-      // Show error toast if validation fails
-      const errors = Object.values(fields).filter(field => field.error && field.touched)
-      if (errors.length > 0) {
+      // Get fields with errors and show detailed error message
+      const errorFields = Object.entries(fields)
+        .filter(([_, field]) => field.error && field.touched)
+        .map(([key, field]) => {
+          // Convert field names to user-friendly labels
+          const fieldLabels: Record<string, string> = {
+            firstName: 'First Name',
+            lastName: 'Last Name',
+            email: 'Email',
+            phone: 'Phone Number',
+            address: 'Barangay',
+            city: 'City',
+            state: 'Province',
+            zipCode: 'ZIP Code'
+          }
+          return `${fieldLabels[key] || key}: ${field.error}`
+        })
+      
+      console.log('Validation errors:', errorFields)
+      
+      if (errorFields.length > 0) {
+        showToast({
+          type: "error",
+          title: "Validation Error",
+          message: errorFields.length > 2 
+            ? `Please fix errors in ${errorFields.length} fields: ${errorFields.slice(0, 2).join(', ')}...`
+            : `Please fix: ${errorFields.join(', ')}`,
+          durationMs: 5000
+        })
+      } else {
         showToast({
           type: "error",
           title: "Validation Error",
