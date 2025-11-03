@@ -889,6 +889,10 @@ const StaffProfilePage: React.FC = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
                             <p className="text-gray-900 font-medium text-sm sm:text-base">{profile?.department || 'Not provided'}</p>
                           </div>
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
+                            <p className="text-gray-900 font-medium text-sm sm:text-base">{team?.name || profile?.team_name || 'Not assigned'}</p>
+                          </div>
                         </div>
                       )}
 
@@ -954,6 +958,18 @@ const StaffProfilePage: React.FC = () => {
                             required
                             disabled={!isEditing}
                             icon={<i className="ri-building-line"></i>}
+                          />
+                          <Input
+                            label="Team"
+                            type="text"
+                            name="team"
+                            id="team"
+                            value={team?.name || profile?.team_name || 'Not assigned'}
+                            onChange={() => {}}
+                            error=""
+                            placeholder="Team assignment"
+                            disabled={true}
+                            icon={<i className="ri-team-line"></i>}
                           />
                         </div>
                       )}
