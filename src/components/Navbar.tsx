@@ -15,13 +15,13 @@ interface NavbarProps {
   userData?: UserData | null
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, userData: propUserData }) => {
+const Navbar: React.FC<NavbarProps> = () => {
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(propIsAuthenticated || false)
-  const [userData, setUserData] = useState<UserData | null>(propUserData || null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userData, setUserData] = useState<UserData | null>(null)
   const [userType, setUserType] = useState<'user' | 'admin' | 'staff' | null>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -41,20 +41,21 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
   });
 
   useEffect(() => {
-    const authState = getAuthState()
-    // Only allow user type to access these pages
-    const isUserAuth = authState.isAuthenticated && authState.userType === 'user'
-    setIsAuthenticated(isUserAuth)
-    setUserData(isUserAuth ? authState.userData : null)
-    setUserType(isUserAuth ? authState.userType : null)
+    // Function to update auth state
+    const updateAuthState = () => {
+      const authState = getAuthState()
+      // Only allow user type to access these pages
+      const isUserAuth = authState.isAuthenticated && authState.userType === 'user'
+      setIsAuthenticated(isUserAuth)
+      setUserData(isUserAuth ? authState.userData : null)
+      setUserType(isUserAuth ? authState.userType : null)
+    }
+
+    // Initial state check
+    updateAuthState()
 
     const handleAuthStateChange = () => {
-      const newAuthState = getAuthState()
-      // Only allow user type to access these pages
-      const isNewUserAuth = newAuthState.isAuthenticated && newAuthState.userType === 'user'
-      setIsAuthenticated(isNewUserAuth)
-      setUserData(isNewUserAuth ? newAuthState.userData : null)
-      setUserType(isNewUserAuth ? newAuthState.userType : null)
+      updateAuthState()
     }
 
     window.addEventListener("storage", handleAuthStateChange)
@@ -73,7 +74,6 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
 
   // Fetch notifications on mount (like AdminLayout)
   useEffect(() => {
-    console.log('Auth state changed:', { isAuthenticated, userType });
     if (isAuthenticated) {
       fetchNotifications();
     }
@@ -147,11 +147,9 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
   // Fetch notifications (like AdminLayout)
   const fetchNotifications = async () => {
     if (!isAuthenticated) {
-      console.log('Not authenticated, skipping notification fetch');
       return;
     }
     
-    console.log('Fetching notifications for authenticated user');
     try {
       const response = await notificationsApi.getNotifications(10, 0);
       if (response.success && Array.isArray(response.notifications)) {
@@ -619,7 +617,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                           : undefined
                       }
                       email={userData?.email}
-                      profilePicture={userData?.profile_picture}
+                      profilePicture={userData?.profilePicture || userData?.profile_picture}
                       size="md"
                       className="flex-shrink-0"
                     />
@@ -651,7 +649,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                                 : undefined
                             }
                             email={userData?.email}
-                            profilePicture={userData?.profile_picture}
+                            profilePicture={userData?.profilePicture || userData?.profile_picture}
                             size="lg"
                             className="flex-shrink-0"
                           />
@@ -1004,7 +1002,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                             : undefined
                         }
                         email={userData?.email}
-                        profilePicture={userData?.profile_picture}
+                        profilePicture={userData?.profilePicture || userData?.profile_picture}
                         size="lg"
                         className="flex-shrink-0"
                       />

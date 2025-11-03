@@ -23,6 +23,7 @@ export interface UserData {
   // Additional database fields
   user_type?: string;
   profile_picture?: string;
+  profilePicture?: string; // CamelCase version from API
   college?: string;
   created_at?: string;
   updated_at?: string;
