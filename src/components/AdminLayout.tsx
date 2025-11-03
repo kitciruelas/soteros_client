@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminAuthGuard from './AdminAuthGuard';
+import Avatar from './base/Avatar';
 import { getAuthState, clearAuthData } from '../utils/auth';
 import { adminAuthApi, incidentsApi, adminNotificationsApi } from '../utils/api';
 import { apiRequest } from '../utils/api';
@@ -1069,9 +1070,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 {/* Profile Dropdown */}
                 <div className="relative group">
                   <button className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                      <i className="ri-user-line text-white text-sm"></i>
-                    </div>
+                    <Avatar
+                      name={adminInfo?.name || adminInfo?.first_name || adminInfo?.firstName}
+                      email={adminInfo?.email}
+                      profilePicture={adminInfo?.profile_picture || adminInfo?.profilePicture}
+                      size="md"
+                      className="flex-shrink-0"
+                    />
                     <div className="hidden md:block text-left">
                       <p className="text-sm font-medium text-gray-900">
                         {adminInfo?.name || adminInfo?.first_name || adminInfo?.firstName || 'Admin'}
