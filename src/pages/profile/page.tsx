@@ -745,9 +745,9 @@ export default function ProfilePage() {
                           : undefined
                       }
                       email={userData?.email}
-                      profilePicture={userData?.profile_picture}
+                      profilePicture={userData?.profile_picture || userData?.profilePicture}
                       size="xl"
-                      className="mx-auto"
+                      className="mx-auto cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={handlePictureModalOpen}
                     />
                   </div>
