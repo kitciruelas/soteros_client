@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import Navbar from "../../components/Navbar"
 import { getAuthState, type UserData } from "../../utils/auth"
 import { apiRequest } from "../../utils/api"
+import { useToast } from "../../components/base/Toast"
 
 interface WelfareCheckData {
   status: 'safe' | 'needs_help'
@@ -27,10 +28,10 @@ interface WelfareReport {
 
 export default function WelfareCheck() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitSuccess, setSubmitSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [systemStatus, setSystemStatus] = useState<WelfareSystemStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -69,11 +70,19 @@ export default function WelfareCheck() {
       if (response.success) {
         setSystemStatus(response)
       } else {
-        setSubmitError('Failed to load welfare check system status')
+        toast.showToast({
+          type: 'error',
+          title: 'Failed to Load Status',
+          message: 'Failed to load welfare check system status'
+        })
       }
     } catch (error) {
       console.error('Error fetching welfare status:', error)
-      setSubmitError('Failed to load welfare check system status')
+      toast.showToast({
+        type: 'error',
+        title: 'Failed to Load Status',
+        message: 'Failed to load welfare check system status'
+      })
     }
   }
 
@@ -131,20 +140,32 @@ export default function WelfareCheck() {
       console.log('Welfare submit response:', response)
       
       if (response.success) {
-        setSubmitSuccess(true)
+        toast.showToast({
+          type: 'success',
+          title: 'Welfare Check Submitted',
+          message: 'Your welfare check has been submitted successfully. Emergency responders have been notified.'
+        })
         // Refresh the latest report
         await fetchLatestReport()
-        
-        setTimeout(() => {
-          setSubmitSuccess(false)
-        }, 3000)
       } else {
-        setSubmitError(response.message || 'Failed to submit welfare check')
+        const errorMessage = response.message || 'Failed to submit welfare check'
+        toast.showToast({
+          type: 'error',
+          title: 'Submission Failed',
+          message: errorMessage
+        })
+        setSubmitError(errorMessage)
       }
       
     } catch (error: any) {
       console.error('Error submitting welfare check:', error)
-      setSubmitError(error.message || 'Failed to submit welfare check. Please try again.')
+      const errorMessage = error.message || 'Failed to submit welfare check. Please try again.'
+      toast.showToast({
+        type: 'error',
+        title: 'Submission Failed',
+        message: errorMessage
+      })
+      setSubmitError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -165,21 +186,33 @@ export default function WelfareCheck() {
       console.log('Welfare update response:', response)
       
       if (response.success) {
-        setSubmitSuccess(true)
+        toast.showToast({
+          type: 'success',
+          title: 'Welfare Check Updated',
+          message: 'Your welfare check has been updated successfully. Emergency responders have been notified.'
+        })
         setIsEditing(false)
         // Refresh the latest report
         await fetchLatestReport()
-        
-        setTimeout(() => {
-          setSubmitSuccess(false)
-        }, 3000)
       } else {
-        setSubmitError(response.message || 'Failed to update welfare check')
+        const errorMessage = response.message || 'Failed to update welfare check'
+        toast.showToast({
+          type: 'error',
+          title: 'Update Failed',
+          message: errorMessage
+        })
+        setSubmitError(errorMessage)
       }
       
     } catch (error: any) {
       console.error('Error updating welfare check:', error)
-      setSubmitError(error.message || 'Failed to update welfare check. Please try again.')
+      const errorMessage = error.message || 'Failed to update welfare check. Please try again.'
+      toast.showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: errorMessage
+      })
+      setSubmitError(errorMessage)
     } finally {
       setIsUpdating(false)
     }
@@ -353,38 +386,6 @@ export default function WelfareCheck() {
 
       <div className="container mx-auto px-4 pb-8">
         <div className="max-w-4xl mx-auto">
-          {submitSuccess && (
-            <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-2xl shadow-lg backdrop-blur-sm">
-              <div className="flex items-center gap-3 text-green-800">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <i className="ri-check-circle-line text-green-600"></i>
-                </div>
-                <div>
-                  <p className="font-semibold text-lg">
-                    {latestReport && isEditing ? 'Welfare check updated successfully!' : 'Welfare check submitted successfully!'}
-                  </p>
-                  <p className="text-green-600 text-sm mt-1">Emergency responders have been notified</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {submitError && (
-            <div className="mb-6 p-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl shadow-lg backdrop-blur-sm">
-              <div className="flex items-center gap-3 text-red-800">
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <i className="ri-error-warning-line text-red-600"></i>
-                </div>
-                <div>
-                  <p className="font-semibold text-lg">
-                    {latestReport && isEditing ? 'Failed to update welfare check' : 'Failed to submit welfare check'}
-                  </p>
-                  <p className="text-red-600 text-sm mt-1">{submitError}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Current Status Display */}
           {latestReport && !isEditing && (
             <div className="mb-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
