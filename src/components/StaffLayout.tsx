@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import Avatar from './base/Avatar';
 import { getAuthState, clearAuthData } from '../utils/auth';
-import { staffAuthApi } from '../utils/api';
+import { staffAuthApi, staffManagementApi } from '../utils/api';
 import LogoutModal from './LogoutModal';
 
 interface StaffLayoutProps {
@@ -31,7 +31,33 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
       return;
     }
 
+    // Set initial user data from auth state
     setUserData(authState.userData);
+
+    // Fetch full staff profile to get profile_picture and other updated fields
+    const fetchStaffProfile = async () => {
+      try {
+        const staffId = authState.userData?.id || authState.userData?.staff_id || authState.userData?.user_id;
+        if (staffId) {
+          const profileResponse = await staffManagementApi.getStaffById(Number(staffId));
+          if (profileResponse.success && profileResponse.staff) {
+            // Merge with existing userData to preserve auth token and other fields
+            setUserData((prev: any) => ({
+              ...prev,
+              ...profileResponse.staff,
+              // Preserve auth-specific fields
+              token: prev?.token,
+              userType: prev?.userType || 'staff'
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch staff profile:', error);
+        // Continue with auth state data if fetch fails
+      }
+    };
+
+    fetchStaffProfile();
   }, [navigate]);
 
   useEffect(() => {
