@@ -245,15 +245,24 @@ const SafetyProtocolsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative inline-flex items-center justify-center mb-6">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-lg opacity-30 scale-110"></div>
-            <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <i className="ri-loader-4-line text-3xl text-white animate-spin"></i>
+        <div className="text-center max-w-md mx-auto px-6">
+          {/* Enhanced Loading Animation */}
+          <div className="relative mb-8">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur-lg opacity-30 scale-110 animate-pulse"></div>
+            <div className="relative w-24 h-24 mx-auto bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl">
+              <i className="ri-shield-check-line text-3xl text-white animate-bounce"></i>
             </div>
           </div>
-          <p className="text-xl text-gray-600 font-medium">Loading safety protocols...</p>
-          <p className="text-gray-500 mt-2">Please wait while we fetch the latest information</p>
+
+          {/* Loading Text */}
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Loading Safety Protocols</h2>
+          <p className="text-gray-600 mb-6">Fetching real-time information...</p>
+
+          {/* Loading Progress */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+          </div>
+
         </div>
       </div>
     );
