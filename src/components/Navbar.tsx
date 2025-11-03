@@ -619,7 +619,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                           : undefined
                       }
                       email={userData?.email}
-                      profilePicture={undefined}
+                      profilePicture={userData?.profile_picture}
                       size="md"
                       className="flex-shrink-0"
                     />
@@ -651,7 +651,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                                 : undefined
                             }
                             email={userData?.email}
-                            profilePicture={undefined}
+                            profilePicture={userData?.profile_picture}
                             size="lg"
                             className="flex-shrink-0"
                           />
@@ -1004,7 +1004,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                             : undefined
                         }
                         email={userData?.email}
-                        profilePicture={undefined}
+                        profilePicture={userData?.profile_picture}
                         size="lg"
                         className="flex-shrink-0"
                       />
