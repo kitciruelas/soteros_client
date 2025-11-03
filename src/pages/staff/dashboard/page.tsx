@@ -360,7 +360,7 @@ const StaffDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
             {/* Total Incidents */}
             <div className="group relative bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 sm:p-6 border border-blue-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -426,23 +426,6 @@ const StaffDashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-xs sm:text-sm text-slate-600 font-medium">Immediate attention</div>
-              </div>
-            </div>
-
-            {/* High Priority */}
-            <div className="group relative bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-2xl p-4 sm:p-6 border border-orange-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-orange-500 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <i className="ri-alert-line text-white text-xl sm:text-2xl"></i>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl sm:text-3xl font-bold text-slate-900">{stats.highPriorityIncidents}</div>
-                    <div className="text-xs font-semibold text-orange-600 uppercase tracking-wider">High</div>
-                  </div>
-                </div>
-                <div className="text-xs sm:text-sm text-slate-600 font-medium">Priority cases</div>
               </div>
             </div>
 
@@ -614,23 +597,20 @@ const StaffDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-4 sm:px-8 py-4 sm:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-2 sm:p-3 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg border border-white/30">
-                  <i className="ri-megaphone-line text-white text-xl sm:text-2xl"></i>
-                </div>
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-white">System Announcements</h3>
-                  <p className="text-blue-100 font-medium text-sm sm:text-base">Latest alerts and notifications</p>
-                </div>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-2.5 bg-blue-400/30 rounded-lg shadow-sm">
+                <i className="ri-megaphone-line text-white text-xl sm:text-2xl"></i>
               </div>
-            
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white">System Announcements</h3>
+                <p className="text-blue-100 text-sm sm:text-base font-medium">Latest alerts and notifications</p>
+              </div>
             </div>
           </div>
 
-          <div className="p-4 sm:p-8">
+          <div className="p-4 sm:p-6 lg:p-8 bg-gray-50">
             {alerts.length === 0 ? (
               <div className="text-center py-12 sm:py-16">
                 <div className="relative mb-6 sm:mb-8">
@@ -654,21 +634,27 @@ const StaffDashboardPage: React.FC = () => {
                     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                   )[0]
 
+                  // Format recipients
+                  const recipientsDisplay = latestAlert.recipients && latestAlert.recipients.length > 0
+                    ? `[Recipients: ${latestAlert.recipients.join(', ')}]`
+                    : latestAlert.recipients
+                      ? '[Recipients: all_users]'
+                      : ''
+
                   return (
-                    /* Improved mobile padding and responsive layout for alert card */
-                    <div className="relative bg-gradient-to-br from-slate-50 to-blue-50/30 border-2 border-blue-200/50 rounded-2xl p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
-                        <div
-                          className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full animate-pulse ${
-                            latestAlert.status === "active" ? "bg-red-500" : "bg-gray-400"
-                          }`}
-                        ></div>
+                    <div className="relative bg-white rounded-xl border border-gray-200 shadow-md p-6 sm:p-8">
+                      {/* Grey dot indicator in top right */}
+                      <div className="absolute top-4 right-4">
+                        <div className={`w-3 h-3 rounded-full ${
+                          latestAlert.status === "active" ? "bg-red-400" : "bg-gray-400"
+                        }`}></div>
                       </div>
 
-                      <div className="space-y-4 sm:space-y-6">
+                      <div className="space-y-4 pr-6">
+                        {/* Alert Tags */}
                         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
                           <span
-                            className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl shadow-sm ${
+                            className={`inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg ${
                               latestAlert.alert_severity === "emergency"
                                 ? "bg-red-100 text-red-800 border-2 border-red-200"
                                 : latestAlert.alert_severity === "warning"
@@ -677,7 +663,7 @@ const StaffDashboardPage: React.FC = () => {
                             }`}
                           >
                             <i
-                              className={`text-base sm:text-lg ${
+                              className={`text-sm ${
                                 latestAlert.alert_severity === "emergency"
                                   ? "ri-alarm-warning-line"
                                   : latestAlert.alert_severity === "warning"
@@ -685,39 +671,45 @@ const StaffDashboardPage: React.FC = () => {
                                     : "ri-information-line"
                               }`}
                             ></i>
-                            {latestAlert.alert_severity.charAt(0).toUpperCase() + latestAlert.alert_severity.slice(1)}{" "}
-                            Alert
+                            {latestAlert.alert_severity.charAt(0).toUpperCase() + latestAlert.alert_severity.slice(1)} Alert
                           </span>
-                          <span className="text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-200 capitalize">
-                            {latestAlert.alert_type}
+                          <span className="text-xs sm:text-sm font-bold text-gray-700 bg-gray-100 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg border border-gray-200 capitalize">
+                            {latestAlert.alert_type || 'Info'}
                           </span>
                         </div>
 
-                        <div className="space-y-2 sm:space-y-3">
-                          <h4 className="text-lg sm:text-2xl font-bold text-slate-900 leading-tight">
-                            {latestAlert.title}
+                        {/* Announcement Content */}
+                        <div className="space-y-3">
+                          <h4 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                            {latestAlert.title || 'No title'}
                           </h4>
-                          <p className="text-slate-700 text-base sm:text-lg leading-relaxed">
-                            {latestAlert.description}
-                          </p>
+                          <div className="space-y-1">
+                            <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
+                              {latestAlert.description || latestAlert.message || 'No description available'}
+                            </p>
+                            {recipientsDisplay && (
+                              <p className="text-gray-600 text-sm sm:text-base font-medium">
+                                {recipientsDisplay}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-200">
-                          <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-slate-600">
-                            <div className="flex items-center gap-2">
-                              <i className="ri-time-line text-blue-500 text-base sm:text-lg"></i>
-                              <span className="font-semibold">Posted:</span>
-                              <span>{new Date(latestAlert.created_at).toLocaleString()}</span>
-                            </div>
+                        {/* Separator and Timestamp */}
+                        <div className="pt-4 border-t border-gray-200">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <i className="ri-time-line text-gray-400"></i>
+                            <span className="font-medium">Posted:</span>
+                            <span>{new Date(latestAlert.created_at).toLocaleString('en-US', {
+                              month: '2-digit',
+                              day: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              hour12: true
+                            })}</span>
                           </div>
-
-                          {latestAlert.location_text && (
-                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-                              <i className="ri-map-pin-line text-red-500 text-base sm:text-lg"></i>
-                              <span className="font-semibold">Location:</span>
-                              <span className="truncate">{latestAlert.location_text}</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
