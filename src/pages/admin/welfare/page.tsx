@@ -784,7 +784,7 @@ export default function AdminWelfareManagement() {
                     value={editingSettings.title}
                       onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter system title"
+                    placeholder="Enter Welfare title"
                     />
                   </div>
 
@@ -798,7 +798,7 @@ export default function AdminWelfareManagement() {
                       onChange={handleInputChange}
                       rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter system description"
+                    placeholder="Enter Welfare description"
                     />
                   </div>
 
@@ -858,7 +858,7 @@ export default function AdminWelfareManagement() {
                     Saving...
                   </>
                 ) : (
-                  isEditMode ? 'Update Settings' : 'Create Settings'
+                  isEditMode ? 'Update Welfare' : 'Create Welfare'
                 )}
               </button>
                     </div>
