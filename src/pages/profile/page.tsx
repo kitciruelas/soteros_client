@@ -563,13 +563,46 @@ export default function ProfilePage() {
     e.preventDefault()
 
     if (!validateAll()) {
-      // Show feedback when validation fails
+      // Get fields with errors
+      const fieldNames: Record<string, string> = {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        email: 'Email',
+        phone: 'Phone',
+        address: 'Barangay',
+        city: 'City',
+        state: 'State',
+        zipCode: 'ZIP Code'
+      }
+
+      const errorFields = Object.entries(fields)
+        .filter(([_, field]) => field.error)
+        .map(([key, field]) => `${fieldNames[key] || key}: ${field.error}`)
+
+      // Show feedback with specific errors
+      const errorMessage = errorFields.length > 0
+        ? errorFields.length === 1
+          ? errorFields[0]
+          : `${errorFields.length} field(s) have errors. Please check: ${errorFields.join('; ')}`
+        : "Please fix the errors in the form before saving."
+
       showToast({
         type: "error",
         title: "Validation Error",
-        message: "Please fix the errors in the form before saving.",
-        durationMs: 4000
+        message: errorMessage,
+        durationMs: 6000
       })
+
+      // Scroll to first error field
+      const firstErrorField = Object.keys(fields).find(key => fields[key as keyof ProfileFormData].error)
+      if (firstErrorField) {
+        const element = document.getElementById(firstErrorField)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          element.focus()
+        }
+      }
+
       return
     }
 
