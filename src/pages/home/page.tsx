@@ -418,45 +418,6 @@ export default function Home() {
             {isLoggedIn ? (
               // Authenticated user content
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 md:mb-20">
-                {userData?.userType === "staff" && (
-                  <Link
-                    to="/staff"
-                    className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-purple-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
-                  >
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                      <i className="ri-dashboard-3-line text-3xl md:text-4xl text-purple-600"></i>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Staff Dashboard</h3>
-                    <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                      Access your staff dashboard with emergency management tools
-                    </p>
-                    <div className="flex items-center text-purple-600 group-hover:text-purple-700 mt-auto">
-                      <span className="font-semibold text-lg">Go to Dashboard</span>
-                      <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
-                    </div>
-                  </Link>
-                )}
-
-                <Link
-                  to="/incident-report"
-                  className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative z-10">
-                    <div className="w-14 h-14 md:w-16 md:h-16 bg-red-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                      <i className="ri-error-warning-line text-2xl md:text-3xl text-white"></i>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Report Incident</h3>
-                    <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
-                      Submit emergency incidents and safety concerns with real-time tracking
-                    </p>
-                    <div className="flex items-center text-red-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
-                      <span>Report Now</span>
-                      <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
-                    </div>
-                  </div>
-                </Link>
-
                 <Link
                   to="/evacuation-center"
                   className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
@@ -468,7 +429,7 @@ export default function Home() {
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Evacuation Centers</h3>
                     <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
-                      Find nearby evacuation centers with real-time capacity and status updates
+                      View available evacuation centers in Rosario, Batangas with capacity and contact information
                     </p>
                     <div className="flex items-center text-blue-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
                       <span>View Centers</span>
@@ -488,10 +449,30 @@ export default function Home() {
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Safety Protocols</h3>
                     <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
-                      Access comprehensive emergency procedures and safety guidelines
+                      Access emergency procedures and safety guidelines for various disaster scenarios
                     </p>
                     <div className="flex items-center text-green-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
                       <span>View Protocols</span>
+                      <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/incident-report"
+                  className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-red-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <i className="ri-error-warning-line text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Report Incident</h3>
+                    <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                      Report emergencies and safety concerns to MDRRMO Rosario
+                    </p>
+                    <div className="flex items-center text-red-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                      <span>Report Now</span>
                       <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
                     </div>
                   </div>
@@ -523,69 +504,81 @@ export default function Home() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 md:mb-20">
                   <Link
                     to="/evacuation-center"
-                    className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                    className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                   >
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                      <i className="ri-building-2-line text-3xl md:text-4xl text-blue-600"></i>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Evacuation Centers</h3>
-                    <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                      View available evacuation centers in Rosario, Batangas with capacity and contact information
-                    </p>
-                    <div className="flex items-center text-blue-600 group-hover:text-blue-700 mt-auto">
-                      <span className="font-semibold text-lg">View Centers</span>
-                      <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <i className="ri-building-2-line text-2xl md:text-3xl text-white"></i>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Evacuation Centers</h3>
+                      <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                        View available evacuation centers in Rosario, Batangas with capacity and contact information
+                      </p>
+                      <div className="flex items-center text-blue-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                        <span>View Centers</span>
+                        <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                      </div>
                     </div>
                   </Link>
 
                   <Link
                     to="/safety-protocols"
-                    className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-green-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                    className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                   >
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                      <i className="ri-shield-check-line text-3xl md:text-4xl text-green-600"></i>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Safety Protocols</h3>
-                    <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                      Access emergency procedures and safety guidelines for various disaster scenarios
-                    </p>
-                    <div className="flex items-center text-green-600 group-hover:text-green-700 mt-auto">
-                      <span className="font-semibold text-lg">View Protocols</span>
-                      <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-green-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <i className="ri-shield-check-line text-2xl md:text-3xl text-white"></i>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Safety Protocols</h3>
+                      <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                        Access emergency procedures and safety guidelines for various disaster scenarios
+                      </p>
+                      <div className="flex items-center text-green-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                        <span>View Protocols</span>
+                        <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                      </div>
                     </div>
                   </Link>
 
                   <Link
                     to="/incident-report"
-                    className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-red-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                    className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                   >
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                      <i className="ri-error-warning-line text-3xl md:text-4xl text-red-600"></i>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Report Incident</h3>
-                    <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                      Report emergencies and safety concerns to MDRRMO Rosario
-                    </p>
-                    <div className="flex items-center text-red-600 group-hover:text-red-700 mt-auto">
-                      <span className="font-semibold text-lg">Report Now</span>
-                      <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-red-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <i className="ri-error-warning-line text-2xl md:text-3xl text-white"></i>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Report Incident</h3>
+                      <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                        Report emergencies and safety concerns to MDRRMO Rosario
+                      </p>
+                      <div className="flex items-center text-red-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                        <span>Report Now</span>
+                        <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                      </div>
                     </div>
                   </Link>
 
                   <Link
                     to="/welfare-check"
-                    className="bg-white border-2 border-gray-100 rounded-2xl p-6 md:p-8 hover:shadow-2xl hover:border-purple-200 transition-all duration-300 cursor-pointer group hover:-translate-y-2 flex flex-col h-full"
+                    className="relative bg-white rounded-3xl p-8 md:p-10 hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col h-full border border-gray-100"
                   >
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 transition-all duration-300">
-                      <i className="ri-heart-pulse-line text-3xl md:text-4xl text-purple-600"></i>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">Welfare Check</h3>
-                    <p className="text-gray-600 mb-6 md:mb-8 text-lg leading-relaxed flex-grow">
-                      Report your status and location during emergencies for safety tracking
-                    </p>
-                    <div className="flex items-center text-purple-600 group-hover:text-purple-700 mt-auto">
-                      <span className="font-semibold text-lg">Check In</span>
-                      <i className="ri-arrow-right-line ml-3 group-hover:translate-x-2 transition-transform duration-300"></i>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-purple-500 rounded-2xl flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <i className="ri-heart-pulse-line text-2xl md:text-3xl text-white"></i>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Welfare Check</h3>
+                      <p className="text-gray-600 mb-6 text-base md:text-lg leading-relaxed flex-grow">
+                        Report your status and location during emergencies for safety tracking
+                      </p>
+                      <div className="flex items-center text-purple-600 group-hover:gap-3 gap-2 mt-auto font-semibold transition-all duration-300">
+                        <span>Check In</span>
+                        <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
+                      </div>
                     </div>
                   </Link>
                 </div>

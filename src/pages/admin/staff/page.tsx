@@ -63,20 +63,22 @@ interface Team {
 
 // Department to Team mapping
 const departmentTeamMapping: { [key: string]: number[] } = {
-  'Emergency Response': [1], // Alpha Response Team
-  'Risk Assessment': [3], // Search and Rescue Team
-  'Medical Team': [2], // Medical Emergency Team
-  'Communications': [4], // Communications Team
-  'Logistics': [5], // Logistics Support Team
+  'MDRRMO': [1], // MDRRMO Team
+  'PNP': [3], // PNP Team
+  'BFP': [2], // BFP Team
+  'RHU I': [4], // RHU I Team
+  'MSWDO': [5], // MSWDO Team
+  'PRC': [6], // PRC Team
 };
 
 // Department to Availability mapping
 const departmentAvailabilityMapping: { [key: string]: string } = {
-  'Emergency Response': 'available', // Always ready for emergencies
-  'Risk Assessment': 'available', // Always monitoring risks
-  'Medical Team': 'available', // Always ready for medical emergencies
-  'Communications': 'available', // Always ready for communications
-  'Logistics': 'available', // Always ready for logistics support
+  'MDRRMO': 'available', // Always ready for MDRRMO operations
+  'PNP': 'available', // Always ready for PNP operations
+  'BFP': 'available', // Always ready for BFP operations
+  'RHU I': 'available', // Always ready for RHU I operations
+  'MSWDO': 'available', // Always ready for MSWDO operations
+  'PRC': 'available', // Always ready for PRC operations
 };
 
 const StaffManagement: React.FC = () => {
@@ -495,11 +497,12 @@ const StaffManagement: React.FC = () => {
             disabled={isSubmitting}
           >
             <option value="">Select Department</option>
-            <option value="Emergency Response">Emergency Response</option>
-            <option value="Risk Assessment">Risk Assessment</option>
-            <option value="Medical Team">Medical Team</option>
-            <option value="Communications">Communications</option>
-            <option value="Logistics">Logistics</option>
+            <option value="MDRRMO">MDRRMO</option>
+            <option value="PNP">PNP</option>
+            <option value="BFP">BFP</option>
+            <option value="RHU I">RHU I</option>
+            <option value="MSWDO">MSWDO</option>
+            <option value="PRC">PRC</option>
           </select>
         </div>
         <div>
