@@ -11,6 +11,7 @@ import { apiRequest } from "../../../utils/api"
 import PrivacyPolicyModal from "../../../components/PrivacyPolicyModal"
 import TermsOfServiceModal from "../../../components/TermsOfServiceModal"
 import Navbar from "../../../components/Navbar"
+import { useToast } from "../../../components/base/Toast"
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 
@@ -80,9 +81,7 @@ interface SignupFormData {
 }
 
 export default function SignupPage() {
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
-  const [showErrorMessage, setShowErrorMessage] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  const { showToast } = useToast()
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
@@ -188,8 +187,6 @@ export default function SignupPage() {
     if (!validateAll()) return
 
     setIsSubmitting(true)
-    setShowErrorMessage(false)
-    setShowSuccessMessage(false)
 
     try {
       const formData = getValues()
@@ -212,10 +209,17 @@ export default function SignupPage() {
 
       if (data && data.success) {
         console.log("Registration successful:", data)
-        setShowSuccessMessage(true)
 
         // Store email for login page
         sessionStorage.setItem("lastRegisteredEmail", formData.email)
+
+        // Show success toast
+        showToast({
+          type: "success",
+          title: "Account Created Successfully",
+          message: "Redirecting to login page... You can now login with your credentials.",
+          durationMs: 3000
+        })
 
         // Redirect to login page
         setTimeout(() => {
@@ -230,16 +234,23 @@ export default function SignupPage() {
           setError("email", "This email is already registered")
         }
 
-        setErrorMessage(errorMsg)
-        setShowErrorMessage(true)
+        showToast({
+          type: "error",
+          title: "Registration Failed",
+          message: errorMsg,
+          durationMs: 5000
+        })
       }
     } catch (error) {
       console.error("Registration failed:", error)
-      setErrorMessage("Login failed: " + (error instanceof Error ? error.message : "Unknown error"))
-      setShowErrorMessage(true)
+      showToast({
+        type: "error",
+        title: "Registration Failed",
+        message: error instanceof Error ? error.message : "Unknown error occurred. Please try again.",
+        durationMs: 5000
+      })
     } finally {
       setIsSubmitting(false)
-      setTimeout(() => setShowErrorMessage(false), 5000)
     }
   }
 
@@ -291,35 +302,6 @@ export default function SignupPage() {
             </div>
           </div>
         </div>
-
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl shadow-lg backdrop-blur-sm">
-            <div className="flex items-center gap-3 text-green-800">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <i className="ri-check-circle-line text-green-600"></i>
-              </div>
-              <div>
-                <div className="text-sm font-semibold">Account created successfully!</div>
-                <div className="text-xs mt-1 text-green-700">
-                  Redirecting to login page... You can now login with your credentials.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {showErrorMessage && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-lg backdrop-blur-sm">
-            <div className="flex items-center gap-3 text-red-800">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <i className="ri-error-warning-line text-red-600"></i>
-              </div>
-              <span className="text-sm font-medium">{errorMessage}</span>
-            </div>
-          </div>
-        )}
 
         {/* Signup Form */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden">

@@ -7,6 +7,7 @@ import Button from "../../../components/base/Button"
 import Card from "../../../components/base/Card"
 import { getAuthState, type UserData } from "../../../utils/auth"
 import { feedbackApi } from "../../../utils/api"
+import { useToast } from "../../../components/base/Toast"
 
 export default function FeedbackPage() {
   const navigate = useNavigate()
@@ -16,10 +17,8 @@ export default function FeedbackPage() {
   const [rating, setRating] = useState<number | null>(null)
   const [hoveredRating, setHoveredRating] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [showError, setShowError] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
   const [charCount, setCharCount] = useState(0)
+  const { showToast } = useToast()
 
   const maxChars = 1000
 
@@ -37,21 +36,26 @@ export default function FeedbackPage() {
     e.preventDefault()
 
     if (!feedback.trim()) {
-      setErrorMessage("Please enter your feedback")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Feedback Required",
+        message: "Please enter your feedback",
+        durationMs: 4000
+      })
       return
     }
 
     if (feedback.trim().length < 10) {
-      setErrorMessage("Please provide more detailed feedback (at least 10 characters)")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Feedback Too Short",
+        message: "Please provide more detailed feedback (at least 10 characters)",
+        durationMs: 4000
+      })
       return
     }
 
     setIsSubmitting(true)
-    setShowError(false)
 
     try {
       await feedbackApi.submitFeedback({
@@ -59,15 +63,23 @@ export default function FeedbackPage() {
         rating: rating,
       })
 
-      setShowSuccess(true)
+      showToast({
+        type: "success",
+        title: "Thank You!",
+        message: "Your feedback has been successfully submitted and will help us improve.",
+        durationMs: 4000
+      })
+
       setFeedback("")
       setRating(null)
       setCharCount(0)
-      setTimeout(() => setShowSuccess(false), 5000)
     } catch (error: any) {
-      setErrorMessage(error.message || "Failed to submit feedback. Please try again.")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Submission Failed",
+        message: error.message || "Failed to submit feedback. Please try again.",
+        durationMs: 5000
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -143,38 +155,6 @@ export default function FeedbackPage() {
               </div>
             )}
           </div>
-
-          {/* Success Message */}
-          {showSuccess && (
-            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <i className="ri-check-circle-line text-2xl text-green-600"></i>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-green-900 text-lg">Thank you for your feedback!</h3>
-                  <p className="text-green-700 mt-1">
-                    Your input has been successfully submitted and will help us improve.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {showError && (
-            <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <i className="ri-error-warning-line text-2xl text-red-600"></i>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-red-900 text-lg">Oops! Something went wrong</h3>
-                  <p className="text-red-700 mt-1">{errorMessage}</p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Feedback Form */}
           <Card className="p-8 shadow-xl border-0 bg-white/80 backdrop-blur-sm">

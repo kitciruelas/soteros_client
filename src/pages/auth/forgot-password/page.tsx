@@ -7,6 +7,7 @@ import Button from "../../../components/base/Button"
 import Input from "../../../components/base/Input"
 import useForm from "../../../hooks/useForm"
 import Navbar from "../../../components/Navbar"
+import { useToast } from "../../../components/base/Toast"
 
 interface ForgotPasswordFormData {
   email: string
@@ -14,7 +15,7 @@ interface ForgotPasswordFormData {
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate()
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const { showToast } = useToast()
   const [emailSent, setEmailSent] = useState(false)
 
   const { fields, setValue, validateAll, getValues, isSubmitting, setIsSubmitting } = useForm<ForgotPasswordFormData>(
@@ -55,7 +56,12 @@ export default function ForgotPasswordPage() {
 
       if (response.ok && data.success) {
         setEmailSent(true)
-        setShowSuccessMessage(true)
+        showToast({
+          type: "success",
+          title: "Verification Code Sent",
+          message: "Check your email for the verification code.",
+          durationMs: 3000
+        })
         // Redirect to OTP verification page after 2 seconds
         setTimeout(() => {
           navigate("/auth/verify-otp", { state: { email: formData.email } })
@@ -65,7 +71,12 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       console.error("Reset password failed:", error)
-      alert("Failed to send verification code. Please try again later.")
+      showToast({
+        type: "error",
+        title: "Failed to Send Code",
+        message: error instanceof Error ? error.message : "Failed to send verification code. Please try again later.",
+        durationMs: 5000
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -91,14 +102,23 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        setShowSuccessMessage(true)
-        setTimeout(() => setShowSuccessMessage(false), 3000)
+        showToast({
+          type: "success",
+          title: "Code Resent",
+          message: "Verification code has been sent again to your email.",
+          durationMs: 3000
+        })
       } else {
         throw new Error(data.message || "Failed to resend verification code")
       }
     } catch (error) {
       console.error("Resend email failed:", error)
-      alert("Failed to resend verification code. Please try again later.")
+      showToast({
+        type: "error",
+        title: "Failed to Resend Code",
+        message: error instanceof Error ? error.message : "Failed to resend verification code. Please try again later.",
+        durationMs: 5000
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -136,18 +156,6 @@ export default function ForgotPasswordPage() {
               : "Enter your email address and we'll send you a code to reset your password"}
           </p>
         </div>
-
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg backdrop-blur-sm shadow-sm">
-            <div className="flex items-center gap-2 text-green-800">
-              <i className="ri-check-circle-line"></i>
-              <span className="text-sm font-medium">
-                {emailSent ? "Verification code sent again!" : "Verification code sent to your email!"}
-              </span>
-            </div>
-          </div>
-        )}
 
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl"></div>

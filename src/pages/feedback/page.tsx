@@ -8,17 +8,16 @@ import Card from "../../components/base/Card"
 import Navbar from "../../components/Navbar"
 import { getAuthState, type UserData } from "../../utils/auth"
 import { feedbackApi } from "../../utils/api"
+import { useToast } from "../../components/base/Toast"
 
 export default function FeedbackPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [feedback, setFeedback] = useState("")
   const [rating, setRating] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [showError, setShowError] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
   const [hoveredRating, setHoveredRating] = useState<number | null>(null)
 
   useEffect(() => {
@@ -48,28 +47,36 @@ export default function FeedbackPage() {
     e.preventDefault()
 
     if (!feedback.trim()) {
-      setErrorMessage("Please enter your feedback")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Feedback Required",
+        message: "Please enter your feedback",
+        durationMs: 4000
+      })
       return
     }
 
     if (feedback.trim().length < 10) {
-      setErrorMessage("Please provide at least 10 characters of feedback")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Invalid Feedback",
+        message: "Please provide at least 10 characters of feedback",
+        durationMs: 4000
+      })
       return
     }
 
     if (feedback.trim().length > 1000) {
-      setErrorMessage("Feedback must be less than 1000 characters")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Feedback Too Long",
+        message: "Feedback must be less than 1000 characters",
+        durationMs: 4000
+      })
       return
     }
 
     setIsSubmitting(true)
-    setShowError(false)
 
     try {
       await feedbackApi.submitFeedback({
@@ -77,14 +84,22 @@ export default function FeedbackPage() {
         rating: rating,
       })
 
-      setShowSuccess(true)
+      showToast({
+        type: "success",
+        title: "Thank You!",
+        message: "Your feedback has been submitted successfully. We appreciate your input!",
+        durationMs: 4000
+      })
+
       setFeedback("")
       setRating(null)
-      setTimeout(() => setShowSuccess(false), 5000)
     } catch (error: any) {
-      setErrorMessage(error.message || "Failed to submit feedback. Please try again.")
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
+      showToast({
+        type: "error",
+        title: "Submission Failed",
+        message: error.message || "Failed to submit feedback. Please try again.",
+        durationMs: 5000
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -127,28 +142,6 @@ export default function FeedbackPage() {
             </h1>
             <p className="text-gray-600 text-lg">Help us improve by sharing your thoughts and suggestions</p>
           </div>
-
-          {showSuccess && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-3 text-green-800">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
-                  <i className="ri-check-circle-line text-green-600"></i>
-                </div>
-                <span className="font-medium">Thank you for your feedback! We appreciate your input.</span>
-              </div>
-            </div>
-          )}
-
-          {showError && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-3 text-red-800">
-                <div className="w-8 h-8 bg-gradient-to-r from-red-100 to-rose-100 rounded-full flex items-center justify-center">
-                  <i className="ri-error-warning-line text-red-600"></i>
-                </div>
-                <span className="font-medium">{errorMessage}</span>
-              </div>
-            </div>
-          )}
 
           <Card className="p-8 shadow-xl border-0 bg-white/80 backdrop-blur-sm">
             <form onSubmit={handleSubmit} className="space-y-8">

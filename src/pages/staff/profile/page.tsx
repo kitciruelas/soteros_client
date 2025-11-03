@@ -10,6 +10,7 @@ import Button from "../../../components/base/Button"
 import Modal from "../../../components/base/Modal"
 import Avatar from "../../../components/base/Avatar"
 import LogoutModal from "../../../components/LogoutModal"
+import { useToast } from "../../../components/base/Toast"
 import PhoneInput, { formatPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
@@ -97,9 +98,8 @@ const StaffProfilePage: React.FC = () => {
   })
   const [saving, setSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
   const [profileCompletion, setProfileCompletion] = useState(0)
+  const { showToast } = useToast()
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [passwordForm, setPasswordForm] = useState({
@@ -170,14 +170,6 @@ const StaffProfilePage: React.FC = () => {
     }
   }, [currentStaffId])
 
-  useEffect(() => {
-    if (showSuccessAlert) {
-      const timer = setTimeout(() => {
-        setShowSuccessAlert(false)
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [showSuccessAlert])
 
   const fetchProfileData = async () => {
     try {
@@ -215,6 +207,12 @@ const StaffProfilePage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching profile data:", error)
       setError("Failed to load profile data")
+      showToast({
+        type: "error",
+        title: "Failed to Load Profile",
+        message: "Failed to load profile data. Please refresh the page.",
+        durationMs: 5000
+      })
     } finally {
       setLoading(false)
     }
@@ -332,22 +330,45 @@ const StaffProfilePage: React.FC = () => {
   const handleSave = async () => {
     try {
       setSaving(true)
-      setError(null)
 
       if (!editForm.name.trim()) {
-        setError("Name is required")
+        showToast({
+          type: "error",
+          title: "Validation Error",
+          message: "Name is required",
+          durationMs: 4000
+        })
+        setSaving(false)
         return
       }
       if (!editForm.email.trim()) {
-        setError("Email is required")
+        showToast({
+          type: "error",
+          title: "Validation Error",
+          message: "Email is required",
+          durationMs: 4000
+        })
+        setSaving(false)
         return
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
-        setError("Please enter a valid email address")
+        showToast({
+          type: "error",
+          title: "Invalid Email",
+          message: "Please enter a valid email address",
+          durationMs: 4000
+        })
+        setSaving(false)
         return
       }
       if (!validatePhilippineMobile(editForm.phone)) {
-        setError("Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)")
+        showToast({
+          type: "error",
+          title: "Invalid Phone Number",
+          message: "Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)",
+          durationMs: 4000
+        })
+        setSaving(false)
         return
       }
 
@@ -362,7 +383,13 @@ const StaffProfilePage: React.FC = () => {
       const response = await staffManagementApi.updateStaff(Number(currentStaffId), updateData)
 
       if (!response.success) {
-        setError("Failed to update profile")
+        showToast({
+          type: "error",
+          title: "Update Failed",
+          message: "Failed to update profile. Please try again.",
+          durationMs: 5000
+        })
+        setSaving(false)
         return
       }
 
@@ -381,8 +408,13 @@ const StaffProfilePage: React.FC = () => {
         console.log('Availability update response:', availabilityResponse);
 
         if (!availabilityResponse.success) {
-          setError("Profile updated but failed to update availability status")
-          return
+          showToast({
+            type: "warning",
+            title: "Partial Update",
+            message: "Profile updated but failed to update availability status. Please try again.",
+            durationMs: 5000
+          })
+          // Still proceed to update the profile state
         }
       }
 
@@ -396,13 +428,22 @@ const StaffProfilePage: React.FC = () => {
       setIsEditing(false)
       setHasUnsavedChanges(false)
 
-      setSuccessMessage("Profile updated successfully!")
-      setShowSuccessAlert(true)
+      showToast({
+        type: "success",
+        title: "Profile Updated",
+        message: "Your profile has been updated successfully!",
+        durationMs: 3000
+      })
 
       await fetchProfileData()
     } catch (error) {
       console.error("Error updating profile:", error)
-      setError("Failed to update profile")
+      showToast({
+        type: "error",
+        title: "Update Failed",
+        message: "Failed to update profile. Please try again.",
+        durationMs: 5000
+      })
     } finally {
       setSaving(false)
     }
@@ -504,8 +545,12 @@ const StaffProfilePage: React.FC = () => {
       // For now, we'll simulate a successful password change
       await new Promise(resolve => setTimeout(resolve, 1000))
 
-      setSuccessMessage("Password changed successfully!")
-      setShowSuccessAlert(true)
+      showToast({
+        type: "success",
+        title: "Password Changed",
+        message: "Your password has been changed successfully!",
+        durationMs: 3000
+      })
       handlePasswordModalClose()
     } catch (error) {
       console.error("Error changing password:", error)
@@ -513,6 +558,12 @@ const StaffProfilePage: React.FC = () => {
         ...prev,
         currentPassword: "Failed to change password. Please try again.",
       }))
+      showToast({
+        type: "error",
+        title: "Password Change Failed",
+        message: "Failed to change password. Please try again.",
+        durationMs: 5000
+      })
     } finally {
       setIsChangingPassword(false)
     }
@@ -616,18 +667,6 @@ const StaffProfilePage: React.FC = () => {
 
       <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-5xl mx-auto">
-          {/* Alert Messages */}
-          {showSuccessAlert && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-2 sm:gap-3 text-green-800">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <i className="ri-check-circle-line text-green-600 text-sm sm:text-base"></i>
-                </div>
-                <span className="font-medium text-sm sm:text-base">{successMessage}</span>
-              </div>
-            </div>
-          )}
-
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Profile Summary Card */}

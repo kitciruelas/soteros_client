@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../../components/base/Button';
 import Input from '../../../components/base/Input';
 import useForm from '../../../hooks/useForm';
 import Navbar from '../../../components/Navbar';
+import { useToast } from '../../../components/base/Toast';
 
 interface ResetPasswordFormData {
   password: string;
@@ -13,9 +14,7 @@ interface ResetPasswordFormData {
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [showErrorMessage, setShowErrorMessage] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const { showToast } = useToast();
 
   // Get email and OTP from location state if coming from verify-otp page
   const emailFromState = location.state?.email || '';
@@ -52,14 +51,16 @@ export default function ResetPasswordPage() {
 
     // Manual password confirmation validation
     if (formData.password !== formData.confirmPassword) {
-      setErrorMessage('Passwords do not match');
-      setShowErrorMessage(true);
+      showToast({
+        type: 'error',
+        title: 'Password Mismatch',
+        message: 'Passwords do not match. Please try again.',
+        durationMs: 4000
+      });
       return;
     }
 
     setIsSubmitting(true);
-    setShowErrorMessage(false);
-    setShowSuccessMessage(false);
 
     try {
       console.log('Reset password data:', { email: emailFromState, otp: otpFromState });
@@ -80,7 +81,12 @@ export default function ResetPasswordPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setShowSuccessMessage(true);
+        showToast({
+          type: 'success',
+          title: 'Password Reset Successful',
+          message: 'Your password has been reset. Redirecting to login...',
+          durationMs: 2000
+        });
         setTimeout(() => {
           navigate('/auth/login');
         }, 2000);
@@ -90,11 +96,14 @@ export default function ResetPasswordPage() {
 
     } catch (error) {
       console.error('Reset password failed:', error);
-      setErrorMessage('Failed to reset password. Please try again.');
-      setShowErrorMessage(true);
+      showToast({
+        type: 'error',
+        title: 'Password Reset Failed',
+        message: error instanceof Error ? error.message : 'Failed to reset password. Please try again.',
+        durationMs: 5000
+      });
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => setShowErrorMessage(false), 5000);
     }
   };
 
@@ -112,26 +121,6 @@ export default function ResetPasswordPage() {
           <p className="text-gray-600">Enter your new password below</p>
           <p className="text-sm text-gray-600 mt-2">Email: <span className="font-medium">{emailFromState}</span></p>
         </div>
-
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 text-green-800">
-              <i className="ri-check-circle-line"></i>
-              <span className="text-sm font-medium">Password reset successful! Redirecting to login...</span>
-            </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {showErrorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-800">
-              <i className="ri-error-warning-line"></i>
-              <span className="text-sm font-medium">{errorMessage}</span>
-            </div>
-          </div>
-        )}
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">

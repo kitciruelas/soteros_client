@@ -9,9 +9,11 @@ import Input from "../../../components/base/Input"
 import Button from "../../../components/base/Button"
 import { getAuthState, clearAuthData, updateUserData, type UserData } from "../../../utils/auth"
 import { adminAuthApi } from "../../../utils/api"
+import { useToast } from "../../../components/base/Toast"
 
 export default function AdminProfilePage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [userData, setUserData] = useState<UserData | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
@@ -19,10 +21,8 @@ export default function AdminProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editedUserData, setEditedUserData] = useState<UserData>({})
   const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -56,7 +56,12 @@ export default function AdminProfilePage() {
         }
       } catch (error) {
         console.error("Failed to fetch profile data:", error)
-        setError("Failed to load profile data")
+        showToast({
+          type: "error",
+          title: "Failed to Load Profile",
+          message: "Failed to load profile data. Please refresh the page.",
+          durationMs: 5000
+        })
       } finally {
         setIsLoading(false)
       }
@@ -102,14 +107,6 @@ export default function AdminProfilePage() {
     }
   }, [editedUserData, userData, isEditing])
 
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage("")
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [successMessage])
 
   const handleLogoutClick = () => {
     if (hasUnsavedChanges) {
@@ -142,25 +139,32 @@ export default function AdminProfilePage() {
     if (userData) {
       setEditedUserData({ ...userData })
       setIsEditing(true)
-      setError("")
-      setSuccessMessage("")
     }
   }
 
   const handleSaveClick = async () => {
     if (!editedUserData.name || !editedUserData.email) {
-      setError("Name and email are required")
+      showToast({
+        type: "error",
+        title: "Validation Error",
+        message: "Name and email are required",
+        durationMs: 4000
+      })
       return
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(editedUserData.email)) {
-      setError("Please enter a valid email address")
+      showToast({
+        type: "error",
+        title: "Invalid Email",
+        message: "Please enter a valid email address",
+        durationMs: 4000
+      })
       return
     }
 
     setIsSaving(true)
-    setError("")
 
     try {
       const response = await adminAuthApi.updateProfile({
@@ -177,13 +181,28 @@ export default function AdminProfilePage() {
         setIsEditing(false)
         setEditedUserData({})
         setHasUnsavedChanges(false)
-        setSuccessMessage("Profile updated successfully!")
+        showToast({
+          type: "success",
+          title: "Profile Updated",
+          message: "Profile updated successfully!",
+          durationMs: 3000
+        })
       } else {
-        setError(response.message || "Failed to update profile")
+        showToast({
+          type: "error",
+          title: "Update Failed",
+          message: response.message || "Failed to update profile",
+          durationMs: 5000
+        })
       }
     } catch (error: any) {
       console.error("Failed to update profile:", error)
-      setError(error.message || "Failed to update profile")
+      showToast({
+        type: "error",
+        title: "Update Failed",
+        message: error.message || "Failed to update profile",
+        durationMs: 5000
+      })
     } finally {
       setIsSaving(false)
     }
@@ -197,7 +216,6 @@ export default function AdminProfilePage() {
     }
     setIsEditing(false)
     setEditedUserData({})
-    setError("")
     setHasUnsavedChanges(false)
   }
 
@@ -267,9 +285,13 @@ export default function AdminProfilePage() {
         })
         setShowPasswordModal(false)
 
-        // Show success message
-        setSuccessMessage('Password changed successfully!')
-        setTimeout(() => setSuccessMessage(''), 5000)
+        // Show success toast
+        showToast({
+          type: "success",
+          title: "Password Changed",
+          message: "Your password has been changed successfully!",
+          durationMs: 3000
+        })
       } else {
         setPasswordErrors(prev => ({
           ...prev,
@@ -318,28 +340,6 @@ export default function AdminProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {(successMessage || error) && (
-        <div
-          className={`mb-6 p-4 rounded-lg border-l-4 ${
-            successMessage ? "bg-green-50 border-green-400 text-green-700" : "bg-red-50 border-red-400 text-red-700"
-          } transition-all duration-300 ease-in-out`}
-        >
-          <div className="flex items-center">
-            <i className={`${successMessage ? "ri-check-circle-line" : "ri-error-warning-line"} text-lg mr-2`}></i>
-            <span>{successMessage || error}</span>
-            <button
-              onClick={() => {
-                setSuccessMessage("")
-                setError("")
-              }}
-              className="ml-auto text-lg hover:opacity-70"
-            >
-              <i className="ri-close-line"></i>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Profile Summary Card */}

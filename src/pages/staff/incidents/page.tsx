@@ -70,22 +70,10 @@ const StaffIncidentsPage: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false)
   const [updateStatus, setUpdateStatus] = useState<string>("")
   const [updateNotes, setUpdateNotes] = useState<string>("")
-  const [notifications, setNotifications] = useState<
-    Array<{ id: string; message: string; type: "info" | "success" | "warning" | "error" }>
-  >([])
   const [showExportModal, setShowExportModal] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
-  const toast = useToast()
-
-  const addNotification = (message: string, type: "info" | "success" | "warning" | "error") => {
-    const id = Date.now().toString()
-    setNotifications((prev) => [...prev, { id, message, type }])
-    // Auto-remove notification after 5 seconds
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id))
-    }, 5000)
-  }
+  const { showToast } = useToast()
   const [locationCache, setLocationCache] = useState<{ [key: string]: string }>({})
   const [geocodingInProgress, setGeocodingInProgress] = useState<{ [key: string]: boolean }>({})
 
@@ -147,11 +135,21 @@ const StaffIncidentsPage: React.FC = () => {
         title: "Staff Incidents Report",
         includeTimestamp: true,
       })
-      toast.showToast({ type: "success", message: "PDF export completed successfully" })
+      showToast({
+        type: "success",
+        title: "Export Successful",
+        message: "PDF export completed successfully",
+        durationMs: 3000
+      })
       setShowExportModal(false)
     } catch (error) {
       console.error("PDF export failed:", error)
-      toast.showToast({ type: "error", message: "Failed to export PDF" })
+      showToast({
+        type: "error",
+        title: "Export Failed",
+        message: "Failed to export PDF. Please try again.",
+        durationMs: 5000
+      })
     }
   }
 
@@ -161,11 +159,21 @@ const StaffIncidentsPage: React.FC = () => {
         filename: "staff_incidents",
         includeTimestamp: true,
       })
-      toast.showToast({ type: "success", message: "CSV export completed successfully" })
+      showToast({
+        type: "success",
+        title: "Export Successful",
+        message: "CSV export completed successfully",
+        durationMs: 3000
+      })
       setShowExportModal(false)
     } catch (error) {
       console.error("CSV export failed:", error)
-      toast.showToast({ type: "error", message: "Failed to export CSV" })
+      showToast({
+        type: "error",
+        title: "Export Failed",
+        message: "Failed to export CSV. Please try again.",
+        durationMs: 5000
+      })
     }
   }
 
@@ -175,11 +183,21 @@ const StaffIncidentsPage: React.FC = () => {
         filename: "staff_incidents",
         includeTimestamp: true,
       })
-      toast.showToast({ type: "success", message: "Excel export completed successfully" })
+      showToast({
+        type: "success",
+        title: "Export Successful",
+        message: "Excel export completed successfully",
+        durationMs: 3000
+      })
       setShowExportModal(false)
     } catch (error) {
       console.error("Excel export failed:", error)
-      toast.showToast({ type: "error", message: "Failed to export Excel" })
+      showToast({
+        type: "error",
+        title: "Export Failed",
+        message: "Failed to export Excel. Please try again.",
+        durationMs: 5000
+      })
     }
   }
 
@@ -523,13 +541,23 @@ const StaffIncidentsPage: React.FC = () => {
       const currentAuthState = getAuthState()
       if (!currentAuthState.isAuthenticated || currentAuthState.userType !== 'staff') {
         console.error("❌ User is not authenticated as staff - cannot update incident")
-        addNotification("Authentication required. Please log in again.", "error")
+        showToast({
+          type: "error",
+          title: "Authentication Required",
+          message: "Please log in again to update incidents.",
+          durationMs: 5000
+        })
         return
       }
 
       // Validate that notes (remarks) is not empty
       if (!notes || !notes.trim()) {
-        addNotification("Remarks are required when updating incident status.", "error")
+        showToast({
+          type: "error",
+          title: "Remarks Required",
+          message: "Remarks are required when updating incident status.",
+          durationMs: 4000
+        })
         setIsUpdating(false)
         return
       }
@@ -559,20 +587,13 @@ const StaffIncidentsPage: React.FC = () => {
         }),
       )
 
-      // Show success notification
-      const notificationId = Date.now().toString()
-      setNotifications((prev) => [
-        ...prev,
-        {
-          id: notificationId,
-          message: "Incident updated successfully",
-          type: "success",
-        },
-      ])
-
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
-      }, 3000)
+      // Show success toast
+      showToast({
+        type: "success",
+        title: "Incident Updated",
+        message: "Incident updated successfully.",
+        durationMs: 3000
+      })
 
       // Close modal
       setTimeout(() => {
@@ -590,9 +611,19 @@ const StaffIncidentsPage: React.FC = () => {
       
       // Check if it's an authentication error
       if (errorMessage.includes('Authentication') || errorMessage.includes('token') || errorMessage.includes('401')) {
-        addNotification("Authentication failed. Please log in again.", "error")
+        showToast({
+          type: "error",
+          title: "Authentication Failed",
+          message: "Please log in again to update incidents.",
+          durationMs: 5000
+        })
       } else {
-        addNotification(errorMessage, "error")
+        showToast({
+          type: "error",
+          title: "Update Failed",
+          message: errorMessage,
+          durationMs: 5000
+        })
       }
     } finally {
       setIsUpdating(false)
@@ -710,7 +741,12 @@ const StaffIncidentsPage: React.FC = () => {
   const openUpdateModal = (incident: Incident) => {
     // Prevent opening update modal for resolved or closed incidents
     if (incident.status === "resolved" || incident.status === "closed") {
-      addNotification("Cannot update incident. Resolved and closed incidents cannot be modified.", "error")
+      showToast({
+        type: "error",
+        title: "Cannot Update",
+        message: "Resolved and closed incidents cannot be modified.",
+        durationMs: 4000
+      })
       return
     }
 
@@ -1742,38 +1778,6 @@ const StaffIncidentsPage: React.FC = () => {
         title="Export Staff Incidents"
       />
 
-      {/* Notifications */}
-      <div className="fixed top-4 right-3 sm:right-4 z-50 space-y-2 max-w-[calc(100vw-24px)] sm:max-w-sm">
-        {notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
-              notification.type === "success"
-                ? "bg-green-500 text-white"
-                : notification.type === "error"
-                  ? "bg-red-500 text-white"
-                  : notification.type === "warning"
-                    ? "bg-yellow-500 text-white"
-                    : "bg-blue-500 text-white"
-            }`}
-          >
-            <div className="flex items-center">
-              <i
-                className={`mr-2 ${
-                  notification.type === "success"
-                    ? "ri-check-line"
-                    : notification.type === "error"
-                      ? "ri-error-warning-line"
-                      : notification.type === "warning"
-                        ? "ri-alert-line"
-                        : "ri-information-line"
-                }`}
-              ></i>
-              <span className="text-xs sm:text-sm font-medium break-words">{notification.message}</span>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }

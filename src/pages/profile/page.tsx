@@ -12,6 +12,7 @@ import useForm from "../../hooks/useForm"
 import Navbar from "../../components/Navbar"
 import { getAuthState, clearAuthData, updateUserData, type UserData } from "../../utils/auth"
 import { profileApi } from "../../utils/api"
+import { useToast } from "../../components/base/Toast"
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 
@@ -109,11 +110,9 @@ interface ProfileFormData {
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [userData, setUserData] = useState<UserData>({})
   const [isEditing, setIsEditing] = useState(false)
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
-  const [showErrorMessage, setShowErrorMessage] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -301,9 +300,13 @@ export default function ProfilePage() {
         })
         setShowPasswordModal(false)
 
-        // Show success message
-        setShowSuccessMessage(true)
-        setTimeout(() => setShowSuccessMessage(false), 5000)
+        // Show success toast
+        showToast({
+          type: "success",
+          title: "Password Changed",
+          message: "Your password has been changed successfully!",
+          durationMs: 3000
+        })
       } else {
         setPasswordErrors(prev => ({
           ...prev,
@@ -357,17 +360,23 @@ export default function ProfilePage() {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
       if (!allowedTypes.includes(file.type)) {
-        setErrorMessage('Please select a valid image file (JPEG, PNG, GIF, or WebP)')
-        setShowErrorMessage(true)
-        setTimeout(() => setShowErrorMessage(false), 5000)
+        showToast({
+          type: "error",
+          title: "Invalid File Type",
+          message: "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+          durationMs: 4000
+        })
         return
       }
 
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage('File size must be less than 5MB')
-        setShowErrorMessage(true)
-        setTimeout(() => setShowErrorMessage(false), 5000)
+        showToast({
+          type: "error",
+          title: "File Too Large",
+          message: "File size must be less than 5MB",
+          durationMs: 4000
+        })
         return
       }
 
@@ -386,8 +395,6 @@ export default function ProfilePage() {
     if (!selectedFile) return
 
     setIsUploadingPicture(true)
-    setShowErrorMessage(false)
-    setShowSuccessMessage(false)
 
     try {
       const response = await profileApi.uploadProfilePicture(selectedFile)
@@ -397,19 +404,29 @@ export default function ProfilePage() {
         setUserData(updatedUser)
         updateUserData(updatedUser)
 
-        setShowSuccessMessage(true)
-        setTimeout(() => setShowSuccessMessage(false), 5000)
+        showToast({
+          type: "success",
+          title: "Profile Picture Updated",
+          message: "Your profile picture has been updated successfully!",
+          durationMs: 3000
+        })
         handlePictureModalClose()
       } else {
-        setErrorMessage(response.message || 'Failed to upload profile picture')
-        setShowErrorMessage(true)
-        setTimeout(() => setShowErrorMessage(false), 5000)
+        showToast({
+          type: "error",
+          title: "Upload Failed",
+          message: response.message || 'Failed to upload profile picture',
+          durationMs: 5000
+        })
       }
     } catch (error) {
       console.error('Profile picture upload failed:', error)
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to upload profile picture. Please try again.')
-      setShowErrorMessage(true)
-      setTimeout(() => setShowErrorMessage(false), 5000)
+      showToast({
+        type: "error",
+        title: "Upload Failed",
+        message: error instanceof Error ? error.message : 'Failed to upload profile picture. Please try again.',
+        durationMs: 5000
+      })
     } finally {
       setIsUploadingPicture(false)
     }
@@ -423,8 +440,6 @@ export default function ProfilePage() {
     }
 
     setIsUploadingPicture(true)
-    setShowErrorMessage(false)
-    setShowSuccessMessage(false)
 
     try {
       const response = await profileApi.deleteProfilePicture()
@@ -434,18 +449,28 @@ export default function ProfilePage() {
         setUserData(updatedUser)
         updateUserData(updatedUser)
 
-        setShowSuccessMessage(true)
-        setTimeout(() => setShowSuccessMessage(false), 5000)
+        showToast({
+          type: "success",
+          title: "Profile Picture Deleted",
+          message: "Your profile picture has been deleted successfully!",
+          durationMs: 3000
+        })
       } else {
-        setErrorMessage(response.message || 'Failed to delete profile picture')
-        setShowErrorMessage(true)
-        setTimeout(() => setShowErrorMessage(false), 5000)
+        showToast({
+          type: "error",
+          title: "Deletion Failed",
+          message: response.message || 'Failed to delete profile picture',
+          durationMs: 5000
+        })
       }
     } catch (error) {
       console.error('Profile picture deletion failed:', error)
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete profile picture. Please try again.')
-      setShowErrorMessage(true)
-      setTimeout(() => setShowErrorMessage(false), 5000)
+      showToast({
+        type: "error",
+        title: "Deletion Failed",
+        message: error instanceof Error ? error.message : 'Failed to delete profile picture. Please try again.',
+        durationMs: 5000
+      })
     } finally {
       setIsUploadingPicture(false)
     }
@@ -540,8 +565,6 @@ export default function ProfilePage() {
     if (!validateAll()) return
 
       setIsSubmitting(true)
-      setShowErrorMessage(false)
-      setShowSuccessMessage(false)
 
       try {
         const formData = getValues()
@@ -561,15 +584,22 @@ export default function ProfilePage() {
           // Use the new updateUserData function to handle storage
           updateUserData(updatedUser)
 
-          setShowSuccessMessage(true)
-          setTimeout(() => setShowSuccessMessage(false), 5000)
+          showToast({
+            type: "success",
+            title: "Profile Updated",
+            message: "Your profile has been updated successfully!",
+            durationMs: 3000
+          })
           setIsEditing(false)
           setHasUnsavedChanges(false)
         } else {
           console.warn("Profile update returned unsuccessful response:", response)
-          setErrorMessage(response.message || "Failed to update profile. Please try again.")
-          setShowErrorMessage(true)
-          setTimeout(() => setShowErrorMessage(false), 5000)
+          showToast({
+            type: "error",
+            title: "Update Failed",
+            message: response.message || "Failed to update profile. Please try again.",
+            durationMs: 5000
+          })
         }
       } catch (error) {
         console.error("Profile update failed:", error)
@@ -582,8 +612,12 @@ export default function ProfilePage() {
             error.message.includes("401") ||
             error.message.includes("403"))
         ) {
-          setErrorMessage("Your session has expired. Please log in again to save changes.")
-          setShowErrorMessage(true)
+          showToast({
+            type: "error",
+            title: "Session Expired",
+            message: "Your session has expired. Please log in again to save changes.",
+            durationMs: 4000
+          })
 
           // Auto-redirect to login after showing message
           setTimeout(() => {
@@ -591,11 +625,13 @@ export default function ProfilePage() {
             navigate("/auth/login")
           }, 3000)
         } else {
-          setErrorMessage(error instanceof Error ? error.message : "Network error. Please try again.")
-          setShowErrorMessage(true)
+          showToast({
+            type: "error",
+            title: "Update Failed",
+            message: error instanceof Error ? error.message : "Network error. Please try again.",
+            durationMs: 5000
+          })
         }
-
-        setTimeout(() => setShowErrorMessage(false), 5000)
       } finally {
         setIsSubmitting(false)
       }
@@ -655,29 +691,6 @@ export default function ProfilePage() {
 
       <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-5xl mx-auto">
-          {/* Alert Messages */}
-          {showSuccessMessage && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-2 sm:gap-3 text-green-800">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <i className="ri-check-circle-line text-green-600 text-sm sm:text-base"></i>
-                </div>
-                <span className="font-medium text-sm sm:text-base">Profile updated successfully!</span>
-              </div>
-            </div>
-          )}
-
-          {showErrorMessage && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-2 sm:gap-3 text-red-800">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <i className="ri-error-warning-line text-red-600 text-sm sm:text-base"></i>
-                </div>
-                <span className="font-medium text-sm sm:text-base">{errorMessage}</span>
-              </div>
-            </div>
-          )}
-
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Profile Summary Card */}

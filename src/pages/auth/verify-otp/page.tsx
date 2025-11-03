@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../../components/base/Button';
 import Input from '../../../components/base/Input';
 import useForm from '../../../hooks/useForm';
 import Navbar from '../../../components/Navbar';
+import { useToast } from '../../../components/base/Toast';
 
 interface VerifyOTPFormData {
   otp: string;
@@ -12,8 +13,7 @@ interface VerifyOTPFormData {
 export default function VerifyOTPPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showErrorMessage, setShowErrorMessage] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const { showToast } = useToast();
 
   // Get email from location state or query params
   const email = location.state?.email || new URLSearchParams(location.search).get('email') || '';
@@ -38,7 +38,6 @@ export default function VerifyOTPPage() {
     const formData = getValues();
 
     setIsSubmitting(true);
-    setShowErrorMessage(false);
 
     try {
       // Verify OTP with backend
@@ -57,24 +56,37 @@ export default function VerifyOTPPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // OTP verified successfully, redirect to reset password
-        navigate('/auth/reset-password', {
-          state: {
-            email: email,
-            otp: formData.otp
-          }
+        // Show success toast
+        showToast({
+          type: 'success',
+          title: 'Code Verified',
+          message: 'OTP verified successfully. Redirecting to reset password...',
+          durationMs: 2000
         });
+
+        // OTP verified successfully, redirect to reset password
+        setTimeout(() => {
+          navigate('/auth/reset-password', {
+            state: {
+              email: email,
+              otp: formData.otp
+            }
+          });
+        }, 1500);
       } else {
         throw new Error(data.message || 'Invalid verification code');
       }
 
     } catch (error) {
       console.error('OTP verification failed:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Invalid verification code');
-      setShowErrorMessage(true);
+      showToast({
+        type: 'error',
+        title: 'Verification Failed',
+        message: error instanceof Error ? error.message : 'Invalid verification code. Please try again.',
+        durationMs: 5000
+      });
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => setShowErrorMessage(false), 5000);
     }
   };
 
@@ -96,14 +108,24 @@ export default function VerifyOTPPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert('Verification code sent again!');
+        showToast({
+          type: 'success',
+          title: 'Code Resent',
+          message: 'Verification code has been sent again to your email.',
+          durationMs: 3000
+        });
       } else {
         throw new Error(data.message || 'Failed to resend code');
       }
 
     } catch (error) {
       console.error('Resend OTP failed:', error);
-      alert('Failed to resend verification code. Please try again later.');
+      showToast({
+        type: 'error',
+        title: 'Failed to Resend Code',
+        message: error instanceof Error ? error.message : 'Failed to resend verification code. Please try again later.',
+        durationMs: 5000
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -128,16 +150,6 @@ export default function VerifyOTPPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify your email</h1>
           <p className="text-gray-600">Enter the 6-digit code sent to your email</p>
         </div>
-
-        {/* Error Message */}
-        {showErrorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-800">
-              <i className="ri-error-warning-line"></i>
-              <span className="text-sm font-medium">{errorMessage}</span>
-            </div>
-          </div>
-        )}
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
