@@ -360,7 +360,7 @@ const StaffDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Total Incidents */}
             <div className="group relative bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 sm:p-6 border border-blue-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -377,7 +377,6 @@ const StaffDashboardPage: React.FC = () => {
                 <div className="text-xs sm:text-sm text-slate-600 font-medium">All assigned incidents</div>
               </div>
             </div>
-
 
             {/* In Progress */}
             <div className="group relative bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-2xl p-4 sm:p-6 border border-indigo-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
