@@ -41,48 +41,28 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
   });
 
   useEffect(() => {
-    const updateAuthState = () => {
-      const authState = getAuthState()
-      console.log('Navbar: Auth state updated', { 
-        isAuthenticated: authState.isAuthenticated, 
-        userType: authState.userType,
-        hasUserData: !!authState.userData,
-        userDataKeys: authState.userData ? Object.keys(authState.userData) : []
-      })
-      
+    const authState = getAuthState()
+    // Only allow user type to access these pages
+    const isUserAuth = authState.isAuthenticated && authState.userType === 'user'
+    setIsAuthenticated(isUserAuth)
+    setUserData(isUserAuth ? authState.userData : null)
+    setUserType(isUserAuth ? authState.userType : null)
+
+    const handleAuthStateChange = () => {
+      const newAuthState = getAuthState()
       // Only allow user type to access these pages
-      // Check if userType is 'user' or if it's not set but we have user data (fallback for regular users)
-      const isUserAuth = Boolean(authState.isAuthenticated && (
-        authState.userType === 'user' || 
-        (!authState.userType && authState.userData && !authState.userData.role)
-      ))
-      
-      setIsAuthenticated(isUserAuth)
-      setUserData(isUserAuth ? authState.userData : null)
-      setUserType(isUserAuth ? (authState.userType || 'user') : null)
+      const isNewUserAuth = newAuthState.isAuthenticated && newAuthState.userType === 'user'
+      setIsAuthenticated(isNewUserAuth)
+      setUserData(isNewUserAuth ? newAuthState.userData : null)
+      setUserType(isNewUserAuth ? newAuthState.userType : null)
     }
 
-    // Check auth state immediately on mount
-    updateAuthState()
-
-    // Listen for storage changes (fires in other tabs)
-    window.addEventListener("storage", updateAuthState)
-    
-    // Listen for custom auth state change events (fires in same tab)
-    window.addEventListener("authStateChanged", updateAuthState)
-
-    // Also check when window gains focus (user switches back to tab)
-    const handleFocus = () => updateAuthState()
-    window.addEventListener("focus", handleFocus)
-
-    // Periodic check as fallback (every 3 seconds) - only if events fail
-    const intervalId = setInterval(updateAuthState, 3000)
+    window.addEventListener("storage", handleAuthStateChange)
+    window.addEventListener("authStateChanged", handleAuthStateChange)
 
     return () => {
-      window.removeEventListener("storage", updateAuthState)
-      window.removeEventListener("authStateChanged", updateAuthState)
-      window.removeEventListener("focus", handleFocus)
-      clearInterval(intervalId)
+      window.removeEventListener("storage", handleAuthStateChange)
+      window.removeEventListener("authStateChanged", handleAuthStateChange)
     }
   }, [])
 
@@ -639,7 +619,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                           : undefined
                       }
                       email={userData?.email}
-                      profilePicture={userData?.profile_picture}
+                      profilePicture={undefined}
                       size="md"
                       className="flex-shrink-0"
                     />
@@ -671,7 +651,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                                 : undefined
                             }
                             email={userData?.email}
-                            profilePicture={userData?.profile_picture}
+                            profilePicture={undefined}
                             size="lg"
                             className="flex-shrink-0"
                           />
@@ -1024,7 +1004,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated: propIsAuthenticated, u
                             : undefined
                         }
                         email={userData?.email}
-                        profilePicture={userData?.profile_picture}
+                        profilePicture={undefined}
                         size="lg"
                         className="flex-shrink-0"
                       />
