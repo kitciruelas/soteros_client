@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAuthState, clearAuthData, type UserData } from "../utils/auth"
 import { userAuthApi } from "../utils/api"
@@ -39,6 +38,17 @@ const Navbar: React.FC<NavbarProps> = () => {
     const saved = localStorage.getItem('readNotifications');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
+  const [floatingNotifications, setFloatingNotifications] = useState<Array<{
+    id: string;
+    type: 'alert' | 'safety_protocol' | 'welfare' | 'system';
+    title: string;
+    message: string;
+    severity: 'info' | 'warning' | 'emergency';
+    notificationId?: number;
+    timestamp: number;
+  }>>([]);
+  const [notificationSound, setNotificationSound] = useState<HTMLAudioElement | null>(null);
+  const lastNotificationId = useRef<number>(0);
 
   useEffect(() => {
     // Function to update auth state
@@ -71,6 +81,32 @@ const Navbar: React.FC<NavbarProps> = () => {
   useEffect(() => {
     localStorage.setItem('readNotifications', JSON.stringify([...readNotifications]));
   }, [readNotifications]);
+
+  // Initialize notification sound
+  useEffect(() => {
+    const audio = new Audio('/sounds/notification.mp3');
+    audio.volume = 0.5;
+    audio.preload = 'auto';
+    setNotificationSound(audio);
+    
+    audio.addEventListener('error', () => {
+      console.log('Notification sound file not found, using fallback');
+    });
+    
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+    };
+  }, []);
+
+  // Request browser notification permission
+  useEffect(() => {
+    if (isAuthenticated && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [isAuthenticated]);
 
   // Fetch notifications on mount (like AdminLayout)
   useEffect(() => {
@@ -153,6 +189,28 @@ const Navbar: React.FC<NavbarProps> = () => {
     try {
       const response = await notificationsApi.getNotifications(10, 0);
       if (response.success && Array.isArray(response.notifications)) {
+        // Check for new unread notifications
+        const newNotifications = response.notifications.filter((notif: any) => 
+          notif.id > lastNotificationId.current && !notif.is_read
+        );
+        
+        // Show pop-ups for new notifications
+        if (newNotifications.length > 0) {
+          lastNotificationId.current = Math.max(...newNotifications.map((n: any) => n.id));
+          
+          newNotifications.forEach((notif: any) => {
+            handleNewNotification(notif);
+          });
+        }
+        
+        // Update lastNotificationId to the highest ID seen
+        if (response.notifications.length > 0) {
+          const maxId = Math.max(...response.notifications.map((n: any) => n.id));
+          if (maxId > lastNotificationId.current) {
+            lastNotificationId.current = maxId;
+          }
+        }
+
         setNotifications(response.notifications);
 
         // Clean up read notifications that are no longer in the list
@@ -202,6 +260,111 @@ const Navbar: React.FC<NavbarProps> = () => {
       setReadNotifications(new Set(allIds));
     }
   };
+
+  // Floating notification functions
+  const removeFloatingNotification = (id: string) => {
+    setFloatingNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
+  const addFloatingNotification = (notification: {
+    id: string;
+    type: 'alert' | 'safety_protocol' | 'welfare' | 'system';
+    title: string;
+    message: string;
+    severity: 'info' | 'warning' | 'emergency';
+    notificationId?: number;
+    timestamp?: number;
+  }) => {
+    const newFloatingNotif = {
+      ...notification,
+      timestamp: notification.timestamp || Date.now()
+    };
+    
+    setFloatingNotifications(prev => [...prev, newFloatingNotif]);
+    
+    // Auto-dismiss based on severity
+    // Emergency: 10 seconds, Warning: 7 seconds, Info: 5 seconds
+    const dismissTime = 
+      notification.severity === 'emergency' ? 10000 :
+      notification.severity === 'warning' ? 7000 : 5000;
+    
+    setTimeout(() => {
+      removeFloatingNotification(newFloatingNotif.id);
+    }, dismissTime);
+  };
+
+  // Handle new notification and show pop-up
+  const handleNewNotification = useCallback((notification: any) => {
+    console.log('📬 New notification received:', notification);
+    
+    // Determine priority based on severity
+    const priority = notification.severity === 'emergency' ? 'high' : 
+                     notification.severity === 'warning' ? 'medium' : 'low';
+    
+    // Add floating notification
+    addFloatingNotification({
+      id: `notification-${notification.id}-${Date.now()}`,
+      type: notification.type || 'system',
+      title: notification.title || 'New Notification',
+      message: notification.message || '',
+      severity: notification.severity || 'info',
+      notificationId: notification.id,
+      timestamp: Date.now()
+    });
+
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+      const browserNotif = new Notification(notification.title || 'New Notification', {
+        body: notification.message || '',
+        icon: '/images/soteros_logo.png',
+        tag: `notification-${notification.id}`,
+        badge: '/images/soteros_logo.png',
+        requireInteraction: notification.severity === 'emergency'
+      });
+      
+      // Auto-close after 5 seconds for low priority, 10 seconds for high priority
+      const autoCloseTime = notification.severity === 'emergency' ? 10000 : 5000;
+      setTimeout(() => browserNotif.close(), autoCloseTime);
+    }
+
+    // Play notification sound
+    if (notificationSound) {
+      try {
+        notificationSound.currentTime = 0;
+        notificationSound.play().catch(err => {
+          console.log('Could not play notification sound:', err);
+        });
+      } catch (error) {
+        console.log('Error playing notification sound:', error);
+      }
+    } else {
+      // Fallback: Use Web Audio API for a simple beep
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Different frequencies based on severity
+        const frequencies: Record<string, number> = {
+          'emergency': 800,
+          'warning': 600,
+          'info': 400
+        };
+        
+        oscillator.frequency.value = frequencies[notification.severity || 'info'] || 400;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } catch (error) {
+        console.log('Could not create audio context:', error);
+      }
+    }
+  }, [notificationSound]);
 
   // Get unread notifications count (like AdminLayout)
   const unreadCount = notifications.filter(notif => !readNotifications.has(notif.id)).length;
@@ -1113,6 +1276,211 @@ const Navbar: React.FC<NavbarProps> = () => {
         onClose={() => setShowAlertModal(false)}
         alert={selectedAlert}
       />
+
+      {/* Floating Notifications */}
+      <div className="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
+        {floatingNotifications.map((notification, index) => {
+          const getSeverityStyles = (severity: string) => {
+            switch (severity) {
+              case 'emergency':
+                return {
+                  bg: 'bg-gradient-to-r from-red-600 to-red-700',
+                  border: 'border-red-800',
+                  text: 'text-white',
+                  shadow: 'shadow-2xl shadow-red-500/50',
+                  glow: 'ring-2 ring-red-400 ring-opacity-75'
+                };
+              case 'warning':
+                return {
+                  bg: 'bg-gradient-to-r from-orange-600 to-orange-700',
+                  border: 'border-orange-800',
+                  text: 'text-white',
+                  shadow: 'shadow-2xl shadow-orange-500/50',
+                  glow: 'ring-2 ring-orange-400 ring-opacity-75'
+                };
+              default:
+                return {
+                  bg: 'bg-gradient-to-r from-blue-600 to-blue-700',
+                  border: 'border-blue-800',
+                  text: 'text-white',
+                  shadow: 'shadow-xl shadow-blue-500/30',
+                  glow: ''
+                };
+            }
+          };
+
+          const getIcon = (type: string, severity: string) => {
+            const iconMap: Record<string, string> = {
+              'welfare': 'ri-heart-pulse-line',
+              'alert': 'ri-alarm-warning-line',
+              'safety_protocol': 'ri-shield-check-line',
+              'system': 'ri-settings-3-line'
+            };
+            
+            if (type && iconMap[type]) return iconMap[type];
+            if (severity === 'emergency') return 'ri-alarm-warning-line';
+            if (severity === 'warning') return 'ri-alert-line';
+            return 'ri-notification-3-line';
+          };
+
+          const getTypeLabel = (type: string) => {
+            const labels: Record<string, string> = {
+              'alert': 'ALERT',
+              'safety_protocol': 'SAFETY',
+              'welfare': 'WELFARE',
+              'system': 'SYSTEM'
+            };
+            return labels[type] || 'NOTIFICATION';
+          };
+
+          const styles = getSeverityStyles(notification.severity);
+          const dismissTime = 
+            notification.severity === 'emergency' ? 10000 :
+            notification.severity === 'warning' ? 7000 : 5000;
+
+          const handleNotificationClick = () => {
+            // Mark as read if notificationId exists
+            if (notification.notificationId) {
+              markAsRead(notification.notificationId);
+            }
+            
+            // Navigate based on notification type
+            switch (notification.type) {
+              case 'safety_protocol':
+                handleNavigation("/safety-protocols");
+                break;
+              case 'alert':
+                setSelectedAlert(notification);
+                setShowAlertModal(true);
+                break;
+              case 'welfare':
+                handleNavigation("/welfare-check");
+                break;
+              case 'system':
+                handleNavigation("/history-report");
+                break;
+              default:
+                handleNavigation("/notifications");
+            }
+            
+            removeFloatingNotification(notification.id);
+            setShowNotifDropdown(false);
+          };
+
+          return (
+            <div
+              key={notification.id}
+              className={`
+                ${styles.bg}
+                ${styles.border}
+                ${styles.text}
+                ${styles.shadow}
+                ${styles.glow}
+                max-w-sm w-full rounded-xl border-2 p-5 transform transition-all duration-500 ease-out
+                cursor-pointer hover:scale-[1.02] hover:shadow-2xl
+                animate-slide-in-right
+                ${notification.severity === 'emergency' || notification.severity === 'warning' ? 'animate-pulse' : ''}
+              `}
+              style={{
+                animation: `slideInRight 0.5s ease-out ${index * 100}ms both`,
+              }}
+              onClick={handleNotificationClick}
+              onMouseEnter={(e) => {
+                // Pause auto-dismiss on hover
+                const card = e.currentTarget;
+                card.style.animationPlayState = 'paused';
+              }}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <div className={`p-2 rounded-lg bg-white bg-opacity-20 ${styles.shadow}`}>
+                    <i className={`${getIcon(notification.type, notification.severity)} text-2xl`}></i>
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
+                        {getTypeLabel(notification.type)}
+                      </span>
+                      <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-20 px-2 py-1 rounded">
+                        {notification.severity}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (notification.notificationId) {
+                      markAsRead(notification.notificationId);
+                    }
+                    removeFloatingNotification(notification.id);
+                  }}
+                  className="flex-shrink-0 p-1.5 rounded-full hover:bg-white hover:bg-opacity-30 transition-colors"
+                >
+                  <i className="ri-close-line text-lg"></i>
+                </button>
+              </div>
+              
+              <div className="mb-3">
+                <h4 className="font-bold text-base mb-2 leading-tight">
+                  {notification.title}
+                </h4>
+                <p className="text-sm opacity-95 leading-relaxed line-clamp-3">
+                  {notification.message}
+                </p>
+              </div>
+              
+              <div className="flex items-center justify-between text-xs opacity-90 mb-3">
+                <span className="flex items-center">
+                  <i className="ri-time-line mr-1"></i>
+                  {new Date(notification.timestamp).toLocaleTimeString()}
+                </span>
+                <span className="flex items-center font-semibold">
+                  <i className="ri-arrow-right-line mr-1"></i>
+                  View Details
+                </span>
+              </div>
+              
+              {/* Progress bar for auto-dismiss */}
+              <div className="h-1.5 bg-white bg-opacity-20 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-white bg-opacity-70 rounded-full"
+                  style={{
+                    animation: `progressBar ${dismissTime}ms linear forwards`
+                  }}
+                ></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes progressBar {
+          from {
+            width: 100%;
+          }
+          to {
+            width: 0%;
+          }
+        }
+        
+        .animate-slide-in-right {
+          animation: slideInRight 0.5s ease-out both;
+        }
+      `}</style>
     </>
   )
 }
