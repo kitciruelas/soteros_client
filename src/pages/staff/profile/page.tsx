@@ -112,6 +112,10 @@ const StaffProfilePage: React.FC = () => {
     newPassword: "",
     confirmPassword: "",
   })
+  const [showPictureModal, setShowPictureModal] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [picturePreview, setPicturePreview] = useState<string | null>(null)
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false)
 
   // Additional state variables
   const [isAuthenticated, setIsAuthenticated] = useState(true)
@@ -484,6 +488,134 @@ const StaffProfilePage: React.FC = () => {
     })
   }
 
+  const handlePictureModalClose = () => {
+    if (isUploadingPicture) return // Prevent closing while uploading
+
+    setShowPictureModal(false)
+    setPicturePreview(null)
+    setSelectedFile(null)
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+      if (!allowedTypes.includes(file.type)) {
+        showToast({
+          type: "error",
+          title: "Invalid File Type",
+          message: "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+          durationMs: 4000
+        })
+        return
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast({
+          type: "error",
+          title: "File Too Large",
+          message: "File size must be less than 5MB",
+          durationMs: 4000
+        })
+        return
+      }
+
+      setSelectedFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setPicturePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handlePictureUpload = async () => {
+    if (!selectedFile || !currentStaffId) return
+
+    setIsUploadingPicture(true)
+
+    try {
+      const response = await staffManagementApi.uploadProfilePicture(Number(currentStaffId), selectedFile)
+
+      if (response.success && response.staff) {
+        setProfile(response.staff as any)
+        await fetchProfileData()
+
+        showToast({
+          type: "success",
+          title: "Profile Picture Updated",
+          message: "Your profile picture has been updated successfully!",
+          durationMs: 3000
+        })
+        handlePictureModalClose()
+      } else {
+        showToast({
+          type: "error",
+          title: "Upload Failed",
+          message: response.message || 'Failed to upload profile picture',
+          durationMs: 5000
+        })
+      }
+    } catch (error) {
+      console.error('Profile picture upload failed:', error)
+      showToast({
+        type: "error",
+        title: "Upload Failed",
+        message: error instanceof Error ? error.message : 'Failed to upload profile picture. Please try again.',
+        durationMs: 5000
+      })
+    } finally {
+      setIsUploadingPicture(false)
+    }
+  }
+
+  const handlePictureDelete = async () => {
+    if ((!profile?.profile_picture && !(profile as any)?.profilePicture) || !currentStaffId) return
+
+    if (!window.confirm('Are you sure you want to delete your profile picture?')) {
+      return
+    }
+
+    setIsUploadingPicture(true)
+
+    try {
+      const response = await staffManagementApi.deleteProfilePicture(Number(currentStaffId))
+
+      if (response.success && response.staff) {
+        setProfile(response.staff as any)
+        await fetchProfileData()
+
+        showToast({
+          type: "success",
+          title: "Profile Picture Deleted",
+          message: "Your profile picture has been deleted successfully!",
+          durationMs: 3000
+        })
+      } else {
+        showToast({
+          type: "error",
+          title: "Deletion Failed",
+          message: response.message || 'Failed to delete profile picture',
+          durationMs: 5000
+        })
+      }
+    } catch (error) {
+      console.error('Profile picture deletion failed:', error)
+      showToast({
+        type: "error",
+        title: "Deletion Failed",
+        message: error instanceof Error ? error.message : 'Failed to delete profile picture. Please try again.',
+        durationMs: 5000
+      })
+    } finally {
+      setIsUploadingPicture(false)
+    }
+  }
+
   const validatePassword = (password: string): string => {
     if (password.length < 8) {
       return "Password must be at least 8 characters long"
@@ -677,8 +809,10 @@ const StaffProfilePage: React.FC = () => {
                     <Avatar
                       name={profile?.name}
                       email={profile?.email}
+                      profilePicture={profile?.profile_picture || (profile as any)?.profilePicture}
                       size="xl"
-                      className="mx-auto"
+                      className="mx-auto cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setShowPictureModal(true)}
                     />
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
@@ -1093,6 +1227,113 @@ const StaffProfilePage: React.FC = () => {
         onConfirm={handleLogoutConfirm}
         isLoading={isLoggingOut}
       />
+
+      {/* Profile Picture Upload Modal */}
+      <Modal
+        isOpen={showPictureModal}
+        onClose={handlePictureModalClose}
+        title="Update Profile Picture"
+        size="md"
+      >
+        <div className="space-y-6">
+          {/* File Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Image
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleFileSelect}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isUploadingPicture}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Supported formats: JPEG, PNG, GIF, WebP. Max size: 5MB
+            </p>
+          </div>
+
+          {/* Preview */}
+          {picturePreview && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preview
+              </label>
+              <div className="flex justify-center">
+                <img
+                  src={picturePreview}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-full border-4 border-gray-200"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Current Picture Info */}
+          {(profile?.profile_picture || (profile as any)?.profilePicture) && !picturePreview && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Picture
+              </label>
+              <div className="flex justify-center">
+                <img
+                  src={(profile?.profile_picture || (profile as any)?.profilePicture) || ''}
+                  alt="Current profile"
+                  className="w-32 h-32 object-cover rounded-full border-4 border-gray-200"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            {(profile?.profile_picture || (profile as any)?.profilePicture) && !selectedFile && (
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={handlePictureDelete}
+                disabled={isUploadingPicture}
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                <i className="ri-delete-bin-line mr-2"></i>
+                Delete
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={handlePictureModalClose}
+              disabled={isUploadingPicture}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={handlePictureUpload}
+              disabled={!selectedFile || isUploadingPicture}
+            >
+              {isUploadingPicture ? (
+                <>
+                  <i className="ri-loader-4-line animate-spin mr-2"></i>
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <i className="ri-upload-line mr-2"></i>
+                  Upload Picture
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

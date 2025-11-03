@@ -473,6 +473,41 @@ export const adminAuthApi = {
       body: JSON.stringify({ currentPassword, newPassword }),
     });
   },
+
+  uploadProfilePicture: async (file: File) => {
+    const form = new FormData();
+    form.append('profilePicture', file);
+    return apiFormRequest<{
+      success: boolean;
+      message: string;
+      admin: {
+        id: number;
+        name: string;
+        email: string;
+        role: string;
+        status: string;
+        profile_picture?: string;
+      };
+      profilePicture: string;
+    }>('/admin/auth/upload-picture', form);
+  },
+
+  deleteProfilePicture: async () => {
+    return apiRequest<{
+      success: boolean;
+      message: string;
+      admin: {
+        id: number;
+        name: string;
+        email: string;
+        role: string;
+        status: string;
+        profile_picture?: string;
+      };
+    }>('/admin/auth/delete-picture', {
+      method: 'DELETE',
+    });
+  },
 };
 
 // User Authentication API
@@ -755,6 +790,47 @@ export const staffManagementApi = {
   
   getStaffStats: async () => {
     return apiRequest('/staff/stats');
+  },
+
+  uploadProfilePicture: async (staffId: number, file: File) => {
+    const form = new FormData();
+    form.append('profilePicture', file);
+    return apiFormRequest<{
+      success: boolean;
+      message: string;
+      staff: {
+        id: number;
+        name: string;
+        email: string;
+        phone?: string;
+        position?: string;
+        department?: string;
+        status: number;
+        availability: string;
+        profile_picture?: string;
+      };
+      profilePicture: string;
+    }>(`/staff/${staffId}/upload-picture`, form);
+  },
+
+  deleteProfilePicture: async (staffId: number) => {
+    return apiRequest<{
+      success: boolean;
+      message: string;
+      staff: {
+        id: number;
+        name: string;
+        email: string;
+        phone?: string;
+        position?: string;
+        department?: string;
+        status: number;
+        availability: string;
+        profile_picture?: string;
+      };
+    }>(`/staff/${staffId}/delete-picture`, {
+      method: 'DELETE',
+    });
   },
 };
 
