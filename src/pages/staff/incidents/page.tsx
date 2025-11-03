@@ -116,11 +116,19 @@ const StaffIncidentsPage: React.FC = () => {
     return "No assignment"
   }
 
+  // Format reporter name for export (handles both regular users and guests)
+  const formatReporterName = (value: string, incident: Incident) => {
+    if (incident.reporter_type === "guest") {
+      return incident.guest_name || "Unknown Guest"
+    }
+    return value || incident.reporter_name || "Unknown Reporter"
+  }
+
   // Export columns configuration
   const exportColumns: ExportColumn[] = [
     { key: "incident_id", label: "Incident ID" },
     { key: "description", label: "Description" },
-    { key: "reporter_name", label: "Reporter Name" },
+    { key: "reporter_name", label: "Reporter Name", format: (value, incident) => formatReporterName(value, incident) },
     { key: "assignment", label: "Assigned Team", format: (value, incident) => formatAssignment(incident) },
     { key: "remarks", label: "Notes", format: (value) => value || "No notes" },
     { key: "date_reported", label: "Date Reported", format: (value) => ExportUtils.formatDateTime(value) },
