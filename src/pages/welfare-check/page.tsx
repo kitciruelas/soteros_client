@@ -330,30 +330,30 @@ export default function WelfareCheck() {
 
             {systemStatus?.isActive && showAnnouncement && (
               <div className="relative max-w-3xl mx-auto mb-8">
-                <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 shadow-xl p-6">
+                <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 shadow-xl p-6">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <i className="ri-megaphone-line text-amber-600 text-xl"></i>
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+                      <i className="ri-megaphone-line text-white text-xl"></i>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-semibold text-amber-800 flex items-center">
+                        <h3 className="text-lg font-semibold text-blue-900 flex items-center">
                           Welfare Announcement
                         </h3>
                         <button
                           type="button"
                           onClick={() => setShowAnnouncement(false)}
-                          className="text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded-lg p-1.5 transition-all duration-200 flex-shrink-0"
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg p-1.5 transition-all duration-200 flex-shrink-0"
                           aria-label="Dismiss announcement"
                         >
                           <i className="ri-close-line text-lg"></i>
                         </button>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-base font-semibold text-amber-900 leading-snug">
+                        <p className="text-base font-semibold text-blue-900 leading-snug">
                           {systemStatus?.title || 'Welfare Check'}
                         </p>
-                        <p className="text-sm text-amber-700 leading-relaxed">
+                        <p className="text-sm text-blue-700 leading-relaxed">
                           {systemStatus?.description || 'Welfare check is currently active. Please submit your status to help responders.'}
                         </p>
                       </div>
