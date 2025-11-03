@@ -233,6 +233,18 @@ const AlertsManagement: React.FC = () => {
     fetchAlerts();
   }, []);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal]);
+
   // Map click handler component for create modal
   const MapClickHandler = () => {
     useMapEvents({
@@ -776,7 +788,7 @@ const AlertsManagement: React.FC = () => {
       {/* Create Alert Modal */}
       {showCreateModal && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-hidden"
           onClick={() => {
             if (!isCreating) {
               setShowCreateModal(false);
@@ -784,7 +796,7 @@ const AlertsManagement: React.FC = () => {
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col m-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
@@ -1232,7 +1244,7 @@ const AlertsManagement: React.FC = () => {
       {/* Edit Alert Modal */}
       {showEditModal && editAlert && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-hidden"
           onClick={() => {
             if (!isUpdating) {
               setShowEditModal(false);
@@ -1240,7 +1252,7 @@ const AlertsManagement: React.FC = () => {
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col m-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
