@@ -385,13 +385,21 @@ const Navbar: React.FC<NavbarProps> = () => {
     if (notification) {
       handleNewNotification(notification);
       
-      // Wait before processing next notification (2 seconds delay)
+      // Wait for notification to fully dismiss before processing next one
+      // Emergency: 10 seconds, Warning: 7 seconds, Info: 5 seconds
+      // Add 500ms buffer to ensure previous notification is fully removed
+      const dismissTime = 
+        notification.severity === 'emergency' ? 10000 :
+        notification.severity === 'warning' ? 7000 : 5000;
+      
+      const delay = dismissTime + 500; // Add 500ms buffer
+      
       setTimeout(() => {
         isProcessingQueue.current = false;
         if (processNotificationQueueRef.current) {
           processNotificationQueueRef.current();
         }
-      }, 2000);
+      }, delay);
     } else {
       isProcessingQueue.current = false;
     }
