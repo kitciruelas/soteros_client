@@ -378,22 +378,6 @@ const StaffDashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Pending Incidents */}
-            <div className="group relative bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl p-4 sm:p-6 border border-amber-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-amber-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="p-2 sm:p-3 bg-amber-500 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <i className="ri-time-line text-white text-xl sm:text-2xl"></i>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl sm:text-3xl font-bold text-slate-900">{stats.pendingIncidents}</div>
-                    <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Pending</div>
-                  </div>
-                </div>
-                <div className="text-xs sm:text-sm text-slate-600 font-medium">Awaiting response</div>
-              </div>
-            </div>
 
             {/* In Progress */}
             <div className="group relative bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-2xl p-4 sm:p-6 border border-indigo-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
