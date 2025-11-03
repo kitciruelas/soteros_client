@@ -1088,31 +1088,42 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       )}
                     </div>
 
-                    {/* See More Button */}
-                    {allNotifications.length > 10 && !showAllNotifications && (
-                      <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-                        <button
-                          onClick={() => setShowAllNotifications(true)}
-                          className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium"
-                        >
-                          <i className="ri-eye-line mr-2"></i>
-                          See More ({allNotifications.length - 10} more)
-                        </button>
-                      </div>
-                    )}
+                    {/* Footer Actions */}
+                    <div className="border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                      <div className="p-3 space-y-2">
+                        {/* See More / Show Less Button */}
+                        {allNotifications.length > 10 && (
+                          <button
+                            onClick={() => setShowAllNotifications(!showAllNotifications)}
+                            className={`w-full py-2 text-sm rounded-lg hover:transition-colors flex items-center justify-center font-medium ${
+                              showAllNotifications
+                                ? 'bg-gray-600 text-white hover:bg-gray-700'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                            }`}
+                          >
+                            <i className={`ri-${showAllNotifications ? 'eye-off' : 'eye'}-line mr-2`}></i>
+                            {showAllNotifications
+                              ? 'Show Less'
+                              : `See More (${allNotifications.length - 10} more)`
+                            }
+                          </button>
+                        )}
 
-                    {/* Show Less Button */}
-                    {showAllNotifications && allNotifications.length > 10 && (
-                      <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-                        <button
-                          onClick={() => setShowAllNotifications(false)}
-                          className="w-full py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center font-medium"
-                        >
-                          <i className="ri-eye-off-line mr-2"></i>
-                          Show Less
-                        </button>
+                        {/* View All Button */}
+                        {allNotifications.length > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowNotifDropdown(false);
+                              navigate('/admin/alerts');
+                            }}
+                            className="w-full py-2 text-center text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                          >
+                            View All
+                          </button>
+                        )}
                       </div>
-                    )}
+                    </div>
 
                   </div>
                 )}
