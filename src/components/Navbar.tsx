@@ -1445,9 +1445,6 @@ const Navbar: React.FC<NavbarProps> = () => {
                       <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
                         {getTypeLabel(notification.type)}
                       </span>
-                      <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-20 px-2 py-1 rounded">
-                        {notification.severity}
-                      </span>
                     </div>
                   </div>
                 </div>
