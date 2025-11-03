@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, Outlet, useLocation } from 'react-router-dom';
+import Avatar from './base/Avatar';
 import { getAuthState, clearAuthData } from '../utils/auth';
 import { staffAuthApi } from '../utils/api';
 import LogoutModal from './LogoutModal';
@@ -194,11 +195,13 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                     onClick={toggleProfileDropdown}
                     className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 font-medium focus:outline-none group"
                   >
-                    <div className="w-9 h-9 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-                      <span className="text-white font-semibold text-sm">
-                        {userData.name?.charAt(0)?.toUpperCase() || userData.email?.charAt(0)?.toUpperCase() || 'S'}
-                      </span>
-                    </div>
+                    <Avatar
+                      name={userData.name || userData.email?.split('@')[0]}
+                      email={userData.email}
+                      profilePicture={userData?.profile_picture || userData?.profilePicture}
+                      size="md"
+                      className="flex-shrink-0"
+                    />
                     <div className="hidden lg:block text-left">
                       <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
                         {userData.name || userData.email?.split('@')[0] || 'Staff Member'}
@@ -214,11 +217,13 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                       {/* User Info Header */}
                       <div className="px-4 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
-                            <span className="text-white font-semibold text-lg">
-                              {userData.name?.charAt(0)?.toUpperCase() || userData.email?.charAt(0)?.toUpperCase() || 'S'}
-                            </span>
-                          </div>
+                          <Avatar
+                            name={userData.name || userData.email?.split('@')[0]}
+                            email={userData.email}
+                            profilePicture={userData?.profile_picture || userData?.profilePicture}
+                            size="lg"
+                            className="flex-shrink-0"
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 text-sm truncate">
                               {userData.name || userData.email?.split('@')[0] || 'Staff Member'}
@@ -343,11 +348,13 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                 {/* Mobile User Info Card */}
                 <div className="px-4 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-white font-semibold text-lg">
-                        {userData.name?.charAt(0)?.toUpperCase() || userData.email?.charAt(0)?.toUpperCase() || 'S'}
-                      </span>
-                    </div>
+                    <Avatar
+                      name={userData.name || userData.email?.split('@')[0]}
+                      email={userData.email}
+                      profilePicture={userData?.profile_picture || userData?.profilePicture}
+                      size="lg"
+                      className="flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-base truncate">
                         {userData.name || userData.email?.split('@')[0] || 'Staff Member'}

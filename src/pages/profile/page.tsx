@@ -1055,50 +1055,7 @@ export default function ProfilePage() {
                       )}
                     </div>
 
-                    {/* Profile Picture Section */}
-                    <div className="border-t border-gray-100 pt-6 sm:pt-8">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i className="ri-image-line text-purple-600 text-sm sm:text-base"></i>
-                        </div>
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">Profile Picture</h3>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
-                          <div>
-                            <h4 className="font-medium text-gray-900 text-sm sm:text-base">Update Profile Picture</h4>
-                            <p className="text-xs sm:text-sm text-gray-600">Upload a new profile picture or remove the current one</p>
-                          </div>
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="sm:size-md border-purple-200 text-purple-600 hover:bg-purple-50"
-                              onClick={handlePictureModalOpen}
-                            >
-                              <i className="ri-upload-line mr-2"></i>
-                              <span className="hidden sm:inline">{userData?.profile_picture ? 'Change Picture' : 'Upload Picture'}</span>
-                              <span className="sm:hidden">{userData?.profile_picture ? 'Change' : 'Upload'}</span>
-                            </Button>
-                            {userData?.profile_picture && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="sm:size-md border-red-200 text-red-600 hover:bg-red-50"
-                                onClick={handlePictureDelete}
-                                disabled={isUploadingPicture}
-                              >
-                                <i className="ri-delete-bin-line mr-2"></i>
-                                Remove
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  
 
                     {/* Security Section */}
                     <div className="border-t border-gray-100 pt-6 sm:pt-8">
