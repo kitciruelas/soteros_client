@@ -715,11 +715,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                     {/* Notification Dropdown */}
                     {showNotifDropdown && (
                       <div 
-                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
-                        onClick={() => {
-                          closeNotificationDropdown()
-                          handleNavigation("/notifications")
-                        }}
+                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-w-[calc(100vw-2rem)]"
                       >
                         {/* Header */}
                         <div className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
@@ -804,6 +800,22 @@ const Navbar: React.FC<NavbarProps> = () => {
                             </div>
                           )}
                         </div>
+
+                        {/* Footer - View All */}
+                        {notifications.length > 0 && (
+                          <div className="border-t border-gray-200 bg-gray-50 rounded-b-lg">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                closeNotificationDropdown();
+                                handleNavigation("/notifications");
+                              }}
+                              className="w-full px-3 sm:px-4 py-3 text-center text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                            >
+                              View All
+                            </button>
+                          </div>
+                        )}
 
                       </div>
                     )}
@@ -977,11 +989,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                   {/* Mobile Notification Dropdown */}
                   {showNotifDropdown && (
                     <div 
-                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
-                      onClick={() => {
-                        closeNotificationDropdown()
-                        handleNavigation("/notifications")
-                      }}
+                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-w-[calc(100vw-2rem)]"
                     >
                       {/* Header */}
                       <div className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-xl">
@@ -995,6 +1003,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                               }}
                               className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
                             >
+                              <span className="hidden xs:inline">Mark all as read</span>
                               <span className="xs:hidden">Mark all</span>
                             </button>
                           )}
@@ -1065,6 +1074,22 @@ const Navbar: React.FC<NavbarProps> = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Footer - View All */}
+                      {notifications.length > 0 && (
+                        <div className="border-t border-gray-200 bg-gray-50 rounded-b-xl">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              closeNotificationDropdown();
+                              handleNavigation("/notifications");
+                            }}
+                            className="w-full px-3 sm:px-4 py-3 text-center text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                          >
+                            View All
+                          </button>
+                        </div>
+                      )}
 
                     </div>
                   )}
