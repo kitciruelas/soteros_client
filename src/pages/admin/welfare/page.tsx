@@ -199,7 +199,7 @@ export default function AdminWelfareManagement() {
       isActive: false,
       title: '',
       description: '',
-      messageWhenDisabled: 'Welfare check system is currently disabled.'
+      messageWhenDisabled: ''
     })
     setIsEditMode(false)
     setIsModalOpen(true)
