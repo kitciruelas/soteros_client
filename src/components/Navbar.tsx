@@ -49,6 +49,9 @@ const Navbar: React.FC<NavbarProps> = () => {
   }>>([]);
   const [notificationSound, setNotificationSound] = useState<HTMLAudioElement | null>(null);
   const lastNotificationId = useRef<number>(0);
+  const notificationQueue = useRef<Array<any>>([]);
+  const isProcessingQueue = useRef<boolean>(false);
+  const processNotificationQueueRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // Function to update auth state
@@ -194,13 +197,17 @@ const Navbar: React.FC<NavbarProps> = () => {
           notif.id > lastNotificationId.current && !notif.is_read
         );
         
-        // Show pop-ups for new notifications
+        // Show pop-ups for new notifications - add to queue and process one at a time
         if (newNotifications.length > 0) {
           lastNotificationId.current = Math.max(...newNotifications.map((n: any) => n.id));
           
-          newNotifications.forEach((notif: any) => {
-            handleNewNotification(notif);
-          });
+          // Add notifications to queue
+          notificationQueue.current.push(...newNotifications);
+          
+          // Start processing queue if not already processing
+          if (!isProcessingQueue.current && processNotificationQueueRef.current) {
+            processNotificationQueueRef.current();
+          }
         }
         
         // Update lastNotificationId to the highest ID seen
@@ -365,6 +372,35 @@ const Navbar: React.FC<NavbarProps> = () => {
       }
     }
   }, [notificationSound]);
+
+  // Process notification queue one at a time
+  const processNotificationQueue = useCallback(() => {
+    if (isProcessingQueue.current || notificationQueue.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueue.current = true;
+    const notification = notificationQueue.current.shift();
+    
+    if (notification) {
+      handleNewNotification(notification);
+      
+      // Wait before processing next notification (2 seconds delay)
+      setTimeout(() => {
+        isProcessingQueue.current = false;
+        if (processNotificationQueueRef.current) {
+          processNotificationQueueRef.current();
+        }
+      }, 2000);
+    } else {
+      isProcessingQueue.current = false;
+    }
+  }, [handleNewNotification]);
+
+  // Store processNotificationQueue in ref so it can be accessed from fetchNotifications
+  useEffect(() => {
+    processNotificationQueueRef.current = processNotificationQueue;
+  }, [processNotificationQueue]);
 
   // Get unread notifications count (like AdminLayout)
   const unreadCount = notifications.filter(notif => !readNotifications.has(notif.id)).length;
