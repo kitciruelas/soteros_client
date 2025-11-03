@@ -776,15 +776,16 @@ const AlertsManagement: React.FC = () => {
       {/* Create Alert Modal */}
       {showCreateModal && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => {
-            if (!isCreating) {
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 cursor-pointer"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isCreating) {
               setShowCreateModal(false);
             }
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
@@ -1232,15 +1233,16 @@ const AlertsManagement: React.FC = () => {
       {/* Edit Alert Modal */}
       {showEditModal && editAlert && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => {
-            if (!isUpdating) {
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 cursor-pointer"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isUpdating) {
               setShowEditModal(false);
             }
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
