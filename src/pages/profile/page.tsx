@@ -501,7 +501,7 @@ export default function ProfilePage() {
           return validatePhilippineMobile(value) ? null : "Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)"
         },
       },
-      address: { required: true },
+      address: { required: false },
       city: { required: false }, // Fixed to "Rosario"
       state: { required: false }, // Fixed to "Batangas"
       zipCode: {
@@ -562,121 +562,79 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateAll()) {
-      // Get fields with errors
-      const fieldNames: Record<string, string> = {
-        firstName: 'First Name',
-        lastName: 'Last Name',
-        email: 'Email',
-        phone: 'Phone',
-        address: 'Barangay',
-        city: 'City',
-        state: 'State',
-        zipCode: 'ZIP Code'
-      }
+    if (!validateAll()) return
 
-      const errorFields = Object.entries(fields)
-        .filter(([_, field]) => field.error)
-        .map(([key, field]) => `${fieldNames[key] || key}: ${field.error}`)
+      setIsSubmitting(true)
 
-      // Show feedback with specific errors
-      const errorMessage = errorFields.length > 0
-        ? errorFields.length === 1
-          ? errorFields[0]
-          : `${errorFields.length} field(s) have errors. Please check: ${errorFields.join('; ')}`
-        : "Please fix the errors in the form before saving."
+      try {
+        const formData = getValues()
+        // Ensure province, city, and zip are set to fixed values
+        formData.state = "Batangas"
+        formData.city = "Rosario"
+        formData.zipCode = "4225"
+        console.log("Updating profile with data:", formData)
 
-      showToast({
-        type: "error",
-        title: "Validation Error",
-        message: errorMessage,
-        durationMs: 6000
-      })
+        const response = await profileApi.updateProfile(formData)
 
-      // Scroll to first error field
-      const firstErrorField = Object.keys(fields).find(key => fields[key as keyof ProfileFormData].error)
-      if (firstErrorField) {
-        const element = document.getElementById(firstErrorField)
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          element.focus()
+        if (response.success) {
+          console.log("Profile updated successfully:", response.user)
+          const updatedUser = { ...userData, ...response.user }
+          setUserData(updatedUser)
+
+          // Use the new updateUserData function to handle storage
+          updateUserData(updatedUser)
+
+          showToast({
+            type: "success",
+            title: "Profile Updated",
+            message: "Your profile has been updated successfully!",
+            durationMs: 3000
+          })
+          setIsEditing(false)
+          setHasUnsavedChanges(false)
+        } else {
+          console.warn("Profile update returned unsuccessful response:", response)
+          showToast({
+            type: "error",
+            title: "Update Failed",
+            message: response.message || "Failed to update profile. Please try again.",
+            durationMs: 5000
+          })
         }
+      } catch (error) {
+        console.error("Profile update failed:", error)
+
+        // Handle authentication errors specifically
+        if (
+          error instanceof Error &&
+          (error.message.includes("Authentication") ||
+            error.message.includes("token") ||
+            error.message.includes("401") ||
+            error.message.includes("403"))
+        ) {
+          showToast({
+            type: "error",
+            title: "Session Expired",
+            message: "Your session has expired. Please log in again to save changes.",
+            durationMs: 4000
+          })
+
+          // Auto-redirect to login after showing message
+          setTimeout(() => {
+            clearAuthData()
+            navigate("/auth/login")
+          }, 3000)
+        } else {
+          showToast({
+            type: "error",
+            title: "Update Failed",
+            message: error instanceof Error ? error.message : "Network error. Please try again.",
+            durationMs: 5000
+          })
+        }
+      } finally {
+        setIsSubmitting(false)
       }
-
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      const formData = getValues()
-      // Ensure province, city, and zip are set to fixed values
-      formData.state = "Batangas"
-      formData.city = "Rosario"
-      formData.zipCode = "4225"
-      console.log("Updating profile with data:", formData)
-
-      const response = await profileApi.updateProfile(formData)
-
-      if (response.success) {
-        console.log("Profile updated successfully:", response.user)
-        const updatedUser = { ...userData, ...response.user }
-        setUserData(updatedUser)
-
-        // Use the new updateUserData function to handle storage
-        updateUserData(updatedUser)
-
-        showToast({
-          type: "success",
-          title: "Profile Updated",
-          message: "Your profile has been updated successfully!",
-          durationMs: 3000
-        })
-        setIsEditing(false)
-        setHasUnsavedChanges(false)
-      } else {
-        console.warn("Profile update returned unsuccessful response:", response)
-        showToast({
-          type: "error",
-          title: "Update Failed",
-          message: response.message || "Failed to update profile. Please try again.",
-          durationMs: 5000
-        })
-      }
-    } catch (error) {
-      console.error("Profile update failed:", error)
-
-      // Handle authentication errors specifically
-      if (
-        error instanceof Error &&
-        (error.message.includes("Authentication") ||
-          error.message.includes("token") ||
-          error.message.includes("401") ||
-          error.message.includes("403"))
-      ) {
-        showToast({
-          type: "error",
-          title: "Session Expired",
-          message: "Your session has expired. Please log in again to save changes.",
-          durationMs: 4000
-        })
-
-        // Auto-redirect to login after showing message
-        setTimeout(() => {
-          clearAuthData()
-          navigate("/auth/login")
-        }, 3000)
-      } else {
-        showToast({
-          type: "error",
-          title: "Update Failed",
-          message: error instanceof Error ? error.message : "Network error. Please try again.",
-          durationMs: 5000
-        })
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
   }
 
   if (!isAuthenticated || isLoading) {
