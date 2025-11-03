@@ -197,7 +197,7 @@ export default function AdminWelfareManagement() {
   const handleAddSettings = () => {
     setEditingSettings({
       isActive: false,
-      title: 'Welfare Check System',
+      title: '',
       description: '',
       messageWhenDisabled: 'Welfare check system is currently disabled.'
     })
@@ -757,7 +757,7 @@ export default function AdminWelfareManagement() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {isEditMode ? 'Edit Welfare Settings' : 'Add Welfare Settings'}
+                  {isEditMode ? 'Edit Welfare' : 'Add Welfare'}
                 </h3>
                 <button
                   onClick={() => {
@@ -872,7 +872,7 @@ export default function AdminWelfareManagement() {
         onClose={() => { if (!isDeleting) { setShowDeleteConfirm(false); setSelectedSetting(null); } }}
         onConfirm={() => selectedSetting && handleDeleteSettings(selectedSetting)}
         title="Delete Welfare Settings"
-        message={`Are you sure you want to delete the welfare check settings for "${selectedSetting?.title}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete the welfare check  for "${selectedSetting?.title}"? This action cannot be undone.`}
         confirmText="Delete Settings"
         cancelText="Cancel"
         confirmVariant="secondary"
