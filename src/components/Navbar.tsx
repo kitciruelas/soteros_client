@@ -715,16 +715,14 @@ const Navbar: React.FC<NavbarProps> = () => {
                     {/* Notification Dropdown */}
                     {showNotifDropdown && (
                       <div 
-                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-w-[calc(100vw-2rem)]"
+                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
+                        onClick={() => {
+                          closeNotificationDropdown()
+                          handleNavigation("/notifications")
+                        }}
                       >
                         {/* Header */}
-                        <div 
-                          className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg cursor-pointer"
-                          onClick={() => {
-                            closeNotificationDropdown()
-                            handleNavigation("/notifications")
-                          }}
-                        >
+                        <div className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-lg">
                           <div className="flex items-center justify-between gap-2">
                             <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h3>
                             {unreadCount > 0 && (
@@ -979,16 +977,14 @@ const Navbar: React.FC<NavbarProps> = () => {
                   {/* Mobile Notification Dropdown */}
                   {showNotifDropdown && (
                     <div 
-                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-w-[calc(100vw-2rem)]"
+                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 cursor-pointer max-w-[calc(100vw-2rem)]"
+                      onClick={() => {
+                        closeNotificationDropdown()
+                        handleNavigation("/notifications")
+                      }}
                     >
                       {/* Header */}
-                      <div 
-                        className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-xl cursor-pointer"
-                        onClick={() => {
-                          closeNotificationDropdown()
-                          handleNavigation("/notifications")
-                        }}
-                      >
+                      <div className="px-3 sm:px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 rounded-t-xl">
                         <div className="flex items-center justify-between gap-2">
                           <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h3>
                           {unreadCount > 0 && (
@@ -999,7 +995,6 @@ const Navbar: React.FC<NavbarProps> = () => {
                               }}
                               className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
                             >
-                              <span className="hidden xs:inline">Mark all as read</span>
                               <span className="xs:hidden">Mark all</span>
                             </button>
                           )}
