@@ -895,76 +895,106 @@ const StaffProfilePage: React.FC = () => {
                       {/* Edit Mode - Show when editing */}
                       {isEditing && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <Input
-                            label="First Name"
-                            type="text"
-                            name="firstName"
-                            id="firstName"
-                            value={editForm.name.split(' ')[0] || ''}
-                            onChange={(e) => {
-                              const lastName = editForm.name.split(' ').slice(1).join(' ') || ''
-                              const newName = e.target.value + (lastName ? ' ' + lastName : '')
-                              handleInputChange("name", newName)
-                            }}
-                            error=""
-                            placeholder="Enter your first name"
-                            required
-                            disabled={!isEditing}
-                            icon={<i className="ri-user-line"></i>}
-                          />
-                          <Input
-                            label="Last Name"
-                            type="text"
-                            name="lastName"
-                            id="lastName"
-                            value={editForm.name.split(' ').slice(1).join(' ') || ''}
-                            onChange={(e) => {
-                              const firstName = editForm.name.split(' ')[0] || ''
-                              const newName = firstName + (e.target.value ? ' ' + e.target.value : '')
-                              handleInputChange("name", newName)
-                            }}
-                            error=""
-                            placeholder="Enter your last name"
-                            required
-                            disabled={!isEditing}
-                            icon={<i className="ri-user-line"></i>}
-                          />
-                          <Input
-                            label="Position"
-                            type="text"
-                            name="position"
-                            id="position"
-                            value={editForm.position}
-                            onChange={() => {}}
-                            error=""
-                            placeholder="Position"
-                            disabled={true}
-                            icon={<i className="ri-briefcase-line"></i>}
-                          />
-                          <Input
-                            label="Department"
-                            type="text"
-                            name="department"
-                            id="department"
-                            value={editForm.department}
-                            onChange={() => {}}
-                            error=""
-                            placeholder="Department"
-                            disabled={true}
-                            icon={<i className="ri-building-line"></i>}
-                          />
-                          <Input
-                            label="Team"
-                            type="text"
-                            name="team"
-                            id="team"
-                            value={team?.name || profile?.team_name || 'Not assigned'}
-                            onChange={() => {}}
-                            error=""
-                            placeholder="Team assignment"
-                            disabled={true}
-                            icon={<i className="ri-team-line"></i>}
-                          />
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i className="ri-user-line text-gray-400"></i>
+                              </div>
+                              <input
+                                type="text"
+                                name="firstName"
+                                id="firstName"
+                                value={editForm.name.split(' ')[0] || ''}
+                                onChange={(e) => {
+                                  const lastName = editForm.name.split(' ').slice(1).join(' ') || ''
+                                  const newName = e.target.value + (lastName ? ' ' + lastName : '')
+                                  handleInputChange("name", newName)
+                                }}
+                                placeholder="Enter your first name"
+                                required
+                                disabled={!isEditing}
+                                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i className="ri-user-line text-gray-400"></i>
+                              </div>
+                              <input
+                                type="text"
+                                name="lastName"
+                                id="lastName"
+                                value={editForm.name.split(' ').slice(1).join(' ') || ''}
+                                onChange={(e) => {
+                                  const firstName = editForm.name.split(' ')[0] || ''
+                                  const newName = firstName + (e.target.value ? ' ' + e.target.value : '')
+                                  handleInputChange("name", newName)
+                                }}
+                                placeholder="Enter your last name"
+                                required
+                                disabled={!isEditing}
+                                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i className="ri-briefcase-line text-gray-400"></i>
+                              </div>
+                              <input
+                                type="text"
+                                name="position"
+                                id="position"
+                                value={editForm.position}
+                                onChange={() => {}}
+                                placeholder="Position"
+                                disabled={true}
+                                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i className="ri-building-line text-gray-400"></i>
+                              </div>
+                              <input
+                                type="text"
+                                name="department"
+                                id="department"
+                                value={editForm.department}
+                                onChange={() => {}}
+                                placeholder="Department"
+                                disabled={true}
+                                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i className="ri-team-line text-gray-400"></i>
+                              </div>
+                              <input
+                                type="text"
+                                name="team"
+                                id="team"
+                                value={team?.name || profile?.team_name || 'Not assigned'}
+                                onChange={() => {}}
+                                placeholder="Team assignment"
+                                disabled={true}
+                                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1004,19 +1034,25 @@ const StaffProfilePage: React.FC = () => {
                       {/* Edit Mode - Show when editing */}
                       {isEditing && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <Input
-                            label="Email Address"
-                            type="email"
-                            name="email"
-                            id="email"
-                            value={editForm.email}
-                            onChange={(e) => handleInputChange("email", e.target.value)}
-                            error=""
-                            placeholder="Enter your email"
-                            required
-                            disabled={!isEditing}
-                            icon={<i className="ri-mail-line"></i>}
-                          />
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i className="ri-mail-line text-gray-400"></i>
+                              </div>
+                              <input
+                                type="email"
+                                name="email"
+                                id="email"
+                                value={editForm.email}
+                                onChange={(e) => handleInputChange("email", e.target.value)}
+                                placeholder="Enter your email"
+                                required
+                                disabled={!isEditing}
+                                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
+                              />
+                            </div>
+                          </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                             <PhoneInput
