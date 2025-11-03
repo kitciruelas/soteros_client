@@ -406,7 +406,6 @@ const EvacuationCenterPage: React.FC = () => {
 
           {/* Loading Text */}
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Loading Evacuation Centers</h2>
-          <p className="text-gray-600 mb-6">Fetching real-time information...</p>
 
           {/* Loading Progress */}
           <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
@@ -999,241 +998,240 @@ const EvacuationCenterPage: React.FC = () => {
             <div>
               {/* Enhanced List View */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-6 lg:px-8 max-w-6xl mx-auto">
-              {displayedCenters.map((center, index) => {
-                const centerWithRoute = centersWithRoutes.find(c => c.center_id === center.center_id);
-                const distance = centerWithRoute?.distance || null;
-                const duration = centerWithRoute?.duration || null;
-                const isNearby = nearbyCenters.some(nearbyCenter => nearbyCenter.center_id === center.center_id);
-                const occupancyPercentage = (center.current_occupancy / center.capacity) * 100;
+                {displayedCenters.map((center, index) => {
+                  const centerWithRoute = centersWithRoutes.find(c => c.center_id === center.center_id);
+                  const distance = centerWithRoute?.distance || null;
+                  const duration = centerWithRoute?.duration || null;
+                  const isNearby = nearbyCenters.some(nearbyCenter => nearbyCenter.center_id === center.center_id);
+                  const occupancyPercentage = (center.current_occupancy / center.capacity) * 100;
 
-                return (
-                  <div
-                    key={center.center_id}
-                    className={`group relative bg-white/90 backdrop-blur-sm border rounded-xl shadow-lg px-3 py-4 md:px-1 md:py-3 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
-                      isNearby
-                        ? 'border-blue-300 ring-1 ring-blue-100 bg-gradient-to-br from-blue-50/50 to-white'
-                        : 'border-white/20 hover:border-blue-200'
-                    }`}
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                      animation: 'fadeInUp 0.4s ease-out forwards'
-                    }}
-                  >
-                    {/* Closest Center Badge */}
-                    {isNearby && distance && (
-                      <div className="absolute -top-1 -right-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-md">
-                        <i className="ri-route-line mr-0.5 text-xs"></i>
-                        {distance.toFixed(1)}km
-                        {duration && (
-                          <span className="ml-1">• {Math.round(duration)}min</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${
-                          center.status === 'open' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                          center.status === 'full' ? 'bg-gradient-to-r from-red-500 to-rose-500' :
-                          'bg-gradient-to-r from-gray-500 to-slate-500'
-                        }`}>
-                          <i className="ri-building-2-line text-lg text-white"></i>
-                        </div>
-                        <div>
-                          <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                            {center.name}
-                          </h3>
-                          <p className="text-gray-500 text-sm">Emergency Facility</p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
-                          center.status === 'open' ? 'bg-green-100 text-green-700' :
-                          center.status === 'full' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            center.status === 'open' ? 'bg-green-500' :
-                            center.status === 'full' ? 'bg-red-500' :
-                            'bg-gray-500'
-                          }`}></div>
-                          {center.status.charAt(0).toUpperCase() + center.status.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Simple Capacity & Status */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-gray-700">Capacity</span>
-                        <span className="text-sm text-gray-600">
-                          {center.current_occupancy}/{center.capacity}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
-                          className={`h-2.5 rounded-full transition-all duration-1000 ${
-                            occupancyPercentage >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600' :
-                            occupancyPercentage >= 70 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                            'bg-gradient-to-r from-green-500 to-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(occupancyPercentage, 100)}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-gray-500">
-                          {occupancyPercentage.toFixed(0)}% occupied
-                        </p>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
-                          center.status === 'open' ? 'bg-green-100 text-green-700' :
-                          center.status === 'full' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {center.status.charAt(0).toUpperCase() + center.status.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Simple Contact Information */}
-                    <div className="mb-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i className="ri-user-line text-blue-600 text-xs"></i>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 truncate">{center.contact_person}</p>
-                            <p className="text-xs text-gray-500">Contact Person</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-3">
-                          <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i className="ri-phone-line text-green-600 text-xs"></i>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 truncate">{center.contact_number}</p>
-                            <p className="text-xs text-gray-500">Phone Number</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Simple Resources Summary */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <i className="ri-tools-line text-purple-600 text-sm"></i>
-                          <span className="text-sm font-medium text-gray-700">Resources</span>
-                        </div>
-                        <button
-                          onClick={() => loadEvacuationResources(center.center_id)}
-                          className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-                        >
-                          {resourcesLoading[center.center_id] ? 'Loading...' : 'Refresh'}
-                        </button>
-                      </div>
-                      
-                      {resourcesLoading[center.center_id] ? (
-                        <div className="flex items-center justify-center py-3">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
-                          <span className="ml-2 text-sm text-gray-500">Loading...</span>
-                        </div>
-                      ) : (
-                        <div>
-                          {(() => {
-                            const resources = getResourcesForCenter(center.center_id);
-                            const hasResources = resources.length > 0;
-                            
-                            if (!hasResources) {
-                              return (
-                                <div className="text-center py-3 bg-gray-50 rounded-lg">
-                                  <p className="text-sm text-gray-500">No resources available</p>
-                                  <button
-                                    onClick={() => loadEvacuationResources(center.center_id)}
-                                    className="text-xs text-purple-600 hover:text-purple-700 mt-1"
-                                  >
-                                    Load Resources
-                                  </button>
-                                </div>
-                              );
-                            }
-
-                            const totalResources = resources.length;
-                            const resourcesWithImages = resources.filter(r => r.picture).length;
-                            
-                            return (
-                              <div 
-                                onClick={() => setSelectedGallery({ 
-                                  center: center,
-                                  resources: resources
-                                })}
-                                className="bg-purple-50 rounded-lg p-3 border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <i className="ri-tools-line text-purple-600"></i>
-                                    <span className="text-sm font-medium text-gray-700">
-                                      {totalResources} resources available
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                                    {resourcesWithImages > 0 && (
-                                      <span className="flex items-center">
-                                        <i className="ri-image-line mr-1"></i>
-                                        {resourcesWithImages} with images
-                                      </span>
-                                    )}
-                                    <i className="ri-arrow-right-line"></i>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })()}
+                  return (
+                    <div
+                      key={center.center_id}
+                      className={`group relative bg-white/90 backdrop-blur-sm border rounded-xl shadow-lg px-3 py-4 md:px-1 md:py-3 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                        isNearby
+                          ? 'border-blue-300 ring-1 ring-blue-100 bg-gradient-to-br from-blue-50/50 to-white'
+                          : 'border-white/20 hover:border-blue-200'
+                      }`}
+                      style={{
+                        animationDelay: `${index * 100}ms`,
+                        animation: 'fadeInUp 0.4s ease-out forwards'
+                      }}
+                    >
+                      {/* Closest Center Badge */}
+                      {isNearby && distance && (
+                        <div className="absolute -top-1 -right-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-md">
+                          <i className="ri-route-line mr-0.5 text-xs"></i>
+                          {distance.toFixed(1)}km
+                          {duration && (
+                            <span className="ml-1">• {Math.round(duration)}min</span>
+                          )}
                         </div>
                       )}
+
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${
+                            center.status === 'open' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                            center.status === 'full' ? 'bg-gradient-to-r from-red-500 to-rose-500' :
+                            'bg-gradient-to-r from-gray-500 to-slate-500'
+                          }`}>
+                            <i className="ri-building-2-line text-lg text-white"></i>
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                              {center.name}
+                            </h3>
+                            <p className="text-gray-500 text-sm">Emergency Facility</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
+                            center.status === 'open' ? 'bg-green-100 text-green-700' :
+                            center.status === 'full' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                              center.status === 'open' ? 'bg-green-500' :
+                              center.status === 'full' ? 'bg-red-500' :
+                              'bg-gray-500'
+                            }`}></div>
+                            {center.status.charAt(0).toUpperCase() + center.status.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Simple Capacity & Status */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">Capacity</span>
+                          <span className="text-sm text-gray-600">
+                            {center.current_occupancy}/{center.capacity}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className={`h-2.5 rounded-full transition-all duration-1000 ${
+                              occupancyPercentage >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                              occupancyPercentage >= 70 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                              'bg-gradient-to-r from-green-500 to-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(occupancyPercentage, 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-xs text-gray-500">
+                            {occupancyPercentage.toFixed(0)}% occupied
+                          </p>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
+                            center.status === 'open' ? 'bg-green-100 text-green-700' :
+                            center.status === 'full' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {center.status.charAt(0).toUpperCase() + center.status.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Simple Contact Information */}
+                      <div className="mb-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <i className="ri-user-line text-blue-600 text-xs"></i>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 truncate">{center.contact_person}</p>
+                              <p className="text-xs text-gray-500">Contact Person</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                              <i className="ri-phone-line text-green-600 text-xs"></i>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 truncate">{center.contact_number}</p>
+                              <p className="text-xs text-gray-500">Phone Number</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Simple Resources Summary */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <i className="ri-tools-line text-purple-600 text-sm"></i>
+                            <span className="text-sm font-medium text-gray-700">Resources</span>
+                          </div>
+                          <button
+                            onClick={() => loadEvacuationResources(center.center_id)}
+                            className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                          >
+                            {resourcesLoading[center.center_id] ? 'Loading...' : 'Refresh'}
+                          </button>
+                        </div>
+                        
+                        {resourcesLoading[center.center_id] ? (
+                          <div className="flex items-center justify-center py-3">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                            <span className="ml-2 text-sm text-gray-500">Loading...</span>
+                          </div>
+                        ) : (
+                          <div>
+                            {(() => {
+                              const resources = getResourcesForCenter(center.center_id);
+                              const hasResources = resources.length > 0;
+                              
+                              if (!hasResources) {
+                                return (
+                                  <div className="text-center py-3 bg-gray-50 rounded-lg">
+                                    <p className="text-sm text-gray-500">No resources available</p>
+                                    <button
+                                      onClick={() => loadEvacuationResources(center.center_id)}
+                                      className="text-xs text-purple-600 hover:text-purple-700 mt-1"
+                                    >
+                                      Load Resources
+                                    </button>
+                                  </div>
+                                );
+                              }
+
+                              const totalResources = resources.length;
+                              const resourcesWithImages = resources.filter(r => r.picture).length;
+                              
+                              return (
+                                <div 
+                                  onClick={() => setSelectedGallery({ 
+                                    center: center,
+                                    resources: resources
+                                  })}
+                                  className="bg-purple-50 rounded-lg p-3 border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <i className="ri-tools-line text-purple-600"></i>
+                                      <span className="text-sm font-medium text-gray-700">
+                                        {totalResources} resources available
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                      {resourcesWithImages > 0 && (
+                                        <span className="flex items-center">
+                                          <i className="ri-image-line mr-1"></i>
+                                          {resourcesWithImages} with images
+                                        </span>
+                                      )}
+                                      <i className="ri-arrow-right-line"></i>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(center.name + ' Rosario, Batangas')}`, '_blank')}
+                          className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center justify-center space-x-2"
+                        >
+                          <i className="ri-direction-line text-sm"></i>
+                          <span>Directions</span>
+                        </button>
+                        <button
+                          onClick={() => window.open(`tel:${center.contact_number}`, '_self')}
+                          className="flex-1 border border-blue-600 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-medium text-sm flex items-center justify-center space-x-2"
+                        >
+                          <i className="ri-phone-line text-sm"></i>
+                          <span>Call</span>
+                        </button>
+                      </div>
                     </div>
-
-
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <button
-                        onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(center.name + ' Rosario, Batangas')}`, '_blank')}
-                        className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center justify-center space-x-2"
-                      >
-                        <i className="ri-direction-line text-sm"></i>
-                        <span>Directions</span>
-                      </button>
-                      <button
-                        onClick={() => window.open(`tel:${center.contact_number}`, '_self')}
-                        className="flex-1 border border-blue-600 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-medium text-sm flex items-center justify-center space-x-2"
-                      >
-                        <i className="ri-phone-line text-sm"></i>
-                        <span>Call</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Show More / Show Less Button */}
-            {filteredCenters.length > 8 && (
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={() => setShowAllCenters(!showAllCenters)}
-                  className="px-6 py-3 rounded-xl font-semibold  transition-colors flex items-center space-x-2"
-                >
-                  <i className={`x-${showAllCenters ? 'up' : 'down'}-line`}></i>
-                  <span>{showAllCenters ? 'Show Less' : 'Show More'}</span>
-                </button>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        )}
-        </>
+              
+              {/* Show More / Show Less Button */}
+              {filteredCenters.length > 8 && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setShowAllCenters(!showAllCenters)}
+                    className="px-6 py-3 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                  >
+                    <i className={`ri-arrow-${showAllCenters ? 'up' : 'down'}-line`}></i>
+                    <span>{showAllCenters ? 'Show Less' : 'Show More'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+            </>
           )}
 
           {/* Image Preview Modal */}

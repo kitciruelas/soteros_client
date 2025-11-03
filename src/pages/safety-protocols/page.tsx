@@ -256,7 +256,6 @@ const SafetyProtocolsPage: React.FC = () => {
 
           {/* Loading Text */}
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Loading Safety Protocols</h2>
-          <p className="text-gray-600 mb-6">Fetching real-time information...</p>
 
           {/* Loading Progress */}
           <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
