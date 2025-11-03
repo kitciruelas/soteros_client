@@ -754,6 +754,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     };
   }, [showNotifDropdown]);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isMobileMenuOpen]);
+
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -868,8 +886,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={toggleMobileMenu}></div>
+          <div className="fixed top-0 left-0 right-0 bottom-0 z-50 lg:hidden overflow-hidden">
+            <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50" onClick={toggleMobileMenu}></div>
             <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-xl overflow-y-auto thin-scrollbar">
               <AdminSidebar />
             </div>
