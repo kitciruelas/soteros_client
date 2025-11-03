@@ -175,16 +175,19 @@ const StaffManagement: React.FC = () => {
     const filtered = teams.filter(team => teamIds.includes(team.id));
     setFilteredTeams(filtered);
     
-    // Auto-select the first available team for the department
-    if (filtered.length > 0) {
-      setFormData(prev => ({ ...prev, team_id: filtered[0].id.toString() }));
-    } else {
-      setFormData(prev => ({ ...prev, team_id: '' }));
-    }
-    
+    // Clear team selection if current team is not valid for the new department
     // Auto-set availability based on department
     const defaultAvailability = departmentAvailabilityMapping[department] || 'available';
-    setFormData(prev => ({ ...prev, availability: defaultAvailability }));
+    setFormData(prev => {
+      const currentTeamId = prev.team_id ? parseInt(prev.team_id) : null;
+      const isValidTeam = currentTeamId && filtered.some(team => team.id === currentTeamId);
+      
+      return {
+        ...prev,
+        team_id: isValidTeam ? prev.team_id : '',
+        availability: defaultAvailability
+      };
+    });
   };
 
   const handleStatusChange = async (staffId: number, newStatus: Staff['status']) => {
@@ -331,7 +334,7 @@ const StaffManagement: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // If department changes, filter teams and auto-select appropriate team
+    // If department changes, filter teams based on department
     if (name === 'department') {
       filterTeamsByDepartment(value);
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -433,7 +436,7 @@ const StaffManagement: React.FC = () => {
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
             placeholder="Enter staff name"
             required
             disabled={isSubmitting}
@@ -446,7 +449,7 @@ const StaffManagement: React.FC = () => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
             placeholder="Enter email address"
             required
             disabled={isSubmitting}
@@ -477,7 +480,7 @@ const StaffManagement: React.FC = () => {
             name="position"
             value={formData.position}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 placeholder-gray-500"
             placeholder="Enter position"
             required
             disabled={isSubmitting}
@@ -492,7 +495,7 @@ const StaffManagement: React.FC = () => {
             name="department"
             value={formData.department}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900"
             required
             disabled={isSubmitting}
           >
@@ -511,7 +514,7 @@ const StaffManagement: React.FC = () => {
             name="team_id"
             value={formData.team_id}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900"
             disabled={isSubmitting}
           >
             <option value="">No Team</option>
@@ -521,8 +524,8 @@ const StaffManagement: React.FC = () => {
           </select>
           <p className="text-xs text-gray-500 mt-1">
             {formData.department 
-              ? `Team automatically selected for ${formData.department} department` 
-              : 'Team will be auto-selected when department is chosen'
+              ? `Available teams for ${formData.department} department` 
+              : 'Select a department to see available teams'
             }
           </p>
         </div>
