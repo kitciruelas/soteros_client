@@ -9,6 +9,7 @@ import Checkbox from "../../../components/base/Checkbox"
 import useForm from "../../../hooks/useForm"
 import { apiRequest } from "../../../utils/api"
 import Navbar from "../../../components/Navbar"
+import { useToast } from "../../../components/base/Toast"
 
 interface LoginFormData {
   email: string
@@ -18,9 +19,7 @@ interface LoginFormData {
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
-  const [showErrorMessage, setShowErrorMessage] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  const { showToast } = useToast()
   
   // reCAPTCHA state
   const recaptchaRef = useRef<ReCAPTCHA>(null)
@@ -65,8 +64,6 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true)
-    setShowErrorMessage(false)
-    setShowSuccessMessage(false)
     setRecaptchaError("")
 
     try {
@@ -154,7 +151,6 @@ export default function LoginPage() {
       }
 
       if (userData) {
-        setShowSuccessMessage(true)
         console.log(`Login successful for ${userType} user:`, userData)
         console.log(`Token in userData:`, userData.token ? "Present" : "Missing")
 
@@ -176,6 +172,14 @@ export default function LoginPage() {
         // Notify components of auth state change
         window.dispatchEvent(new Event("authStateChanged"))
 
+        // Show success toast
+        showToast({
+          type: "success",
+          title: "Login Successful",
+          message: "Redirecting to dashboard...",
+          durationMs: 2000
+        })
+
         // Redirect based on user type
         setTimeout(() => {
           if (userType === "staff") {
@@ -196,8 +200,12 @@ export default function LoginPage() {
       }
 
       // Handle specific error cases
-      setErrorMessage("Email or password is incorrect. Please try again.")
-      setShowErrorMessage(true)
+      showToast({
+        type: "error",
+        title: "Login Failed",
+        message: "Email or password is incorrect. Please try again.",
+        durationMs: 5000
+      })
       
       // Reset reCAPTCHA on failed login
       if (recaptchaRef.current) {
@@ -206,8 +214,12 @@ export default function LoginPage() {
       setRecaptchaValue(null)
     } catch (error) {
       console.error("Login failed:", error)
-      setErrorMessage("Login failed: " + (error instanceof Error ? error.message : "Unknown error"))
-      setShowErrorMessage(true)
+      showToast({
+        type: "error",
+        title: "Login Failed",
+        message: error instanceof Error ? error.message : "Unknown error occurred. Please try again.",
+        durationMs: 5000
+      })
       
       // Reset reCAPTCHA on error
       if (recaptchaRef.current) {
@@ -216,7 +228,6 @@ export default function LoginPage() {
       setRecaptchaValue(null)
     } finally {
       setIsSubmitting(false)
-      setTimeout(() => setShowErrorMessage(false), 5000)
     }
   }
 
@@ -251,33 +262,6 @@ export default function LoginPage() {
             <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-200"></div>
           </div>
         </div>
-
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl shadow-sm animate-fadeIn">
-            <div className="flex items-center gap-3 text-green-800">
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                <i className="ri-check-circle-line text-green-600"></i>
-              </div>
-              <span className="text-sm font-medium">Login successful! Redirecting to dashboard...</span>
-              <div className="ml-auto">
-                <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {showErrorMessage && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-sm animate-shake">
-            <div className="flex items-center gap-3 text-red-800">
-              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                <i className="ri-error-warning-line text-red-600"></i>
-              </div>
-              <span className="text-sm font-medium">{errorMessage}</span>
-            </div>
-          </div>
-        )}
 
         {/* Login Form */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
