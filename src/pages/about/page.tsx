@@ -374,25 +374,39 @@ const AboutPage: React.FC = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-700 py-16 md:py-20">
-        <div className="container mx-auto px-4 lg:px-8 max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
+      <section className="relative bg-gradient-to-br from-blue-800 via-blue-900 to-indigo-900 py-20 md:py-28 overflow-hidden">
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-blue-400 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-400 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative container mx-auto px-4 lg:px-8 max-w-5xl text-center">
+          {/* Icon/Decoration */}
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl mb-8 border border-white/20">
+            <i className="ri-team-line text-4xl text-white"></i>
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 text-balance">
             Ready to Get Involved?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed text-pretty">
             Join our community of prepared citizens and help us build a safer, more resilient Rosario.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          
+          <div className="flex flex-col sm:flex-row gap-5 justify-center items-center">
             <Link
               to="/incident-report"
-              className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-2xl hover:shadow-yellow-500/25 hover:-translate-y-1"
+              className="group bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-10 py-5 rounded-2xl font-bold text-lg md:text-xl transition-all duration-300 shadow-2xl hover:shadow-yellow-500/50 hover:-translate-y-2 flex items-center gap-3 min-w-[250px] justify-center"
             >
+              <i className="ri-alarm-warning-line text-2xl group-hover:scale-110 transition-transform duration-300"></i>
               Report an Incident
             </Link>
             <Link
               to="/evacuation-center"
-              className="bg-white/20 hover:bg-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50"
+              className="group bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-10 py-5 rounded-2xl font-bold text-lg md:text-xl transition-all duration-300 border-2 border-white/30 hover:border-white/50 hover:-translate-y-2 flex items-center gap-3 min-w-[250px] justify-center shadow-xl"
             >
+              <i className="ri-building-line text-2xl group-hover:scale-110 transition-transform duration-300"></i>
               Find Evacuation Centers
             </Link>
           </div>
@@ -526,7 +540,7 @@ const AboutPage: React.FC = () => {
           <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-gray-400 text-sm mb-4 md:mb-0">
-                © 2024 MDRRMO Rosario, Batangas. All rights reserved.
+                © 2025 SoteROS. All rights reserved.
               </div>
               <div className="flex flex-wrap gap-6 text-sm">
                 <button
