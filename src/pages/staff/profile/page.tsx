@@ -144,8 +144,6 @@ const StaffProfilePage: React.FC = () => {
         editForm.name !== profile.name ||
         editForm.email !== profile.email ||
         editForm.phone !== profile.phone ||
-        editForm.position !== profile.position ||
-        editForm.department !== profile.department ||
         editForm.availability !== profile.availability
       setHasUnsavedChanges(hasChanges)
     }
@@ -380,8 +378,6 @@ const StaffProfilePage: React.FC = () => {
         name: editForm.name.trim(),
         email: editForm.email.trim(),
         phone: editForm.phone.trim(),
-        position: editForm.position.trim(),
-        department: editForm.department.trim(),
       }
 
       const response = await staffManagementApi.updateStaff(Number(currentStaffId), updateData)
@@ -939,11 +935,10 @@ const StaffProfilePage: React.FC = () => {
                             name="position"
                             id="position"
                             value={editForm.position}
-                            onChange={(e) => handleInputChange("position", e.target.value)}
+                            onChange={() => {}}
                             error=""
-                            placeholder="Enter your position"
-                            required
-                            disabled={!isEditing}
+                            placeholder="Position"
+                            disabled={true}
                             icon={<i className="ri-briefcase-line"></i>}
                           />
                           <Input
@@ -952,11 +947,10 @@ const StaffProfilePage: React.FC = () => {
                             name="department"
                             id="department"
                             value={editForm.department}
-                            onChange={(e) => handleInputChange("department", e.target.value)}
+                            onChange={() => {}}
                             error=""
-                            placeholder="Enter your department"
-                            required
-                            disabled={!isEditing}
+                            placeholder="Department"
+                            disabled={true}
                             icon={<i className="ri-building-line"></i>}
                           />
                           <Input
