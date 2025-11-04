@@ -256,7 +256,7 @@ export default function HistoryReportPage() {
       console.log(`🔍 Fetching incidents for user ID: ${userId}`)
       
       // Get the correct API base URL
-      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend-q2yihjhchq-et.a.run.app/api');
       const apiUrl = `${apiBaseUrl}/incidents/user/${userId}`;
       
       console.log(`🔍 API URL: ${apiUrl}`)

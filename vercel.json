@@ -8,7 +8,7 @@
   },
   "build": {
     "env": {
-      "VITE_API_URL": "https://soteros-backend.onrender.com/api"
+      "VITE_API_URL": "https://soteros-backend-q2yihjhchq-et.a.run.app/api"
     }
   },
   "rewrites": [
