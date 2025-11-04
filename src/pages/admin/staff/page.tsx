@@ -100,7 +100,6 @@ const StaffManagement: React.FC = () => {
   const [totalStaff, setTotalStaff] = useState(0);
   const { showToast } = useToast();
   const [showExportPreview, setShowExportPreview] = useState(false);
-  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssigningTeam, setIsAssigningTeam] = useState(false);
   const [updatingStatusStaffId, setUpdatingStatusStaffId] = useState<number | null>(null);
@@ -156,7 +155,6 @@ const StaffManagement: React.FC = () => {
       
       if (data.success) {
         setTeams(data.teams || []);
-        setFilteredTeams(data.teams || []); // Initialize filtered teams
         console.log('Teams data set:', data.teams?.length || 0, 'teams');
       }
     } catch (error) {
@@ -164,33 +162,6 @@ const StaffManagement: React.FC = () => {
     }
   };
 
-  // Function to filter teams based on selected department
-  const filterTeamsByDepartment = (department: string, preserveTeamId?: string, preserveAvailability?: boolean) => {
-    if (!department) {
-      setFilteredTeams(teams);
-      return;
-    }
-
-    const teamIds = departmentTeamMapping[department] || [];
-    const filtered = teams.filter(team => teamIds.includes(team.id));
-    setFilteredTeams(filtered);
-    
-    // Clear team selection if current team is not valid for the new department
-    // Auto-set availability based on department (unless preserving it)
-    const defaultAvailability = departmentAvailabilityMapping[department] || 'available';
-    setFormData(prev => {
-      // Use preserveTeamId if provided (for edit mode), otherwise use prev.team_id
-      const teamIdToCheck = preserveTeamId !== undefined ? preserveTeamId : prev.team_id;
-      const currentTeamId = teamIdToCheck ? parseInt(teamIdToCheck) : null;
-      const isValidTeam = currentTeamId && filtered.some(team => team.id === currentTeamId);
-      
-      return {
-        ...prev,
-        team_id: isValidTeam ? teamIdToCheck : '',
-        availability: preserveAvailability ? prev.availability : defaultAvailability
-      };
-    });
-  };
 
   const handleStatusChange = async (staffId: number, newStatus: Staff['status']) => {
     try {
@@ -263,15 +234,12 @@ const StaffManagement: React.FC = () => {
       availability: 'available',
       team_id: ''
     });
-    // Reset filtered teams to show all teams when adding new staff
-    setFilteredTeams(teams);
     setIsEditing(true);
     setShowStaffModal(true);
   };
 
   const handleEditStaff = (staffMember: Staff) => {
     setSelectedStaff(staffMember);
-    const teamId = staffMember.team_id?.toString() || '';
     setFormData({
       name: staffMember.name,
       email: staffMember.email,
@@ -279,10 +247,8 @@ const StaffManagement: React.FC = () => {
       position: staffMember.position,
       department: staffMember.department,
       availability: staffMember.availability,
-      team_id: teamId
+      team_id: staffMember.team_id?.toString() || ''
     });
-    // Filter teams based on the staff member's department, preserving the team_id and availability
-    filterTeamsByDepartment(staffMember.department, teamId, true);
     setIsEditing(true);
     setShowStaffModal(true);
   };
@@ -336,31 +302,7 @@ const StaffManagement: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
-    // If department changes, filter teams based on department
-    if (name === 'department') {
-      // Update department first, then filter teams
-      setFormData(prev => {
-        const updatedFormData = { ...prev, [name]: value };
-        // Filter teams based on the new department, preserving team_id if valid
-        const teamIds = departmentTeamMapping[value] || [];
-        const filtered = teams.filter(team => teamIds.includes(team.id));
-        setFilteredTeams(filtered);
-        
-        // Check if current team_id is valid for the new department
-        const currentTeamId = updatedFormData.team_id ? parseInt(updatedFormData.team_id) : null;
-        const isValidTeam = currentTeamId && filtered.some(team => team.id === currentTeamId);
-        const defaultAvailability = departmentAvailabilityMapping[value] || 'available';
-        
-        return {
-          ...updatedFormData,
-          team_id: isValidTeam ? updatedFormData.team_id : '',
-          availability: defaultAvailability
-        };
-      });
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAssignTeam = (staffMember: Staff) => {
@@ -538,16 +480,10 @@ const StaffManagement: React.FC = () => {
             disabled={isSubmitting}
           >
             <option value="">No Team</option>
-            {filteredTeams.map(team => (
+            {teams.map(team => (
               <option key={team.id} value={team.id}>{team.name}</option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1">
-            {formData.department 
-              ? `Available teams for ${formData.department} department` 
-              : 'Select a department to see available teams'
-            }
-          </p>
         </div>
       </div>
       
