@@ -1038,9 +1038,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                     <p className={`text-sm font-semibold ${isRead ? 'text-gray-700' : 'text-gray-900'}`}>
                                       {isWelfare ? 'Welfare Check - Needs Help' : capitalizeFirstLetter(notif.incident_type)}
                                     </p>
-                                    <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getPriorityColor(notif.priority_level)}`}>
-                                      {isWelfare ? 'WELFARE' : notif.priority_level?.toUpperCase()}
-                                    </span>
+                                    {isWelfare && (
+                                      <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getPriorityColor(notif.priority_level)}`}>
+                                        WELFARE
+                                      </span>
+                                    )}
                                     {isPriority && (
                                       <span className="text-xs text-red-600 font-bold flex items-center">
                                         <i className={`${isWelfare ? 'ri-heart-pulse-line' : 'ri-alarm-warning-line'} mr-1`}></i>
