@@ -7,7 +7,7 @@ const isPreview = process.env.IS_PREVIEW ? true : false;
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Environment variables for API configuration
-const apiUrl = process.env.VITE_API_URL || (process.env.NODE_ENV === 'development' ? '/api' : 'https://soteros-backend.onrender.com/api');
+const apiUrl = process.env.VITE_API_URL || (process.env.NODE_ENV === 'development' ? '/api' : 'https://soteros-backend-q2yihjhchq-et.a.run.app/api');
 // https://vite.dev/config/
 export default defineConfig({
   define: {

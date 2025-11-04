@@ -58,7 +58,7 @@ class WebSocketService {
 
       try {
         // Get the WebSocket URL from environment or construct from API URL
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
         let wsUrl;
         
         console.log('🔧 WebSocket Debug Info:');

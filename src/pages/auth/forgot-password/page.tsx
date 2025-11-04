@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
       const formData = getValues()
       console.log("Forgot password data:", formData)
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
       const response = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: "POST",
         headers: {
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
     try {
       const formData = getValues()
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
       const response = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: "POST",
         headers: {

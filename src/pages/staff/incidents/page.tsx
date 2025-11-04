@@ -302,7 +302,7 @@ const StaffIncidentsPage: React.FC = () => {
 
     try {
       // Use our backend proxy for geocoding - use full API URL
-      const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend-q2yihjhchq-et.a.run.app/api');
       const token = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo') || '{}').token : null;
       
       const headers: HeadersInit = {

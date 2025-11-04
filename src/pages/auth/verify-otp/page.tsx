@@ -41,7 +41,7 @@ export default function VerifyOTPPage() {
 
     try {
       // Verify OTP with backend
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
       const response = await fetch(`${apiUrl}/auth/verify-otp`, {
         method: 'POST',
         headers: {
@@ -94,7 +94,7 @@ export default function VerifyOTPPage() {
     setIsSubmitting(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
       const response = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: 'POST',
         headers: {
