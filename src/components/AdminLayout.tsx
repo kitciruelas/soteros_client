@@ -456,7 +456,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       id: incidentData.id || (incidentData as any).incident_id,
       type: 'incident',
       title: 'New Incident Report',
-      message: `${incidentData.incident_type ? incidentData.incident_type.charAt(0).toUpperCase() + incidentData.incident_type.slice(1).toLowerCase() : 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
+      message: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
       priority_level: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium',
       action_url: '/admin/incidents/view'
     };
@@ -1030,11 +1030,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex items-center space-x-2 flex-1">
                                     <p className={`text-sm font-semibold ${isRead ? 'text-gray-700' : 'text-gray-900'}`}>
-                                      {isWelfare ? 'Welfare Check - Needs Help' : notif.incident_type}
+                                      {isWelfare ? 'Welfare Check - Needs Help' : notif.incident_type?.charAt(0).toUpperCase() + notif.incident_type?.slice(1).toLowerCase()}
                                     </p>
-                                    <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getPriorityColor(notif.priority_level)}`}>
-                                      {isWelfare ? 'WELFARE' : notif.priority_level?.toUpperCase()}
-                                    </span>
+                                    {notif.incident_type?.toLowerCase() !== 'critical' && (
+                                      <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getPriorityColor(notif.priority_level)}`}>
+                                        {isWelfare ? 'WELFARE' : notif.priority_level?.toUpperCase()}
+                                      </span>
+                                    )}
                                     {isPriority && (
                                       <span className="text-xs text-red-600 font-bold flex items-center">
                                         <i className={`${isWelfare ? 'ri-heart-pulse-line' : 'ri-alarm-warning-line'} mr-1`}></i>
@@ -1271,15 +1273,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             const getTypeLabel = (type: string) => {
               const labels: Record<string, string> = {
-                'incident': 'Incident',
-                'welfare': 'Welfare',
-                'alert': 'Alert',
-                'safety_protocol': 'Safety',
-                'system': 'System',
-                'team': 'Team',
-                'staff': 'Staff'
+                'incident': 'INCIDENT',
+                'welfare': 'WELFARE',
+                'alert': 'ALERT',
+                'safety_protocol': 'SAFETY',
+                'system': 'SYSTEM',
+                'team': 'TEAM',
+                'staff': 'STAFF'
               };
-              return labels[type] || 'Notification';
+              return labels[type] || 'NOTIFICATION';
             };
 
             const styles = getPriorityStyles(notification.priority, notification.severity);
@@ -1350,7 +1352,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
+                        <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
                           {getTypeLabel(notification.type)}
                         </span>
                       </div>
