@@ -822,7 +822,7 @@ export default function IncidentReportPage() {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
             <i className="ri-file-text-line mr-2 text-purple-600"></i>
-            Detailed Description <span className="text-gray-500">(optional)</span>
+            Detailed Description <span className="text-red-500">*</span>
           </label>
           <textarea
             value={fields.description.value}

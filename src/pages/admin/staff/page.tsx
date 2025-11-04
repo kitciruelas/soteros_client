@@ -165,7 +165,7 @@ const StaffManagement: React.FC = () => {
   };
 
   // Function to filter teams based on selected department
-  const filterTeamsByDepartment = (department: string) => {
+  const filterTeamsByDepartment = (department: string, preserveTeamId?: string, preserveAvailability?: boolean) => {
     if (!department) {
       setFilteredTeams(teams);
       return;
@@ -176,16 +176,18 @@ const StaffManagement: React.FC = () => {
     setFilteredTeams(filtered);
     
     // Clear team selection if current team is not valid for the new department
-    // Auto-set availability based on department
+    // Auto-set availability based on department (unless preserving it)
     const defaultAvailability = departmentAvailabilityMapping[department] || 'available';
     setFormData(prev => {
-      const currentTeamId = prev.team_id ? parseInt(prev.team_id) : null;
+      // Use preserveTeamId if provided (for edit mode), otherwise use prev.team_id
+      const teamIdToCheck = preserveTeamId !== undefined ? preserveTeamId : prev.team_id;
+      const currentTeamId = teamIdToCheck ? parseInt(teamIdToCheck) : null;
       const isValidTeam = currentTeamId && filtered.some(team => team.id === currentTeamId);
       
       return {
         ...prev,
-        team_id: isValidTeam ? prev.team_id : '',
-        availability: defaultAvailability
+        team_id: isValidTeam ? teamIdToCheck : '',
+        availability: preserveAvailability ? prev.availability : defaultAvailability
       };
     });
   };
@@ -269,6 +271,7 @@ const StaffManagement: React.FC = () => {
 
   const handleEditStaff = (staffMember: Staff) => {
     setSelectedStaff(staffMember);
+    const teamId = staffMember.team_id?.toString() || '';
     setFormData({
       name: staffMember.name,
       email: staffMember.email,
@@ -276,10 +279,10 @@ const StaffManagement: React.FC = () => {
       position: staffMember.position,
       department: staffMember.department,
       availability: staffMember.availability,
-      team_id: staffMember.team_id?.toString() || ''
+      team_id: teamId
     });
-    // Filter teams based on the staff member's department
-    filterTeamsByDepartment(staffMember.department);
+    // Filter teams based on the staff member's department, preserving the team_id and availability
+    filterTeamsByDepartment(staffMember.department, teamId, true);
     setIsEditing(true);
     setShowStaffModal(true);
   };
@@ -336,8 +339,25 @@ const StaffManagement: React.FC = () => {
     
     // If department changes, filter teams based on department
     if (name === 'department') {
-      filterTeamsByDepartment(value);
-      setFormData(prev => ({ ...prev, [name]: value }));
+      // Update department first, then filter teams
+      setFormData(prev => {
+        const updatedFormData = { ...prev, [name]: value };
+        // Filter teams based on the new department, preserving team_id if valid
+        const teamIds = departmentTeamMapping[value] || [];
+        const filtered = teams.filter(team => teamIds.includes(team.id));
+        setFilteredTeams(filtered);
+        
+        // Check if current team_id is valid for the new department
+        const currentTeamId = updatedFormData.team_id ? parseInt(updatedFormData.team_id) : null;
+        const isValidTeam = currentTeamId && filtered.some(team => team.id === currentTeamId);
+        const defaultAvailability = departmentAvailabilityMapping[value] || 'available';
+        
+        return {
+          ...updatedFormData,
+          team_id: isValidTeam ? updatedFormData.team_id : '',
+          availability: defaultAvailability
+        };
+      });
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
