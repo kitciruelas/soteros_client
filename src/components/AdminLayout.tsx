@@ -456,7 +456,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       id: incidentData.id || (incidentData as any).incident_id,
       type: 'incident',
       title: 'New Incident Report',
-      message: `${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
+      message: `${incidentData.incident_type ? incidentData.incident_type.charAt(0).toUpperCase() + incidentData.incident_type.slice(1).toLowerCase() : 'Incident'} reported at ${incidentData.location || 'Unknown location'}`,
       priority_level: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium',
       action_url: '/admin/incidents/view'
     };
@@ -1271,15 +1271,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             const getTypeLabel = (type: string) => {
               const labels: Record<string, string> = {
-                'incident': 'INCIDENT',
-                'welfare': 'WELFARE',
-                'alert': 'ALERT',
-                'safety_protocol': 'SAFETY',
-                'system': 'SYSTEM',
-                'team': 'TEAM',
-                'staff': 'STAFF'
+                'incident': 'Incident',
+                'welfare': 'Welfare',
+                'alert': 'Alert',
+                'safety_protocol': 'Safety',
+                'system': 'System',
+                'team': 'Team',
+                'staff': 'Staff'
               };
-              return labels[type] || 'NOTIFICATION';
+              return labels[type] || 'Notification';
             };
 
             const styles = getPriorityStyles(notification.priority, notification.severity);
@@ -1350,7 +1350,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold uppercase tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
+                        <span className="text-xs font-bold tracking-wider bg-white bg-opacity-30 px-2 py-1 rounded">
                           {getTypeLabel(notification.type)}
                         </span>
                       </div>
