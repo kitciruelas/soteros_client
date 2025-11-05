@@ -20,6 +20,30 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
+
+  // Helper function to format datetime consistently
+  const formatDateTime = (dateValue: string | number | Date | null | undefined): string => {
+    if (!dateValue) return '';
+    try {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return '';
+      
+      // Format as: M/D/YYYY, h:mm:ss AM/PM
+      return date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric'
+      }) + ', ' + date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminInfo, setAdminInfo] = useState<any>(null);
@@ -1063,7 +1087,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                     )}
                                   </div>
                                   <span className="text-xs text-gray-400 ml-2">
-                                    {new Date(notif.created_at || notif.date_reported || notif.submitted_at).toLocaleDateString()}
+                                    {formatDateTime(notif.created_at || notif.date_reported || notif.submitted_at)}
                                   </span>
                                 </div>
                                 <p className={`text-xs leading-relaxed mb-2 ${isRead ? 'text-gray-500' : 'text-gray-600'}`}>
@@ -1080,10 +1104,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                 </p>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-3">
-                                    <span className="text-xs text-gray-400 flex items-center">
-                                      <i className="ri-time-line mr-1"></i>
-                                      {new Date(notif.created_at || notif.date_reported || notif.submitted_at).toLocaleTimeString()}
-                                    </span>
                                     {isWelfare ? (
                                       <span className="text-xs text-gray-400 flex items-center">
                                         <i className="ri-user-line mr-1"></i>
@@ -1402,7 +1422,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <div className="flex items-center justify-between text-xs opacity-90 mb-3">
                   <span className="flex items-center">
                     <i className="ri-time-line mr-1"></i>
-                    {new Date(notification.timestamp).toLocaleTimeString()}
+                    {formatDateTime(notification.timestamp)}
                   </span>
                   <span className="flex items-center font-semibold">
                     <i className="ri-arrow-right-line mr-1"></i>
