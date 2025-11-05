@@ -519,33 +519,19 @@ export default function SignupPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Input
-                label="Password"
-                type="password"
-                name="password"
-                id="password"
-                value={fields.password.value}
-                onChange={(e) => setValue("password", e.target.value)}
-                error={fields.password.touched ? fields.password.error : ""}
-                placeholder="Create a strong password"
-                required
-                autoComplete="new-password"
-                icon={<i className="ri-lock-line"></i>}
-              />
-              {!fields.password.error && (
-                <div className="text-xs text-gray-600 mt-1">
-                  <p className="font-medium mb-1">Password must contain:</p>
-                  <ul className="list-disc list-inside space-y-0.5">
-                    <li>At least 8 characters (max 128)</li>
-                    <li>One uppercase letter</li>
-                    <li>One lowercase letter</li>
-                    <li>One number</li>
-                    <li>One special character (!@#$%^&*...)</li>
-                  </ul>
-                </div>
-              )}
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              id="password"
+              value={fields.password.value}
+              onChange={(e) => setValue("password", e.target.value)}
+              error={fields.password.touched ? fields.password.error : ""}
+              placeholder="Create a strong password"
+              required
+              autoComplete="new-password"
+              icon={<i className="ri-lock-line"></i>}
+            />
 
             <Input
               label="Confirm Password"
