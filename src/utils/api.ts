@@ -386,7 +386,11 @@ export const apiRequest = async <T = any>(
         url
       });
 
-      throw new Error(errorMessage);
+      // Create error with full error data attached for detailed error handling
+      const error = new Error(errorMessage);
+      (error as any).responseData = errorData;
+      (error as any).status = response.status;
+      throw error;
     }
     
     const responseData = await response.json();

@@ -151,10 +151,17 @@ export default function SignupPage() {
       password: {
         required: true,
         minLength: 8,
+        maxLength: 128,
         custom: (value: string) => {
           if (!/(?=.*[a-z])/.test(value)) return "Password must contain at least one lowercase letter"
           if (!/(?=.*[A-Z])/.test(value)) return "Password must contain at least one uppercase letter"
           if (!/(?=.*\d)/.test(value)) return "Password must contain at least one number"
+          if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) return "Password must contain at least one special character"
+          // Check for common weak passwords
+          const commonPasswords = ['password', '12345678', 'qwerty', 'abc123', 'letmein', 'welcome']
+          if (commonPasswords.some(weak => value.toLowerCase().includes(weak))) {
+            return "Password is too common and easily guessable"
+          }
           return null
         },
       },
@@ -234,21 +241,65 @@ export default function SignupPage() {
           setError("email", "This email is already registered")
         }
 
+        // Handle password validation errors
+        if (errorMsg.toLowerCase().includes("password") && data?.errors && Array.isArray(data.errors)) {
+          // Set password field error with specific requirements
+          const passwordErrors = data.errors.join(", ")
+          setError("password", passwordErrors)
+          
+          showToast({
+            type: "error",
+            title: "Password Requirements Not Met",
+            message: passwordErrors,
+            durationMs: 6000
+          })
+        } else {
+          showToast({
+            type: "error",
+            title: "Registration Failed",
+            message: errorMsg,
+            durationMs: 5000
+          })
+        }
+      }
+    } catch (error: any) {
+      console.error("Registration failed:", error)
+      
+      // Handle API error response with password validation errors
+      let errorMessage = "Unknown error occurred. Please try again."
+      let errorData = null
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        // Check if error has attached responseData (from apiRequest)
+        if ((error as any).responseData) {
+          errorData = (error as any).responseData
+        }
+      } else if (error?.response?.data) {
+        errorData = error.response.data
+        errorMessage = errorData?.message || errorMessage
+      }
+      
+      // Handle password validation errors from API
+      if (errorData && errorData.message?.toLowerCase().includes("password") && errorData.errors && Array.isArray(errorData.errors)) {
+        const passwordErrors = errorData.errors.join(", ")
+        setError("password", passwordErrors)
+        errorMessage = passwordErrors
+        
+        showToast({
+          type: "error",
+          title: "Password Requirements Not Met",
+          message: passwordErrors,
+          durationMs: 6000
+        })
+      } else {
         showToast({
           type: "error",
           title: "Registration Failed",
-          message: errorMsg,
+          message: errorMessage,
           durationMs: 5000
         })
       }
-    } catch (error) {
-      console.error("Registration failed:", error)
-      showToast({
-        type: "error",
-        title: "Registration Failed",
-        message: error instanceof Error ? error.message : "Unknown error occurred. Please try again.",
-        durationMs: 5000
-      })
     } finally {
       setIsSubmitting(false)
     }
@@ -468,19 +519,33 @@ export default function SignupPage() {
               )}
             </div>
 
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              id="password"
-              value={fields.password.value}
-              onChange={(e) => setValue("password", e.target.value)}
-              error={fields.password.touched ? fields.password.error : ""}
-              placeholder="Create a strong password"
-              required
-              autoComplete="new-password"
-              icon={<i className="ri-lock-line"></i>}
-            />
+            <div className="space-y-2">
+              <Input
+                label="Password"
+                type="password"
+                name="password"
+                id="password"
+                value={fields.password.value}
+                onChange={(e) => setValue("password", e.target.value)}
+                error={fields.password.touched ? fields.password.error : ""}
+                placeholder="Create a strong password"
+                required
+                autoComplete="new-password"
+                icon={<i className="ri-lock-line"></i>}
+              />
+              {!fields.password.error && (
+                <div className="text-xs text-gray-600 mt-1">
+                  <p className="font-medium mb-1">Password must contain:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li>At least 8 characters (max 128)</li>
+                    <li>One uppercase letter</li>
+                    <li>One lowercase letter</li>
+                    <li>One number</li>
+                    <li>One special character (!@#$%^&*...)</li>
+                  </ul>
+                </div>
+              )}
+            </div>
 
             <Input
               label="Confirm Password"
