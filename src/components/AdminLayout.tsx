@@ -120,19 +120,23 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     // Update notifications list
     fetchNotifications();
 
-    // Show browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      const browserNotif = new Notification(notificationData.title || 'New Notification', {
-        body: notificationData.message || '',
-        icon: '/images/Slogo.png',
-        tag: `notification-${notificationData.id}`,
-        badge: '/images/Slogo.png',
-        requireInteraction: priority === 'critical' || priority === 'high'
-      });
-      
-      // Auto-close after 5 seconds for low priority, 10 seconds for high/critical
-      const autoCloseTime = (priority === 'critical' || priority === 'high') ? 10000 : 5000;
-      setTimeout(() => browserNotif.close(), autoCloseTime);
+    // Show browser notification if permission granted (only if Notification API is available)
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        const browserNotif = new Notification(notificationData.title || 'New Notification', {
+          body: notificationData.message || '',
+          icon: '/images/Slogo.png',
+          tag: `notification-${notificationData.id}`,
+          badge: '/images/Slogo.png',
+          requireInteraction: priority === 'critical' || priority === 'high'
+        });
+        
+        // Auto-close after 5 seconds for low priority, 10 seconds for high/critical
+        const autoCloseTime = (priority === 'critical' || priority === 'high') ? 10000 : 5000;
+        setTimeout(() => browserNotif.close(), autoCloseTime);
+      } catch (error) {
+        console.log('Could not show browser notification:', error);
+      }
     }
 
     // Play notification sound
@@ -278,8 +282,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       if (authState.isAuthenticated && authState.userType === 'admin' && token && !wsInitialized.current) {
         wsInitialized.current = true;
         
-        // Request browser notification permission
-        if (Notification.permission === 'default') {
+        // Request browser notification permission (only if Notification API is available)
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
           await Notification.requestPermission();
         }
         

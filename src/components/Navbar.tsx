@@ -106,7 +106,7 @@ const Navbar: React.FC<NavbarProps> = () => {
 
   // Request browser notification permission
   useEffect(() => {
-    if (isAuthenticated && Notification.permission === 'default') {
+    if (isAuthenticated && typeof Notification !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, [isAuthenticated]);
@@ -319,19 +319,23 @@ const Navbar: React.FC<NavbarProps> = () => {
       timestamp: Date.now()
     });
 
-    // Show browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      const browserNotif = new Notification(notification.title || 'New Notification', {
-        body: notification.message || '',
-        icon: '/images/soteros_logo.png',
-        tag: `notification-${notification.id}`,
-        badge: '/images/soteros_logo.png',
-        requireInteraction: notification.severity === 'emergency'
-      });
-      
-      // Auto-close after 5 seconds for low priority, 10 seconds for high priority
-      const autoCloseTime = notification.severity === 'emergency' ? 10000 : 5000;
-      setTimeout(() => browserNotif.close(), autoCloseTime);
+    // Show browser notification if permission granted (only if Notification API is available)
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        const browserNotif = new Notification(notification.title || 'New Notification', {
+          body: notification.message || '',
+          icon: '/images/soteros_logo.png',
+          tag: `notification-${notification.id}`,
+          badge: '/images/soteros_logo.png',
+          requireInteraction: notification.severity === 'emergency'
+        });
+        
+        // Auto-close after 5 seconds for low priority, 10 seconds for high priority
+        const autoCloseTime = notification.severity === 'emergency' ? 10000 : 5000;
+        setTimeout(() => browserNotif.close(), autoCloseTime);
+      } catch (error) {
+        console.log('Could not show browser notification:', error);
+      }
     }
 
     // Play notification sound
