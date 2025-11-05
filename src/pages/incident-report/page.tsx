@@ -1173,25 +1173,7 @@ export default function IncidentReportPage() {
               <span className="block text-lg text-gray-500 mt-2">Submit incident reports as a guest or create an account for better tracking</span>
             </p>
 
-            {/* Network Status Indicator */}
-            <div className="flex justify-center mb-4">
-              <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
-                isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                <i className={`ri-${isOnline ? 'wifi-line' : 'wifi-off-line'}`}></i>
-                <span className="text-sm font-medium">
-                  {isOnline ? 'Online' : 'Offline - Data will be saved locally'}
-                </span>
-                {isRetrying && (
-                  <span className="text-sm ml-2">
-                    <i className="ri-loader-4-line animate-spin mr-1"></i>
-                    Retrying... ({retryCount}/{MAX_RETRIES})
-                  </span>
-                )}
-              </div>
-            </div>
-
-              {/* Enhanced Info Banner */}
+            {/* Enhanced Info Banner */}
             <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm mb-8">
               <div className="flex items-center justify-center text-red-800">
                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
@@ -1424,24 +1406,6 @@ export default function IncidentReportPage() {
               Emergency Incident Reporting System
               <span className="block text-lg text-gray-500 mt-2">Please provide detailed information about the incident</span>
             </p>
-
-            {/* Network Status Indicator */}
-            <div className="flex justify-center mb-4">
-              <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
-                isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                <i className={`ri-${isOnline ? 'wifi-line' : 'wifi-off-line'}`}></i>
-                <span className="text-sm font-medium">
-                  {isOnline ? 'Online' : 'Offline - Data will be saved locally'}
-                </span>
-                {isRetrying && (
-                  <span className="text-sm ml-2">
-                    <i className="ri-loader-4-line animate-spin mr-1"></i>
-                    Retrying... ({retryCount}/{MAX_RETRIES})
-                  </span>
-                )}
-              </div>
-            </div>
 
             {/* Enhanced Info Banner */}
             <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">

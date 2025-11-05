@@ -105,6 +105,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const severity = notificationData.severity || 'info';
     
     // Add to floating notifications
+    // Use created_at from notification data if available, otherwise use current time
+    const notificationTimestamp = notificationData.created_at 
+      ? new Date(notificationData.created_at).getTime()
+      : Date.now();
+    
     addFloatingNotification({
       id: `notification-${notificationData.id}-${Date.now()}`,
       type: notifType as any,
@@ -114,7 +119,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       severity: severity as 'info' | 'warning' | 'high' | 'critical',
       actionUrl: notificationData.action_url || null,
       notificationId: notificationData.id,
-      timestamp: Date.now()
+      timestamp: notificationTimestamp
     });
 
     // Update notifications list
@@ -468,7 +473,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       title: 'New Incident Report',
       message: capitalizeFirstLetter(`${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`),
       priority_level: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium',
-      action_url: '/admin/incidents/view'
+      action_url: '/admin/incidents/view',
+      created_at: (incidentData as any).created_at || incidentData.date_reported
     };
     notificationQueue.current.push(notificationData);
     
@@ -517,7 +523,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       title: 'Welfare Check - Needs Help',
       message: capitalizeFirstLetter(`${welfareData.user_name || 'User'} needs assistance`),
       priority_level: 'high' as 'high',
-      action_url: '/admin/welfare'
+      action_url: '/admin/welfare',
+      created_at: (welfareData as any).created_at || welfareData.submitted_at || welfareData.date_reported
     };
     notificationQueue.current.push(notificationData);
     
@@ -579,6 +586,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               report_id: notif.related_id,
               title: notif.title,
               description: notif.message,
+              created_at: notif.created_at, // Preserve original created_at
               date_reported: notif.created_at,
               submitted_at: notif.created_at,
               user_name: metadata.user_name || 'Unknown User',
@@ -600,6 +608,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             latitude: metadata.latitude,
             longitude: metadata.longitude,
             priority_level: notif.priority_level,
+            created_at: notif.created_at, // Preserve original created_at
             date_reported: notif.created_at,
             status: 'pending'
           };
@@ -733,7 +742,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // Get all notifications combined
   const allNotifications = [...notifications, ...welfareReports]
-    .sort((a: any, b: any) => new Date(b.date_reported || b.submitted_at).getTime() - new Date(a.date_reported || a.submitted_at).getTime());
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.created_at || a.date_reported || a.submitted_at).getTime();
+      const dateB = new Date(b.created_at || b.date_reported || b.submitted_at).getTime();
+      return dateB - dateA;
+    });
 
   // Show only 10 notifications by default, or all if showAllNotifications is true
   const displayedNotifications = showAllNotifications ? allNotifications : allNotifications.slice(0, 10);
@@ -1050,7 +1063,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                     )}
                                   </div>
                                   <span className="text-xs text-gray-400 ml-2">
-                                    {new Date(notif.date_reported || notif.submitted_at).toLocaleDateString()}
+                                    {new Date(notif.created_at || notif.date_reported || notif.submitted_at).toLocaleDateString()}
                                   </span>
                                 </div>
                                 <p className={`text-xs leading-relaxed mb-2 ${isRead ? 'text-gray-500' : 'text-gray-600'}`}>
@@ -1069,7 +1082,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                   <div className="flex items-center space-x-3">
                                     <span className="text-xs text-gray-400 flex items-center">
                                       <i className="ri-time-line mr-1"></i>
-                                      {new Date(notif.date_reported || notif.submitted_at).toLocaleTimeString()}
+                                      {new Date(notif.created_at || notif.date_reported || notif.submitted_at).toLocaleTimeString()}
                                     </span>
                                     {isWelfare ? (
                                       <span className="text-xs text-gray-400 flex items-center">
