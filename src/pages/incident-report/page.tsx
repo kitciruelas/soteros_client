@@ -55,29 +55,28 @@ export default function IncidentReportPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [attachmentError, setAttachmentError] = useState('');
 
+  // Network recovery state
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [savedFormData, setSavedFormData] = useState<any>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const STORAGE_KEY = 'incident_report_draft';
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff in ms
+
   // Get user location
   const { latitude, longitude, error: locationError, loading: locationLoading, getCurrentLocation } = useGeolocation();
 
-  useEffect(() => {
-    const authState = getAuthState();
-    setIsAuthenticated(authState.isAuthenticated);
-    setUserData(authState.userData);
-
-    // Listen for authentication state changes
-    const handleAuthStateChange = () => {
-      const newAuthState = getAuthState();
-      setIsAuthenticated(newAuthState.isAuthenticated);
-      setUserData(newAuthState.userData);
-    };
-
-    window.addEventListener('storage', handleAuthStateChange);
-    window.addEventListener('authStateChanged', handleAuthStateChange);
-
-    return () => {
-      window.removeEventListener('storage', handleAuthStateChange);
-      window.removeEventListener('authStateChanged', handleAuthStateChange);
-    };
-  }, []);
+  // Clear saved form data after successful submission
+  const clearSavedFormData = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      setSavedFormData(null);
+    } catch (error) {
+      console.error('Failed to clear saved form data:', error);
+    }
+  };
 
   // Handle reCAPTCHA change
   const onRecaptchaChange = (value: string | null) => {
@@ -232,6 +231,150 @@ export default function IncidentReportPage() {
     },
     validationRules
   );
+
+  // Save form data to localStorage
+  const saveFormDataToStorage = (formData: any, files?: File[]) => {
+    try {
+      const dataToSave = {
+        ...formData,
+        timestamp: Date.now(),
+        // Note: Files cannot be stored in localStorage, so we just store metadata
+        fileMetadata: files?.map(file => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified
+        })) || []
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+      setSavedFormData(dataToSave);
+    } catch (error) {
+      console.error('Failed to save form data to localStorage:', error);
+    }
+  };
+
+  // Restore form data from localStorage
+  const restoreFormData = React.useCallback(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        // Only restore if data is less than 24 hours old
+        const age = Date.now() - data.timestamp;
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (age < maxAge) {
+          // Restore form fields
+          if (data.incidentType) setValue('incidentType', data.incidentType);
+          if (data.description) setValue('description', data.description);
+          if (data.location) setValue('location', data.location);
+          if (data.latitude !== null && data.latitude !== undefined) setValue('latitude', data.latitude);
+          if (data.longitude !== null && data.longitude !== undefined) setValue('longitude', data.longitude);
+          if (data.priorityLevel) setValue('priorityLevel', data.priorityLevel);
+          if (data.safetyStatus) setValue('safetyStatus', data.safetyStatus);
+          if (data.guestName) setValue('guestName', data.guestName);
+          if (data.guestContact) setValue('guestContact', data.guestContact);
+          
+          // Show restore notification
+          showToast({
+            type: 'info',
+            title: 'Form Data Restored',
+            message: 'Your previously saved form data has been restored.',
+            durationMs: 3000
+          });
+        } else {
+          // Clear old data
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore form data from localStorage:', error);
+    }
+  }, [setValue, showToast]);
+
+  // Auto-save form data with debouncing
+  useEffect(() => {
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout to save after 2 seconds of inactivity
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const currentValues = getValues();
+      // Only save if form has meaningful data
+      if (currentValues.incidentType || currentValues.description || currentValues.location) {
+        saveFormDataToStorage(currentValues, selectedFiles);
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields, selectedFiles]);
+
+  // Online/offline status monitoring
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      showToast({
+        type: 'success',
+        title: 'Connection Restored',
+        message: 'Your connection has been restored. Saved form data will be preserved.',
+        durationMs: 3000
+      });
+      // Try to restore form if there's saved data
+      restoreFormData();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast({
+        type: 'warning',
+        title: 'Connection Lost',
+        message: 'You are offline. Your form data is being saved locally and will be preserved.',
+        durationMs: 4000
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [restoreFormData, showToast]);
+
+  useEffect(() => {
+    const authState = getAuthState();
+    setIsAuthenticated(authState.isAuthenticated);
+    setUserData(authState.userData);
+
+    // Restore form data on mount
+    restoreFormData();
+
+    // Listen for authentication state changes
+    const handleAuthStateChange = () => {
+      const newAuthState = getAuthState();
+      setIsAuthenticated(newAuthState.isAuthenticated);
+      setUserData(newAuthState.userData);
+    };
+
+    window.addEventListener('storage', handleAuthStateChange);
+    window.addEventListener('authStateChanged', handleAuthStateChange);
+
+    return () => {
+      window.removeEventListener('storage', handleAuthStateChange);
+      window.removeEventListener('authStateChanged', handleAuthStateChange);
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [restoreFormData]);
 
 
 
@@ -392,6 +535,49 @@ export default function IncidentReportPage() {
     return () => clearTimeout(timeoutId);
   }, [fields.location.value, locationMethod]);
 
+  // Retry logic with exponential backoff
+  const retryWithBackoff = async <T,>(
+    fn: () => Promise<T>,
+    retries = MAX_RETRIES,
+    attempt = 0
+  ): Promise<T> => {
+    try {
+      return await fn();
+    } catch (error: any) {
+      // Check if it's a network error (not a validation/auth error)
+      const isNetworkError = 
+        error.message?.includes('Network') ||
+        error.message?.includes('Failed to fetch') ||
+        error.message?.includes('network') ||
+        !navigator.onLine;
+
+      // Don't retry for validation or auth errors
+      if (!isNetworkError || attempt >= retries) {
+        throw error;
+      }
+
+      const delay = RETRY_DELAYS[attempt] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
+      setIsRetrying(true);
+      setRetryCount(attempt + 1);
+
+      showToast({
+        type: 'warning',
+        title: 'Retrying Submission',
+        message: `Network error detected. Retrying in ${delay / 1000} seconds... (Attempt ${attempt + 1}/${retries})`,
+        durationMs: delay
+      });
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      return retryWithBackoff(fn, retries, attempt + 1);
+    } finally {
+      if (attempt >= retries - 1) {
+        setIsRetrying(false);
+        setRetryCount(0);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -426,6 +612,19 @@ export default function IncidentReportPage() {
         title: 'Validation Error',
         message: errorMessages || 'Please fill in all required fields correctly.',
         durationMs: 5000
+      });
+      return;
+    }
+
+    // Check if offline and save data for later
+    if (!navigator.onLine) {
+      const raw = getValues();
+      saveFormDataToStorage(raw, selectedFiles);
+      showToast({
+        type: 'warning',
+        title: 'Offline Mode',
+        message: 'You are currently offline. Your form data has been saved locally. Please submit again when your connection is restored.',
+        durationMs: 6000
       });
       return;
     }
@@ -478,12 +677,18 @@ export default function IncidentReportPage() {
         }
       }
 
-      // Real API call to save to database using proper API utility
-      const responseData = await apiFormRequest(endpoint, formData, {
-        ...(isAuthenticated && userData?.token ? { headers: { 'Authorization': `Bearer ${userData.token}` } } : {})
-      });
+      // Real API call with retry logic
+      const responseData = await retryWithBackoff(() => 
+        apiFormRequest(endpoint, formData, {
+          ...(isAuthenticated && userData?.token ? { headers: { 'Authorization': `Bearer ${userData.token}` } } : {})
+        })
+      );
 
       console.log('SUCCESS: Incident report saved to database:', responseData);
+      
+      // Clear saved form data after successful submission
+      clearSavedFormData();
+      
       showToast({
         type: 'success',
         title: 'Report Submitted Successfully!',
@@ -498,8 +703,12 @@ export default function IncidentReportPage() {
     } catch (error: any) {
       console.error('Incident report submission failed:', error);
       
+      // Save form data for recovery
+      const raw = getValues();
+      saveFormDataToStorage(raw, selectedFiles);
+      
       // Handle different types of errors
-      let errorMessage = 'Network error. Please check your connection and try again.';
+      let errorMessage = 'Network error. Your form data has been saved locally. Please check your connection and try again.';
       let errorTitle = 'Submission Failed';
       
       if (error.message) {
@@ -512,8 +721,10 @@ export default function IncidentReportPage() {
         } else if (error.message.includes('Daily submission limit reached')) {
           errorMessage = error.message;
           errorTitle = 'Daily Limit Reached';
+        } else if (error.message.includes('Network') || error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error after multiple retry attempts. Your form data has been saved locally. Please check your connection and try again.';
         } else {
-          errorMessage = error.message;
+          errorMessage = error.message + ' Your form data has been saved locally.';
         }
       }
       
@@ -525,6 +736,8 @@ export default function IncidentReportPage() {
       });
     } finally {
       setIsSubmitting(false);
+      setIsRetrying(false);
+      setRetryCount(0);
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
       }
@@ -952,13 +1165,31 @@ export default function IncidentReportPage() {
                 </div>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-red-900 to-orange-900 bg-clip-text text-transparent mb-6 leading-tight">
-                Report an Incident
-              </h1>
-              <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-                Emergency Incident Reporting System
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-red-900 to-orange-900 bg-clip-text text-transparent mb-6 leading-tight">
+              Report an Incident
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+              Emergency Incident Reporting System
               <span className="block text-lg text-gray-500 mt-2">Submit incident reports as a guest or create an account for better tracking</span>
-              </p>
+            </p>
+
+            {/* Network Status Indicator */}
+            <div className="flex justify-center mb-4">
+              <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
+                isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                <i className={`ri-${isOnline ? 'wifi-line' : 'wifi-off-line'}`}></i>
+                <span className="text-sm font-medium">
+                  {isOnline ? 'Online' : 'Offline - Data will be saved locally'}
+                </span>
+                {isRetrying && (
+                  <span className="text-sm ml-2">
+                    <i className="ri-loader-4-line animate-spin mr-1"></i>
+                    Retrying... ({retryCount}/{MAX_RETRIES})
+                  </span>
+                )}
+              </div>
+            </div>
 
               {/* Enhanced Info Banner */}
             <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm mb-8">
@@ -1128,7 +1359,7 @@ export default function IncidentReportPage() {
                     {isSubmitting ? (
                       <>
                         <i className="ri-loader-4-line animate-spin mr-2"></i>
-                        Submitting Emergency Report...
+                        {isRetrying ? `Retrying... (${retryCount}/${MAX_RETRIES})` : 'Submitting Emergency Report...'}
                       </>
                     ) : (
                       <>
@@ -1194,6 +1425,24 @@ export default function IncidentReportPage() {
               <span className="block text-lg text-gray-500 mt-2">Please provide detailed information about the incident</span>
             </p>
 
+            {/* Network Status Indicator */}
+            <div className="flex justify-center mb-4">
+              <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
+                isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                <i className={`ri-${isOnline ? 'wifi-line' : 'wifi-off-line'}`}></i>
+                <span className="text-sm font-medium">
+                  {isOnline ? 'Online' : 'Offline - Data will be saved locally'}
+                </span>
+                {isRetrying && (
+                  <span className="text-sm ml-2">
+                    <i className="ri-loader-4-line animate-spin mr-1"></i>
+                    Retrying... ({retryCount}/{MAX_RETRIES})
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* Enhanced Info Banner */}
             <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
               <div className="flex items-center justify-center text-red-800">
@@ -1237,7 +1486,7 @@ export default function IncidentReportPage() {
                     {isSubmitting ? (
                       <>
                         <i className="ri-loader-4-line animate-spin mr-2"></i>
-                        Submitting Emergency Report...
+                        {isRetrying ? `Retrying... (${retryCount}/${MAX_RETRIES})` : 'Submitting Emergency Report...'}
                       </>
                     ) : (
                       <>
