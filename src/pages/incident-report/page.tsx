@@ -250,8 +250,6 @@ export default function IncidentReportPage() {
         })) || []
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-      // Clear success flag when new data is saved (user started a new form)
-      localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
       setSavedFormData(dataToSave);
     } catch (error) {
       console.error('Failed to save form data to localStorage:', error);
@@ -264,25 +262,13 @@ export default function IncidentReportPage() {
       // Check if there was a successful submission - if so, don't restore
       const submissionSuccess = localStorage.getItem(SUBMISSION_SUCCESS_KEY);
       if (submissionSuccess) {
-        const submissionTime = parseInt(submissionSuccess, 10);
-        const saved = localStorage.getItem(STORAGE_KEY);
-        
-        if (saved) {
-          const data = JSON.parse(saved);
-          // If submission was successful and happened after the saved data was created, don't restore
-          if (data.timestamp && submissionTime > data.timestamp) {
-            // Clear the saved data since submission was successful
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
-            return;
-          }
-        } else {
-          // No saved data, clear the success flag
-          localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
-          return;
-        }
+        // Submission was successful, clear everything and don't restore
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
+        return;
       }
 
+      // No successful submission, check if there's saved data to restore
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const data = JSON.parse(saved);
@@ -312,7 +298,6 @@ export default function IncidentReportPage() {
         } else {
           // Clear old data
           localStorage.removeItem(STORAGE_KEY);
-          localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
         }
       }
     } catch (error) {
@@ -325,6 +310,21 @@ export default function IncidentReportPage() {
     // Clear existing timeout
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Check if submission was successful
+    const submissionSuccess = localStorage.getItem(SUBMISSION_SUCCESS_KEY);
+    if (submissionSuccess) {
+      // Submission was successful, but user might be starting a new form
+      // Clear success flag if user is typing (form has data)
+      const currentValues = getValues();
+      if (currentValues.incidentType || currentValues.description || currentValues.location) {
+        // User is starting a new form, clear success flag
+        localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
+      } else {
+        // No form data, don't auto-save yet
+        return;
+      }
     }
 
     // Set new timeout to save after 2 seconds of inactivity
