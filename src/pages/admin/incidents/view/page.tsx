@@ -777,6 +777,15 @@ const ViewIncidents: React.FC = () => {
   };
 
   const openAssignmentModal = (incident: Incident, type: 'team' | 'teams' | 'staff') => {
+    // Prevent assignment for resolved/closed incidents
+    if (incident.status === 'resolved' || incident.status === 'closed') {
+      showToast({
+        type: 'error',
+        message: 'Cannot assign teams/staff to resolved or closed incidents'
+      });
+      return;
+    }
+    
     // Prevent staff assignment for pending incidents
     if (type === 'staff' && incident.status === 'pending') {
       return;
@@ -1180,17 +1189,6 @@ const ViewIncidents: React.FC = () => {
               <option value="closed">Closed</option>
             </select>
             <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Priority</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-            <select
               value={readFilter}
               onChange={(e) => setReadFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1296,9 +1294,6 @@ const ViewIncidents: React.FC = () => {
                         READ
                       </span>
                     )}
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(incident.priorityLevel)}`}>
-                      {incident.priorityLevel.toUpperCase()}
-                    </span>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       incident.validationStatus === 'rejected' && incident.status === 'closed'
                         ? 'bg-red-100 text-red-800 border border-red-200'
@@ -1396,22 +1391,31 @@ const ViewIncidents: React.FC = () => {
                   </button>
                   <button
                     onClick={() => {
+                      if (incident.status === 'resolved' || incident.status === 'closed') {
+                        return;
+                      }
                       setSelectedIncident(incident);
                       setValidationNotes(incident.validationNotes || '');
                       setShowValidationModal(true);
                     }}
+                    disabled={incident.status === 'resolved' || incident.status === 'closed'}
                     className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                      incident.validationStatus === 'validated'
+                      incident.status === 'resolved' || incident.status === 'closed'
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : incident.validationStatus === 'validated'
                         ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                         : incident.validationStatus === 'rejected'
                         ? 'bg-red-100 text-red-700 hover:bg-red-200'
                         : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                     }`}
-                    title={incident.validationStatus === 'validated' 
-                      ? 'Update Validation' 
-                      : incident.validationStatus === 'rejected'
-                      ? 'Update Rejection'
-                      : 'Validate Incident'
+                    title={
+                      incident.status === 'resolved' || incident.status === 'closed'
+                        ? 'Cannot validate resolved/closed incidents'
+                        : incident.validationStatus === 'validated' 
+                        ? 'Update Validation' 
+                        : incident.validationStatus === 'rejected'
+                        ? 'Update Rejection'
+                        : 'Validate Incident'
                     }
                   >
                     <i className="ri-check-double-line mr-1"></i>
@@ -1428,8 +1432,17 @@ const ViewIncidents: React.FC = () => {
                  
                       <button
                         onClick={() => openAssignmentModal(incident, 'teams')}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors relative group"
-                        title="Assign Multiple Teams - All team members will receive email notifications"
+                        disabled={incident.status === 'resolved' || incident.status === 'closed'}
+                        className={`px-3 py-1 text-sm rounded-lg transition-colors relative group ${
+                          incident.status === 'resolved' || incident.status === 'closed'
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        }`}
+                        title={
+                          incident.status === 'resolved' || incident.status === 'closed'
+                            ? 'Cannot assign teams to resolved/closed incidents'
+                            : 'Assign Multiple Teams - All team members will receive email notifications'
+                        }
                       >
                         <i className="ri-team-fill mr-1"></i>
                         Assign Teams
@@ -1470,16 +1483,10 @@ const ViewIncidents: React.FC = () => {
               {/* Basic Information */}
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
                     <p className="text-sm font-medium text-gray-900">{getIncidentTypeText(selectedIncident.type)}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Priority</label>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(selectedIncident.priorityLevel)}`}>
-                      {selectedIncident.priorityLevel.toUpperCase()}
-                    </span>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Safety Status</label>
