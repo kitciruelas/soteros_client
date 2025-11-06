@@ -405,7 +405,7 @@ const StaffDashboardPage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl sm:text-3xl font-bold text-slate-900">{stats.criticalIncidents}</div>
-                    <div className="text-xs font-semibold text-red-600 uppercase tracking-wider">Critical</div>
+                    <div className="text-xs font-semibold text-red-600 uppercase tracking-wider">Urgent</div>
                   </div>
                 </div>
                 <div className="text-xs sm:text-sm text-slate-600 font-medium">Immediate attention</div>
