@@ -864,7 +864,6 @@ export default function IncidentReportPage() {
   // Render incident form sections (shared between authenticated and guest users)
   const renderIncidentFormSections = () => (
     <>
-      {/* Hidden Priority Level Field - Always Critical */}
       <input type="hidden" name="priorityLevel" value="critical" />
       
       {/* Incident Type Section */}

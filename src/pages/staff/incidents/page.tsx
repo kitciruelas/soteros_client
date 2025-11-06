@@ -759,7 +759,9 @@ const StaffIncidentsPage: React.FC = () => {
     }
 
     setSelectedIncident(incident)
-    setUpdateStatus(incident.status)
+    // If status is pending, default to resolved (since pending can only go to resolved or closed)
+    // Otherwise, keep the current status
+    setUpdateStatus(incident.status === "pending" ? "resolved" : incident.status)
     setUpdateNotes("")
     setShowUpdateModal(true)
   }
@@ -1712,9 +1714,18 @@ const StaffIncidentsPage: React.FC = () => {
                     onChange={(e) => setUpdateStatus(e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                   >
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
+                    {selectedIncident.status === "pending" ? (
+                      <>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
