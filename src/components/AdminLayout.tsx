@@ -69,6 +69,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     severity?: 'info' | 'warning' | 'high' | 'critical';
     actionUrl?: string | null;
     notificationId?: number;
+    incidentId?: number | string;
   }>>([]);
   const [notificationSound, setNotificationSound] = useState<HTMLAudioElement | null>(null);
   const notificationQueue = useRef<Array<any>>([]);
@@ -143,6 +144,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       severity: severity as 'info' | 'warning' | 'high' | 'critical',
       actionUrl: notificationData.action_url || null,
       notificationId: notificationData.id,
+      incidentId: notificationData.related_id || notificationData.incident_id || (notifType === 'incident' ? notificationData.id : undefined),
       timestamp: notificationTimestamp
     });
 
@@ -491,14 +493,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
     // Queue floating notification - it will be processed one at a time
     console.log('🎯 Queuing floating notification for incident');
+    const incidentId = incidentData.id || (incidentData as any).incident_id;
     const notificationData = {
-      id: incidentData.id || (incidentData as any).incident_id,
+      id: incidentId,
       type: 'incident',
       title: 'New Incident Report',
       message: capitalizeFirstLetter(`${incidentData.incident_type || 'Incident'} reported at ${incidentData.location || 'Unknown location'}`),
       priority_level: (incidentData.priority_level as 'low' | 'medium' | 'high' | 'critical') || 'medium',
       action_url: '/admin/incidents/view',
-      created_at: (incidentData as any).created_at || incidentData.date_reported
+      created_at: (incidentData as any).created_at || incidentData.date_reported,
+      incident_id: incidentId,
+      related_id: incidentId
     };
     notificationQueue.current.push(notificationData);
     
@@ -814,6 +819,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     severity?: 'info' | 'warning' | 'high' | 'critical';
     actionUrl?: string | null | undefined;
     notificationId?: number;
+    incidentId?: number | string;
     timestamp?: number;
   }) => {
     const newFloatingNotif = {
@@ -1079,6 +1085,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                     <p className={`text-sm font-semibold ${isRead ? 'text-gray-700' : 'text-gray-900'}`}>
                                       {isWelfare ? 'Welfare Check - Needs Help' : capitalizeFirstLetter(notif.incident_type)}
                                     </p>
+                                    {!isWelfare && notificationId && (
+                                      <span className="text-xs text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+                                        #{notificationId}
+                                      </span>
+                                    )}
                                     {isPriority && (
                                       <span className="text-xs text-red-600 font-bold flex items-center">
                                         <i className={`${isWelfare ? 'ri-heart-pulse-line' : 'ri-alarm-warning-line'} mr-1`}></i>
@@ -1411,9 +1422,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </div>
                 
                 <div className="mb-3">
-                  <h4 className="font-bold text-base mb-2 leading-tight">
-                    {notification.title}
-                  </h4>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <h4 className="font-bold text-base leading-tight">
+                      {notification.title}
+                    </h4>
+                    {notification.type === 'incident' && (notification.incidentId || notification.notificationId) && (
+                      <span className="text-xs font-mono bg-white bg-opacity-30 px-2 py-0.5 rounded">
+                        #{notification.incidentId || notification.notificationId}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm opacity-95 leading-relaxed line-clamp-3">
                     {capitalizeFirstLetter(notification.message)}
                   </p>
