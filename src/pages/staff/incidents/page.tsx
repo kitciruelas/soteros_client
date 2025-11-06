@@ -990,12 +990,6 @@ const StaffIncidentsPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col items-end space-y-1.5 sm:space-y-2">
                           <span
-                            className={`inline-flex px-2 sm:px-3 py-1 text-xs font-semibold rounded-full border ${getPriorityColor(incident.priority_level)}`}
-                          >
-                            <i className="ri-flag-line mr-1"></i>
-                            {incident.priority_level.charAt(0).toUpperCase() + incident.priority_level.slice(1)}
-                          </span>
-                          <span
                             className={`inline-flex px-2 sm:px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(incident.status)}`}
                           >
                             {getStatusText(incident.status)}
@@ -1247,39 +1241,20 @@ const StaffIncidentsPage: React.FC = () => {
 
                 {/* Right Column */}
                 <div className="space-y-4 sm:space-y-5">
-                  {/* Priority & Status */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i className="ri-flag-line text-orange-600 text-lg"></i>
-                        </div>
-                        <h3 className="font-bold text-gray-900 text-base sm:text-lg">Priority</h3>
+                  {/* Status */}
+                  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-time-line text-purple-600 text-lg"></i>
                       </div>
-                      <div className="pl-14">
-                        <span
-                          className={`inline-flex px-3 py-1.5 text-sm font-bold rounded-full border ${getPriorityColor(selectedIncident.priority_level)}`}
-                        >
-                          {selectedIncident.priority_level.charAt(0).toUpperCase() +
-                            selectedIncident.priority_level.slice(1)}
-                        </span>
-                      </div>
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg">Status</h3>
                     </div>
-
-                    <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-200">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i className="ri-time-line text-purple-600 text-lg"></i>
-                        </div>
-                        <h3 className="font-bold text-gray-900 text-base sm:text-lg">Status</h3>
-                      </div>
-                      <div className="pl-14">
-                        <span
-                          className={`inline-flex px-3 py-1.5 text-sm font-bold rounded-full border ${getStatusColor(selectedIncident.status)}`}
-                        >
-                          {getStatusText(selectedIncident.status)}
-                        </span>
-                      </div>
+                    <div className="pl-14">
+                      <span
+                        className={`inline-flex px-3 py-1.5 text-sm font-bold rounded-full border ${getStatusColor(selectedIncident.status)}`}
+                      >
+                        {getStatusText(selectedIncident.status)}
+                      </span>
                     </div>
                   </div>
 
