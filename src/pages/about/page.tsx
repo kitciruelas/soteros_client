@@ -278,7 +278,7 @@ const AboutPage: React.FC = () => {
                     <i className="ri-mail-line text-green-600 text-2xl"></i>
                   </div>
                   <h4 className="text-xl font-bold text-gray-900 mb-2">Email</h4>
-                  <p className="text-gray-600 mb-2">mdrrmo@rosario.gov.ph</p>
+                  <p className="text-gray-600 mb-2">rosariobatangasmdrrmo@gmail.com</p>
                   <p className="text-sm text-gray-500">General inquiries</p>
                 </div>
                 
@@ -527,7 +527,7 @@ const AboutPage: React.FC = () => {
                   </div>
                   <div className="flex items-center">
                     <i className="ri-mail-line text-blue-400 mr-3"></i>
-                    <p className="text-gray-300 text-sm">mdrrmo@rosario.gov.ph</p>
+                    <p className="text-gray-300 text-sm">rosariobatangasmdrrmo@gmail.com</p>
                   </div>
                 </div>
               </div>

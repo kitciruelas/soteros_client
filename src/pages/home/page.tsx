@@ -1352,18 +1352,6 @@ export default function Home() {
                   >
                     <i className="ri-facebook-fill text-lg"></i>
                   </a>
-                  <a
-                    href="#"
-                    className="w-11 h-11 bg-gray-800 hover:bg-blue-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                  >
-                    <i className="ri-twitter-fill text-lg"></i>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-11 h-11 bg-gray-800 hover:bg-pink-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                  >
-                    <i className="ri-instagram-line text-lg"></i>
-                  </a>
                 </div>
               </div>
 
@@ -1446,7 +1434,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center">
                     <i className="ri-mail-line text-blue-400 mr-3"></i>
-                    <p className="text-gray-300 text-sm">mdrrmo@rosario.gov.ph</p>
+                    <p className="text-gray-300 text-sm">rosariobatangasmdrrmo@gmail.com</p>
                   </div>
                   <div className="mt-6">
                     <button

@@ -987,7 +987,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         <div className="flex items-center">
                           <h3 className="font-bold text-gray-900 text-lg flex items-center">
                             <i className="ri-notification-3-line mr-2 text-blue-600"></i>
-                            Incident Alerts
+                            Notifications
                           </h3>
                         </div>
                         <div className="flex items-center space-x-2">
