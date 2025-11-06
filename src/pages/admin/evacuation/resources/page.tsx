@@ -71,7 +71,7 @@ const DownloadIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 interface EvacuationResource {
   resource_id: number;
   center_id: number;
-  type: 'facility' | 'feature' | 'water' | 'supply';
+  type: 'facility' | 'water' | 'supply';
   name: string;
   quantity: number;
   picture: string | null;
@@ -98,7 +98,7 @@ const EvacuationResourcesPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
-    type: 'facility' as 'facility' | 'feature' | 'water' | 'supply',
+    type: 'facility' as 'facility' | 'water' | 'supply',
     name: '',
     quantity: 1
   });
@@ -313,7 +313,6 @@ const EvacuationResourcesPage: React.FC = () => {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'facility': return 'bg-blue-100 text-blue-800';
-      case 'feature': return 'bg-green-100 text-green-800';
       case 'water': return 'bg-cyan-100 text-cyan-800';
       case 'supply': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -323,7 +322,6 @@ const EvacuationResourcesPage: React.FC = () => {
   const getTypeIconComponent = (type: string) => {
     switch (type) {
       case 'facility': return BuildingIcon;
-      case 'feature': return ToolsIcon;
       case 'water': return WaterIcon;
       case 'supply': return SupplyIcon;
       default: return BoxIcon;
@@ -473,7 +471,6 @@ const EvacuationResourcesPage: React.FC = () => {
   // Calculate stats
   const totalResources = resources.length;
   const facilityResources = resources.filter(r => r.type === 'facility').length;
-  const featureResources = resources.filter(r => r.type === 'feature').length;
   const waterResources = resources.filter(r => r.type === 'water').length;
   const supplyResources = resources.filter(r => r.type === 'supply').length;
 
@@ -595,7 +592,7 @@ const EvacuationResourcesPage: React.FC = () => {
 
       {/* Stats */}
       {selectedCenter && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -615,17 +612,6 @@ const EvacuationResourcesPage: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600">Facilities</p>
                 <p className="text-xl font-bold text-gray-900">{facilityResources}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                <ToolsIcon className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Features</p>
-                <p className="text-xl font-bold text-gray-900">{featureResources}</p>
               </div>
             </div>
           </div>
@@ -677,7 +663,6 @@ const EvacuationResourcesPage: React.FC = () => {
             >
               <option value="all">All Types</option>
               <option value="facility">Facility</option>
-              <option value="feature">Feature</option>
               <option value="water">Water</option>
               <option value="supply">Supply</option>
             </select>
@@ -816,7 +801,6 @@ const EvacuationResourcesPage: React.FC = () => {
                     disabled={submitting}
                   >
                     <option value="facility">Facility</option>
-                    <option value="feature">Feature</option>
                     <option value="water">Water</option>
                     <option value="supply">Supply</option>
                   </select>
