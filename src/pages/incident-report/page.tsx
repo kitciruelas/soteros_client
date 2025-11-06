@@ -1336,12 +1336,26 @@ export default function IncidentReportPage() {
               {/* Guest Information Section */}
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                      <i className="ri-user-line text-red-600"></i>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                        <i className="ri-user-line text-red-600"></i>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        Your Information
+                      </h3>
                     </div>
-                    Your Information
-                  </h3>
+                    {hasFormData && (
+                      <button
+                        type="button"
+                        onClick={clearFormData}
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2"
+                      >
+                        <i className="ri-delete-bin-line"></i>
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <p className="text-gray-600 mt-2">Please provide your contact details</p>
                 </div>
 
@@ -1442,20 +1456,6 @@ export default function IncidentReportPage() {
                 />
                 {recaptchaError && <p className="text-red-600 text-sm mt-1">{recaptchaError}</p>}
               </div>
-
-              {/* Clear Button - Show if form has data */}
-              {hasFormData && (
-                <div className="border-t border-gray-200 pt-6">
-                  <button
-                    type="button"
-                    onClick={clearFormData}
-                    className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <i className="ri-delete-bin-line"></i>
-                    Clear Form Data
-                  </button>
-                </div>
-              )}
 
               {/* Submit Section */}
               <div className="border-t border-gray-200 pt-8">
