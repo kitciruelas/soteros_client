@@ -83,6 +83,56 @@ export default function IncidentReportPage() {
     }
   };
 
+  // Clear form and saved data (for clear button)
+  const clearFormData = () => {
+    try {
+      // Clear localStorage
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
+      
+      // Reset all form fields
+      setValue('incidentType', '');
+      setValue('description', '');
+      setValue('location', '');
+      setValue('latitude', null);
+      setValue('longitude', null);
+      setValue('priorityLevel', 'critical');
+      setValue('safetyStatus', '');
+      setValue('guestName', '');
+      setValue('guestContact', '');
+      
+      // Clear attachments
+      setSelectedFiles([]);
+      setValue('attachments', []);
+      
+      // Reset other state
+      setSavedFormData(null);
+      restoreMessageShownRef.current = false;
+      setRecaptchaValue(null);
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      setAgreedToTerms(false);
+      setLocationMethod('manual');
+      
+      // Show confirmation
+      showToast({
+        type: 'success',
+        title: 'Form Cleared',
+        message: 'All form data has been cleared. You can now start fresh.',
+        durationMs: 3000
+      });
+    } catch (error) {
+      console.error('Failed to clear form data:', error);
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to clear form data. Please try again.',
+        durationMs: 3000
+      });
+    }
+  };
+
   // Handle reCAPTCHA change
   const onRecaptchaChange = (value: string | null) => {
     setRecaptchaValue(value);
@@ -236,6 +286,34 @@ export default function IncidentReportPage() {
     },
     validationRules
   );
+
+  // Check if there's saved data or form has values to show clear button
+  const hasFormData = React.useMemo(() => {
+    // Check if any form field has a value
+    const hasValues = 
+      fields.incidentType.value ||
+      fields.description.value ||
+      fields.location.value ||
+      fields.safetyStatus.value ||
+      fields.guestName.value ||
+      fields.guestContact.value ||
+      selectedFiles.length > 0;
+    
+    // Also check localStorage
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        const age = Date.now() - data.timestamp;
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        return hasValues || age < maxAge;
+      }
+    } catch (error) {
+      // Ignore errors
+    }
+    
+    return hasValues;
+  }, [fields, selectedFiles]);
 
   // Save form data to localStorage
   const saveFormDataToStorage = (formData: any, files?: File[]) => {
@@ -1365,6 +1443,20 @@ export default function IncidentReportPage() {
                 {recaptchaError && <p className="text-red-600 text-sm mt-1">{recaptchaError}</p>}
               </div>
 
+              {/* Clear Button - Show if form has data */}
+              {hasFormData && (
+                <div className="border-t border-gray-200 pt-6">
+                  <button
+                    type="button"
+                    onClick={clearFormData}
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <i className="ri-delete-bin-line"></i>
+                    Clear Form Data
+                  </button>
+                </div>
+              )}
+
               {/* Submit Section */}
               <div className="border-t border-gray-200 pt-8">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -1473,6 +1565,20 @@ export default function IncidentReportPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Include the same form sections as authenticated users */}
               {renderIncidentFormSections()}
+
+              {/* Clear Button - Show if form has data */}
+              {hasFormData && (
+                <div className="border-t border-gray-200 pt-6">
+                  <button
+                    type="button"
+                    onClick={clearFormData}
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <i className="ri-delete-bin-line"></i>
+                    Clear Form Data
+                  </button>
+                </div>
+              )}
 
               {/* Submit Section */}
               <div className="border-t border-gray-200 pt-8">
