@@ -860,10 +860,32 @@ const ViewIncidents: React.FC = () => {
       return newIncidentIds.has(incident.id);
     };
     
+    // Helper function to check if incident is resolved or closed
+    const isResolvedOrClosed = (incident: Incident) => {
+      return incident.status === 'resolved' || incident.status === 'closed';
+    };
+    
     // Get dates for comparison
     const aDate = new Date(a.dateReported).getTime();
     const bDate = new Date(b.dateReported).getTime();
     
+    // PINAKA-UNA: Move resolved/closed incidents to the bottom
+    const aIsResolvedOrClosed = isResolvedOrClosed(a);
+    const bIsResolvedOrClosed = isResolvedOrClosed(b);
+    
+    if (aIsResolvedOrClosed !== bIsResolvedOrClosed) {
+      return aIsResolvedOrClosed ? 1 : -1; // Resolved/closed incidents go to bottom
+    }
+    
+    // If both are resolved/closed, sort by date (newest first within resolved/closed group)
+    if (aIsResolvedOrClosed && bIsResolvedOrClosed) {
+      const dateDiff = bDate - aDate;
+      if (dateDiff !== 0) return dateDiff;
+      // If same date, sort by status (resolved before closed)
+      return statusOrder[a.status] - statusOrder[b.status];
+    }
+    
+    // For active incidents (not resolved/closed), apply normal sorting logic
     // PINAKA-UNA: New incidents with unread notifications (sorted by newest date first within new group)
     const aIsNew = isNew(a);
     const bIsNew = isNew(b);
