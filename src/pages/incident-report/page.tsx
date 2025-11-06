@@ -61,6 +61,7 @@ export default function IncidentReportPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [savedFormData, setSavedFormData] = useState<any>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const restoreMessageShownRef = useRef<boolean>(false);
   const STORAGE_KEY = 'incident_report_draft';
   const SUBMISSION_SUCCESS_KEY = 'incident_report_submission_success';
   const MAX_RETRIES = 3;
@@ -76,6 +77,7 @@ export default function IncidentReportPage() {
       // Mark that submission was successful to prevent restoration
       localStorage.setItem(SUBMISSION_SUCCESS_KEY, Date.now().toString());
       setSavedFormData(null);
+      restoreMessageShownRef.current = false;
     } catch (error) {
       console.error('Failed to clear saved form data:', error);
     }
@@ -265,6 +267,7 @@ export default function IncidentReportPage() {
         // Submission was successful, clear everything and don't restore
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(SUBMISSION_SUCCESS_KEY);
+        restoreMessageShownRef.current = false;
         return;
       }
 
@@ -288,17 +291,24 @@ export default function IncidentReportPage() {
           if (data.guestName) setValue('guestName', data.guestName);
           if (data.guestContact) setValue('guestContact', data.guestContact);
           
-          // Show restore notification
-          showToast({
-            type: 'info',
-            title: 'Form Data Restored',
-            message: 'Your previously saved form data has been restored.',
-            durationMs: 3000
-          });
+          // Show restore notification only once
+          if (!restoreMessageShownRef.current) {
+            showToast({
+              type: 'info',
+              title: 'Form Data Restored',
+              message: 'Your previously saved form data has been restored.',
+              durationMs: 3000
+            });
+            restoreMessageShownRef.current = true;
+          }
         } else {
           // Clear old data
           localStorage.removeItem(STORAGE_KEY);
+          restoreMessageShownRef.current = false;
         }
+      } else {
+        // No saved data, reset the flag
+        restoreMessageShownRef.current = false;
       }
     } catch (error) {
       console.error('Failed to restore form data from localStorage:', error);
