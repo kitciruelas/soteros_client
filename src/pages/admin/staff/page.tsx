@@ -148,8 +148,8 @@ const StaffManagement: React.FC = () => {
     }
   }, [statusFilter, availabilityFilter, teamFilter]);
 
-  // Filter and paginate staff client-side
-  const filteredAndPaginatedStaff = useMemo(() => {
+  // Filter staff client-side (without pagination)
+  const filteredStaff = useMemo(() => {
     let filtered = [...allStaff];
 
     // Search filter
@@ -179,17 +179,24 @@ const StaffManagement: React.FC = () => {
       filtered = filtered.filter(member => member.team_id?.toString() === teamFilter);
     }
 
-    // Calculate pagination
-    const total = filtered.length;
+    return filtered;
+  }, [allStaff, searchTerm, statusFilter, availabilityFilter, teamFilter]);
+
+  // Calculate pagination and paginate
+  const filteredAndPaginatedStaff = useMemo(() => {
+    const total = filteredStaff.length;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredStaff.slice(startIndex, endIndex);
+  }, [filteredStaff, currentPage, itemsPerPage]);
+
+  // Update pagination state when filtered data changes
+  useEffect(() => {
+    const total = filteredStaff.length;
     const totalPagesCount = Math.ceil(total / itemsPerPage);
     setTotalPages(totalPagesCount);
     setTotalStaff(total);
-
-    // Paginate
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filtered.slice(startIndex, endIndex);
-  }, [allStaff, searchTerm, statusFilter, availabilityFilter, teamFilter, currentPage, itemsPerPage]);
+  }, [filteredStaff, itemsPerPage]);
 
   // Update displayed staff when filtered data changes
   useEffect(() => {

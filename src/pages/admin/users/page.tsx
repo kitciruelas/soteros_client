@@ -110,8 +110,8 @@ const UserManagement: React.FC = () => {
     }
   }, [statusFilter, userTypeFilter]);
 
-  // Filter and paginate users client-side
-  const filteredAndPaginatedUsers = useMemo(() => {
+  // Filter users client-side (without pagination)
+  const filteredUsers = useMemo(() => {
     let filtered = [...allUsers];
 
     // Search filter
@@ -140,47 +140,26 @@ const UserManagement: React.FC = () => {
       filtered = filtered.filter(user => user.user_type === userTypeFilter);
     }
 
-    // Calculate pagination
-    const total = filtered.length;
+    return filtered;
+  }, [allUsers, searchTerm, statusFilter, userTypeFilter]);
+
+  // Calculate pagination and paginate
+  const filteredAndPaginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentPage, itemsPerPage]);
+
+  // Update pagination state when filtered data changes
+  useEffect(() => {
+    const total = filteredUsers.length;
     const totalPagesCount = Math.ceil(total / itemsPerPage);
     setTotalPages(totalPagesCount);
     setTotalUsers(total);
+  }, [filteredUsers, itemsPerPage]);
 
-    // Paginate
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filtered.slice(startIndex, endIndex);
-  }, [allUsers, searchTerm, statusFilter, userTypeFilter, currentPage, itemsPerPage]);
-
-  // Filtered users for export (all matching, not paginated)
-  const filteredUsersForExport = useMemo(() => {
-    let filtered = [...allUsers];
-
-    if (searchTerm.trim()) {
-      const query = searchTerm.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.name?.toLowerCase().includes(query) ||
-        user.first_name?.toLowerCase().includes(query) ||
-        user.last_name?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query) ||
-        user.phone?.toLowerCase().includes(query)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'active') {
-        filtered = filtered.filter(user => user.status === 1);
-      } else if (statusFilter === 'inactive') {
-        filtered = filtered.filter(user => user.status === 0);
-      }
-    }
-
-    if (userTypeFilter !== 'all') {
-      filtered = filtered.filter(user => user.user_type === userTypeFilter);
-    }
-
-    return filtered;
-  }, [allUsers, searchTerm, statusFilter, userTypeFilter]);
+  // Filtered users for export (reuse filteredUsers)
+  const filteredUsersForExport = filteredUsers;
 
   // Update displayed users when filtered data changes
   useEffect(() => {
