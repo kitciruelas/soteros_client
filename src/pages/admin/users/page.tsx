@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { userManagementApi } from '../../../utils/api';
 import Modal, { ConfirmModal } from '../../../components/base/Modal';
 import { useToast } from '../../../components/base/Toast';
@@ -6,6 +6,23 @@ import ExportButton from '../../../components/base/ExportButton';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import ExportUtils, { type ExportColumn } from '../../../utils/exportUtils';
 import { getAuthState } from '../../../utils/auth';
+
+// Debounce hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 interface User {
   user_id: number;
@@ -61,6 +78,9 @@ const UserManagement: React.FC = () => {
   const [allUsersForExport, setAllUsersForExport] = useState<User[]>([]);
   const [showExportPreview, setShowExportPreview] = useState(false);
 
+  // Debounce search term to avoid excessive API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // Define export columns
   const exportColumns: ExportColumn[] = [
     { key: 'name', label: 'Full Name' },
@@ -80,39 +100,23 @@ const UserManagement: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
-    fetchUsers();
-    fetchAllUsersForExportData();
-  }, [statusFilter, userTypeFilter]);
-
-  // Fetch all users for export
-  const fetchAllUsersForExportData = async () => {
-    try {
-      const allUsers = await fetchAllUsersForExport();
-      setAllUsersForExport(allUsers);
-    } catch (error) {
-      console.error('Error fetching all users for export:', error);
-      // Fallback to current users if fetch fails
-      setAllUsersForExport(users);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage]);
-
-  // Remove filtering in fetchUsers, just set users from API response
-  const fetchUsers = async () => {
+  // Fetch users from API with pagination and filters
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const params = {
+      const params: any = {
         page: currentPage,
         limit: 10,
-        status: statusFilter,
-        barangay: userTypeFilter // Using barangay param for user_type filter
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        barangay: userTypeFilter !== 'all' ? userTypeFilter : undefined
       };
+
+      // Add search parameter if debounced search term exists
+      if (debouncedSearchTerm.trim()) {
+        params.search = debouncedSearchTerm.trim();
+      }
 
       const response = await userManagementApi.getUsers(params) as ApiResponse;
 
@@ -129,17 +133,22 @@ const UserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, statusFilter, userTypeFilter, debouncedSearchTerm]);
 
   // Fetch all users for export (without pagination)
-  const fetchAllUsersForExport = async (): Promise<User[]> => {
+  const fetchAllUsersForExport = useCallback(async (): Promise<User[]> => {
     try {
-      const params = {
+      const params: any = {
         page: 1,
         limit: 1000, // Large limit to get all users
-        status: statusFilter,
-        barangay: userTypeFilter
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        barangay: userTypeFilter !== 'all' ? userTypeFilter : undefined
       };
+
+      // Add search parameter if debounced search term exists
+      if (debouncedSearchTerm.trim()) {
+        params.search = debouncedSearchTerm.trim();
+      }
 
       const response = await userManagementApi.getUsers(params) as ApiResponse;
 
@@ -152,7 +161,34 @@ const UserManagement: React.FC = () => {
       console.error('Error fetching users for export:', error);
       throw error;
     }
-  };
+  }, [statusFilter, userTypeFilter, debouncedSearchTerm]);
+
+  // Fetch all users for export
+  const fetchAllUsersForExportData = useCallback(async () => {
+    try {
+      const allUsers = await fetchAllUsersForExport();
+      setAllUsersForExport(allUsers);
+    } catch (error) {
+      console.error('Error fetching all users for export:', error);
+      // Fallback to current users if fetch fails
+      setAllUsersForExport(users);
+    }
+  }, [fetchAllUsersForExport, users]);
+
+  // Reset to page 1 when filters change (but not on initial mount)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, userTypeFilter, debouncedSearchTerm]);
+
+  // Fetch users when filters or page change
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Fetch all users for export when filters change
+  useEffect(() => {
+    fetchAllUsersForExportData();
+  }, [fetchAllUsersForExportData]);
 
   const handleStatusChange = async (userId: number, newStatus: number) => {
     // Get previous status before updating
@@ -311,18 +347,6 @@ const UserManagement: React.FC = () => {
     return 'Unknown';
   };
 
-  // Filter users from allUsersForExport based on searchTerm and filters
-  const filteredUsers = allUsersForExport.filter(user => {
-    const lowerSearch = searchTerm.toLowerCase();
-    if (searchTerm.trim() === '') return true;
-    return (
-      user.first_name.toLowerCase().includes(lowerSearch) ||
-      user.last_name.toLowerCase().includes(lowerSearch) ||
-      user.email.toLowerCase().includes(lowerSearch) ||
-      user.name.toLowerCase().includes(lowerSearch)
-    );
-  });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -388,7 +412,7 @@ const UserManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Active Users</p>
               <p className="text-xl font-bold text-gray-900">
-                {filteredUsers.filter(u => u.status === 1).length}
+                {users.filter(u => u.status === 1).length}
               </p>
             </div>
           </div>
@@ -401,7 +425,7 @@ const UserManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Inactive Users</p>
               <p className="text-xl font-bold text-gray-900">
-                {filteredUsers.filter(u => u.status === 0 || u.status === -1).length}
+                {users.filter(u => u.status === 0).length}
               </p>
             </div>
           </div>
@@ -431,9 +455,18 @@ const UserManagement: React.FC = () => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+            <select
+              value={userTypeFilter}
+              onChange={(e) => setUserTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All User Types</option>
+              <option value="CITIZEN">Citizen</option>
+              <option value="ADMIN">Admin</option>
+            </select>
           </div>
           <div className="text-sm text-gray-600">
-            Showing {filteredUsers.length} of {totalUsers} users
+            Showing {users.length} of {totalUsers} users
           </div>
         </div>
       </div>
@@ -465,7 +498,7 @@ const UserManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-16">
                     <div className="text-center">
@@ -484,6 +517,7 @@ const UserManagement: React.FC = () => {
                             setSearchTerm('');
                             setStatusFilter('all');
                             setUserTypeFilter('all');
+                            setCurrentPage(1);
                           }}
                           className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
                         >
@@ -495,7 +529,7 @@ const UserManagement: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                 <tr key={user.user_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
