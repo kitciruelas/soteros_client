@@ -814,18 +814,18 @@ const EvacuationCenterPage: React.FC = () => {
                           #{index + 1}
                         </div>
 
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <div className={`w-4 h-4 rounded-full shadow-md ${
+                        <div className="flex items-start justify-between mb-4 gap-2">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0 overflow-hidden">
+                            <div className={`w-4 h-4 rounded-full shadow-md flex-shrink-0 ${
                               center.status === 'open' ? 'bg-gradient-to-r from-green-400 to-green-600' :
                               center.status === 'full' ? 'bg-gradient-to-r from-red-400 to-red-600' :
                               'bg-gradient-to-r from-gray-400 to-gray-600'
                             }`}></div>
-                            <h4 className="font-bold text-gray-900 text-base group-hover:text-blue-600 transition-colors truncate">
+                            <h4 className="font-bold text-gray-900 text-base group-hover:text-blue-600 transition-colors truncate min-w-0">
                               {center.name}
                             </h4>
                           </div>
-                          <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm border ${
+                          <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm border flex-shrink-0 ${
                             center.status === 'open' ? 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-green-200' :
                             center.status === 'full' ? 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 border-red-200' :
                             'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 border-gray-200'
@@ -849,9 +849,9 @@ const EvacuationCenterPage: React.FC = () => {
                             </span>
                           </div>
 
-                          <div className="flex items-center space-x-2">
-                            <i className="ri-phone-line text-gray-500 text-sm"></i>
-                            <span className="text-sm text-gray-600">{center.contact_number}</span>
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <i className="ri-phone-line text-gray-500 text-sm flex-shrink-0"></i>
+                            <span className="text-sm text-gray-600 truncate">{center.contact_number}</span>
                           </div>
 
                           {/* Resources Summary */}
@@ -1030,24 +1030,24 @@ const EvacuationCenterPage: React.FC = () => {
                       )}
 
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${
+                      <div className="flex items-start justify-between mb-4 gap-2">
+                        <div className="flex items-center space-x-3 flex-1 min-w-0 overflow-hidden">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md flex-shrink-0 ${
                             center.status === 'open' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
                             center.status === 'full' ? 'bg-gradient-to-r from-red-500 to-rose-500' :
                             'bg-gradient-to-r from-gray-500 to-slate-500'
                           }`}>
                             <i className="ri-building-2-line text-lg text-white"></i>
                           </div>
-                          <div>
+                          <div className="min-w-0 flex-1 overflow-hidden">
                             <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
                               {center.name}
                             </h3>
-                            <p className="text-gray-500 text-sm">Emergency Facility</p>
+                            <p className="text-gray-500 text-sm truncate">Emergency Facility</p>
                           </div>
                         </div>
 
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0">
                           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
                             center.status === 'open' ? 'bg-green-100 text-green-700' :
                             center.status === 'full' ? 'bg-red-100 text-red-700' :
@@ -1268,14 +1268,14 @@ const EvacuationCenterPage: React.FC = () => {
           <div className="relative bg-white rounded-2xl max-w-7xl max-h-[95vh] overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedGallery.center.name}</h2>
-                  <p className="text-purple-100 mt-1">All Available Resources ({selectedGallery.resources.length} items)</p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h2 className="text-xl sm:text-2xl font-bold truncate">{selectedGallery.center.name}</h2>
+                  <p className="text-purple-100 mt-1 text-sm sm:text-base">All Available Resources ({selectedGallery.resources.length} items)</p>
                 </div>
                 <button
                   onClick={() => setSelectedGallery(null)}
-                  className="text-white hover:text-gray-200 text-3xl font-bold transition-colors"
+                  className="text-white hover:text-gray-200 text-3xl font-bold transition-colors flex-shrink-0"
                 >
                   ×
                 </button>
@@ -1401,14 +1401,14 @@ const EvacuationCenterPage: React.FC = () => {
           <div className="relative bg-white rounded-2xl max-w-2xl w-full overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedContactInfo.name}</h2>
-                  <p className="text-blue-100 mt-1">Contact Information</p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h2 className="text-xl sm:text-2xl font-bold truncate">{selectedContactInfo.name}</h2>
+                  <p className="text-blue-100 mt-1 text-sm sm:text-base">Contact Information</p>
                 </div>
                 <button
                   onClick={() => setSelectedContactInfo(null)}
-                  className="text-white hover:text-gray-200 text-3xl font-bold transition-colors"
+                  className="text-white hover:text-gray-200 text-3xl font-bold transition-colors flex-shrink-0"
                 >
                   ×
                 </button>
@@ -1430,7 +1430,7 @@ const EvacuationCenterPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border border-blue-200">
-                    <p className="text-xl font-bold text-gray-900">{selectedContactInfo.contact_person}</p>
+                    <p className="text-xl font-bold text-gray-900 truncate">{selectedContactInfo.contact_person}</p>
                     <p className="text-sm text-gray-500 mt-1">Emergency Contact</p>
                   </div>
                 </div>
@@ -1447,14 +1447,14 @@ const EvacuationCenterPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xl font-bold text-gray-900">{selectedContactInfo.contact_number}</p>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <p className="text-xl font-bold text-gray-900 truncate">{selectedContactInfo.contact_number}</p>
                         <p className="text-sm text-gray-500 mt-1">Available 24/7</p>
                       </div>
                       <button
                         onClick={() => window.open(`tel:${selectedContactInfo.contact_number}`, '_self')}
-                        className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center space-x-2"
+                        className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center space-x-2 flex-shrink-0"
                       >
                         <i className="ri-phone-line"></i>
                         <span>Call Now</span>
@@ -1495,14 +1495,14 @@ const EvacuationCenterPage: React.FC = () => {
           <div className="relative bg-white rounded-2xl max-w-4xl w-full overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedCenterDetails.name}</h2>
-                  <p className="text-green-100 mt-1">Center Information & Status</p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h2 className="text-xl sm:text-2xl font-bold truncate">{selectedCenterDetails.name}</h2>
+                  <p className="text-green-100 mt-1 text-sm sm:text-base">Center Information & Status</p>
                 </div>
                 <button
                   onClick={() => setSelectedCenterDetails(null)}
-                  className="text-white hover:text-gray-200 text-3xl font-bold transition-colors"
+                  className="text-white hover:text-gray-200 text-3xl font-bold transition-colors flex-shrink-0"
                 >
                   ×
                 </button>
