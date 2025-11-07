@@ -92,6 +92,7 @@ export class ExportUtils {
     const margin = 20 // Increased margin for better spacing
     const headerHeight = 45 // Increased header height for better layout
     let currentY = headerHeight
+    let pageNumber = 1 // Initialize page number early
 
     const drawPageHeader = async () => {
       // ===== ENHANCED HEADER WITH DUAL LOGOS =====
@@ -500,7 +501,6 @@ export class ExportUtils {
       return yPos + 8
     }
 
-    let pageNumber = 1
     currentY += 15 // More space before table
     currentY = drawTableHeader(currentY, pageNumber)
 
