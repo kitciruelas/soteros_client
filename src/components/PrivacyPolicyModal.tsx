@@ -54,6 +54,13 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
                   <li>Participate in surveys or feedback forms</li>
                 </ul>
                 <p>This may include your name, email address, phone number, location data, and emergency contact information.</p>
+                <p>We also automatically collect certain technical information when you use our service, including:</p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>IP address and network information</li>
+                  <li>Device information and browser type</li>
+                  <li>Usage patterns and activity logs</li>
+                </ul>
+                <p>We use IP addresses for security purposes, including preventing abuse, rate limiting, and protecting against unauthorized access attempts.</p>
               </div>
             </section>
 
@@ -68,6 +75,8 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
                   <li>Coordinate evacuation and welfare check procedures</li>
                   <li>Improve our services and emergency response capabilities</li>
                   <li>Comply with legal obligations and emergency protocols</li>
+                  <li>Monitor and prevent abuse, unauthorized access, and security threats</li>
+                  <li>Enforce rate limits and prevent system abuse</li>
                 </ul>
               </div>
             </section>

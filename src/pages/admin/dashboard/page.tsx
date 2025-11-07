@@ -83,6 +83,7 @@ const AdminDashboard: React.FC = () => {
   // Export functionality
   const [showExportModal, setShowExportModal] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [exportData, setExportData] = useState<any[]>([]);
   const [exportColumns, setExportColumns] = useState<ExportColumn[]>([]);
   const [exportTitle, setExportTitle] = useState('');
@@ -278,313 +279,380 @@ const AdminDashboard: React.FC = () => {
 
   // Export functions
   const exportDashboardStats = async () => {
-    setShowExportDropdown(false);
-    const statsData = [
-      { metric: 'Total Incidents', value: stats.totalIncidents },
-      { metric: 'Active Incidents', value: stats.activeIncidents },
-      { metric: 'Total Users', value: stats.totalUsers },
-      { metric: 'Staff Members', value: stats.totalStaff },
-      { metric: 'Total Alerts', value: stats.totalAlerts },
-      { metric: 'Active Alerts', value: stats.activeAlerts }
-    ];
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      const statsData = [
+        { metric: 'Total Incidents', value: stats.totalIncidents },
+        { metric: 'Active Incidents', value: stats.activeIncidents },
+        { metric: 'Total Users', value: stats.totalUsers },
+        { metric: 'Staff Members', value: stats.totalStaff },
+        { metric: 'Total Alerts', value: stats.totalAlerts },
+        { metric: 'Active Alerts', value: stats.activeAlerts }
+      ];
 
-    const columns: ExportColumn[] = [
-      { key: 'metric', label: 'Metric' },
-      { key: 'value', label: 'Value' }
-    ];
+      const columns: ExportColumn[] = [
+        { key: 'metric', label: 'Metric' },
+        { key: 'value', label: 'Value' }
+      ];
 
-    // Capture all chart images for comprehensive export
-    const chartImages = await captureChartImages([
-      { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
-      ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
-      { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
-      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
-    ]);
+      // Capture all chart images for comprehensive export
+      const chartImages = await captureChartImages([
+        { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
+        ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
+        { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
+        { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
+        { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+      ]);
 
-    setExportData(statsData);
-    setExportColumns(columns);
-    setExportTitle('Dashboard Statistics');
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
+      setExportData(statsData);
+      setExportColumns(columns);
+      setExportTitle('Dashboard Statistics');
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const exportIncidentTypes = async () => {
-    setShowExportDropdown(false);
-    const columns: ExportColumn[] = [
-      { key: 'incident_type', label: 'Incident Type' },
-      { key: 'count', label: 'Count' }
-    ];
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      const columns: ExportColumn[] = [
+        { key: 'incident_type', label: 'Incident Type' },
+        { key: 'count', label: 'Count' }
+      ];
 
-    // Capture the incident types chart
-    const chartImages = await captureChartImages([
-      { ref: incidentTypesChartRef, title: 'Most Common Incident Types' }
-    ]);
+      // Capture the incident types chart
+      const chartImages = await captureChartImages([
+        { ref: incidentTypesChartRef, title: 'Most Common Incident Types' }
+      ]);
 
-    setExportData(incidentTypes);
-    setExportColumns(columns);
-    setExportTitle('Incident Types Distribution');
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
+      setExportData(incidentTypes);
+      setExportColumns(columns);
+      setExportTitle('Incident Types Distribution');
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const exportWelfareData = async () => {
-    setShowExportDropdown(false);
-    const welfareData = welfareStats ? [
-      { status: 'Safe', count: welfareStats.safeReports },
-      { status: 'Needs Help', count: welfareStats.needsHelpReports },
-      { status: 'Not Submitted', count: welfareStats.notSubmitted }
-    ] : [];
-    
-    const columns: ExportColumn[] = [
-      { key: 'status', label: 'Welfare Status' },
-      { key: 'count', label: 'Count' }
-    ];
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      const welfareData = welfareStats ? [
+        { status: 'Safe', count: welfareStats.safeReports },
+        { status: 'Needs Help', count: welfareStats.needsHelpReports },
+        { status: 'Not Submitted', count: welfareStats.notSubmitted }
+      ] : [];
+      
+      const columns: ExportColumn[] = [
+        { key: 'status', label: 'Welfare Status' },
+        { key: 'count', label: 'Count' }
+      ];
 
-    // Capture the welfare chart
-    const chartImages = await captureChartImages([
-      { ref: welfareChartRef, title: 'Welfare Status Overview' }
-    ]);
+      // Capture the welfare chart
+      const chartImages = await captureChartImages([
+        { ref: welfareChartRef, title: 'Welfare Status Overview' }
+      ]);
 
-    setExportData(welfareData);
-    setExportColumns(columns);
-    setExportTitle('Welfare');
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
+      setExportData(welfareData);
+      setExportColumns(columns);
+      setExportTitle('Welfare');
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const exportTrendsData = async () => {
-    setShowExportDropdown(false);
-    const columns: ExportColumn[] = [
-      { key: 'period', label: 'Period' },
-      { key: 'total_incidents', label: 'Total Incidents' },
-      { key: 'resolved_incidents', label: 'Resolved Incidents' },
-      { key: 'high_priority_incidents', label: 'High Priority Incidents' }
-    ];
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      const columns: ExportColumn[] = [
+        { key: 'period', label: 'Period' },
+        { key: 'total_incidents', label: 'Total Incidents' },
+        { key: 'resolved_incidents', label: 'Resolved Incidents' },
+        { key: 'high_priority_incidents', label: 'High Priority Incidents' }
+      ];
 
-    // Capture the trends chart
-    const chartImages = await captureChartImages([
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
-    ]);
+      // Capture the trends chart
+      const chartImages = await captureChartImages([
+        { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
+      ]);
 
-    setExportData(monthlyIncidents);
-    setExportColumns(columns);
-    setExportTitle(`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`);
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
+      setExportData(monthlyIncidents);
+      setExportColumns(columns);
+      setExportTitle(`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`);
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const exportPeakHoursData = async () => {
-    setShowExportDropdown(false);
-    const formattedData = formatPeakHoursData(peakHoursData);
-    const columns: ExportColumn[] = [
-      { key: 'name', label: 'Hour' },
-      { key: 'count', label: 'Incident Count' },
-      { key: 'dateRange', label: 'Date Range' },
-      { key: 'sampleDateTime', label: 'Sample DateTime' }
-    ];
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      const formattedData = formatPeakHoursData(peakHoursData);
+      const columns: ExportColumn[] = [
+        { key: 'name', label: 'Hour' },
+        { key: 'count', label: 'Incident Count' },
+        { key: 'dateRange', label: 'Date Range' },
+        { key: 'sampleDateTime', label: 'Sample DateTime' }
+      ];
 
-    // Capture the peak hours chart
-    const chartImages = await captureChartImages([
-      { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` }
-    ]);
+      // Capture the peak hours chart
+      const chartImages = await captureChartImages([
+        { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` }
+      ]);
 
-    setExportData(formattedData);
-    setExportColumns(columns);
-    setExportTitle(`Peak Hours Analysis (${peakHoursDateRange})`);
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
+      setExportData(formattedData);
+      setExportColumns(columns);
+      setExportTitle(`Peak Hours Analysis (${peakHoursDateRange})`);
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const exportLocationData = async () => {
-    setShowExportDropdown(false);
-    if (locationIncidents.length === 0) {
-      showToast({ message: 'No location data available to export', type: 'warning' });
-      return;
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      if (locationIncidents.length === 0) {
+        showToast({ message: 'No location data available to export', type: 'warning' });
+        setExportLoading(false);
+        return;
+      }
+
+      const columns: ExportColumn[] = [
+        { key: 'name', label: 'Barangay' },
+        ...Object.keys(locationIncidents[0] || {})
+          .filter(key => key !== 'name')
+          .map(key => ({ key, label: key.charAt(0).toUpperCase() + key.slice(1) }))
+      ];
+
+      // Capture the location chart
+      const chartImages = await captureChartImages([
+        { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+      ]);
+
+      setExportData(locationIncidents);
+      setExportColumns(columns);
+      setExportTitle('Barangay-based Risk Analysis');
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
     }
-
-    const columns: ExportColumn[] = [
-      { key: 'name', label: 'Barangay' },
-      ...Object.keys(locationIncidents[0] || {})
-        .filter(key => key !== 'name')
-        .map(key => ({ key, label: key.charAt(0).toUpperCase() + key.slice(1) }))
-    ];
-
-    // Capture the location chart
-    const chartImages = await captureChartImages([
-      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
-    ]);
-
-    setExportData(locationIncidents);
-    setExportColumns(columns);
-    setExportTitle('Barangay-based Risk Analysis');
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
   };
 
 
   const exportRecentActivity = () => {
-    setShowExportDropdown(false);
-    if (recentActivity.length === 0) {
-      showToast({ message: 'No recent activity available to export', type: 'warning' });
-      return;
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      if (recentActivity.length === 0) {
+        showToast({ message: 'No recent activity available to export', type: 'warning' });
+        setExportLoading(false);
+        return;
+      }
+
+      const columns: ExportColumn[] = [
+        { key: 'action', label: 'Action' },
+        { key: 'details', label: 'Details' },
+        { key: 'user_type', label: 'User Type' },
+        { key: 'created_at', label: 'Date' }
+      ];
+
+      setExportData(recentActivity);
+      setExportColumns(columns);
+      setExportTitle('Recent Activity');
+      setExportChartImages([]);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
     }
-
-    const columns: ExportColumn[] = [
-      { key: 'action', label: 'Action' },
-      { key: 'details', label: 'Details' },
-      { key: 'user_type', label: 'User Type' },
-      { key: 'created_at', label: 'Date' }
-    ];
-
-    setExportData(recentActivity);
-    setExportColumns(columns);
-    setExportTitle('Recent Activity');
-    setShowExportModal(true);
   };
 
   const exportAllData = async () => {
-    setShowExportDropdown(false);
-    // Combine all dashboard data into a comprehensive export
-    const allData = [];
-    
-    // Add dashboard statistics
-    allData.push({
-      section: 'Dashboard Statistics',
-      metric: 'Total Incidents',
-      value: stats.totalIncidents,
-      details: 'Overall incident count'
-    });
-    allData.push({
-      section: 'Dashboard Statistics',
-      metric: 'Active Incidents',
-      value: stats.activeIncidents,
-      details: 'Currently active incidents'
-    });
-    allData.push({
-      section: 'Dashboard Statistics',
-      metric: 'Total Users',
-      value: stats.totalUsers,
-      details: 'Registered users count'
-    });
-    allData.push({
-      section: 'Dashboard Statistics',
-      metric: 'Staff Members',
-      value: stats.totalStaff,
-      details: 'Staff members count'
-    });
-    allData.push({
-      section: 'Dashboard Statistics',
-      metric: 'Total Alerts',
-      value: stats.totalAlerts,
-      details: 'Total alerts count'
-    });
-    allData.push({
-      section: 'Dashboard Statistics',
-      metric: 'Active Alerts',
-      value: stats.activeAlerts,
-      details: 'Currently active alerts'
-    });
+    try {
+      setExportLoading(true);
+      setShowExportDropdown(false);
+      // Combine all dashboard data into a comprehensive export
+      const allData = [];
+      
+      // Add dashboard statistics
+      allData.push({
+        section: 'Dashboard Statistics',
+        metric: 'Total Incidents',
+        value: stats.totalIncidents,
+        details: 'Overall incident count'
+      });
+      allData.push({
+        section: 'Dashboard Statistics',
+        metric: 'Active Incidents',
+        value: stats.activeIncidents,
+        details: 'Currently active incidents'
+      });
+      allData.push({
+        section: 'Dashboard Statistics',
+        metric: 'Total Users',
+        value: stats.totalUsers,
+        details: 'Registered users count'
+      });
+      allData.push({
+        section: 'Dashboard Statistics',
+        metric: 'Staff Members',
+        value: stats.totalStaff,
+        details: 'Staff members count'
+      });
+      allData.push({
+        section: 'Dashboard Statistics',
+        metric: 'Total Alerts',
+        value: stats.totalAlerts,
+        details: 'Total alerts count'
+      });
+      allData.push({
+        section: 'Dashboard Statistics',
+        metric: 'Active Alerts',
+        value: stats.activeAlerts,
+        details: 'Currently active alerts'
+      });
 
-    // Add incident types data
-    incidentTypes.forEach(item => {
-      allData.push({
-        section: 'Incident Types',
-        metric: item.incident_type,
-        value: item.count,
-        details: 'Incident type distribution'
+      // Add incident types data
+      incidentTypes.forEach(item => {
+        allData.push({
+          section: 'Incident Types',
+          metric: item.incident_type,
+          value: item.count,
+          details: 'Incident type distribution'
+        });
       });
-    });
 
-    // Add welfare data
-    if (welfareStats) {
-      allData.push({
-        section: 'Welfare Distribution',
-        metric: 'Safe',
-        value: welfareStats.safeReports,
-        details: 'Welfare check - Safe reports'
+      // Add welfare data
+      if (welfareStats) {
+        allData.push({
+          section: 'Welfare Distribution',
+          metric: 'Safe',
+          value: welfareStats.safeReports,
+          details: 'Welfare check - Safe reports'
+        });
+        allData.push({
+          section: 'Welfare Distribution',
+          metric: 'Needs Help',
+          value: welfareStats.needsHelpReports,
+          details: 'Welfare check - Needs Help reports'
+        });
+        allData.push({
+          section: 'Welfare Distribution',
+          metric: 'Not Submitted',
+          value: welfareStats.notSubmitted,
+          details: 'Welfare check - Not submitted'
+        });
+      }
+
+      // Add trends data
+      monthlyIncidents.forEach(item => {
+        allData.push({
+          section: 'Trends Data',
+          metric: item.period || item.month || 'Unknown Period',
+          value: item.total_incidents,
+          details: `Total incidents in ${item.period || item.month || 'Unknown Period'}`
+        });
       });
-      allData.push({
-        section: 'Welfare Distribution',
-        metric: 'Needs Help',
-        value: welfareStats.needsHelpReports,
-        details: 'Welfare check - Needs Help reports'
+
+      // Add peak hours data
+      const formattedPeakHours = formatPeakHoursData(peakHoursData);
+      formattedPeakHours.forEach(item => {
+        allData.push({
+          section: 'Peak Hours Analysis',
+          metric: item.name,
+          value: item.count,
+          details: `Peak hour: ${item.dateRange || 'N/A'}`
+        });
       });
-      allData.push({
-        section: 'Welfare Distribution',
-        metric: 'Not Submitted',
-        value: welfareStats.notSubmitted,
-        details: 'Welfare check - Not submitted'
+
+      // Add location data
+      locationIncidents.forEach(item => {
+        Object.keys(item).forEach(key => {
+          if (key !== 'name') {
+            allData.push({
+              section: 'Location Data',
+              metric: `${item.name} - ${key}`,
+              value: item[key],
+              details: 'Barangay-based incident data'
+            });
+          }
+        });
       });
+
+
+      // Add recent activity
+      recentActivity.forEach(item => {
+        allData.push({
+          section: 'Recent Activity',
+          metric: item.action,
+          value: 1,
+          details: `${item.details} - ${item.user_type}`
+        });
+      });
+
+      const columns: ExportColumn[] = [
+        { key: 'section', label: 'Data Section' },
+        { key: 'metric', label: 'Metric/Type' },
+        { key: 'value', label: 'Value' },
+        { key: 'details', label: 'Details' }
+      ];
+
+      // Capture all chart images for comprehensive export
+      const chartImages = await captureChartImages([
+        { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
+        ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
+        { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
+        { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
+        { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+      ]);
+
+      setExportData(allData);
+      setExportColumns(columns);
+      setExportTitle('Complete Dashboard Data Export');
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({ message: 'Failed to prepare export data. Please try again.', type: 'error' });
+    } finally {
+      setExportLoading(false);
     }
-
-    // Add trends data
-    monthlyIncidents.forEach(item => {
-      allData.push({
-        section: 'Trends Data',
-        metric: item.period || item.month || 'Unknown Period',
-        value: item.total_incidents,
-        details: `Total incidents in ${item.period || item.month || 'Unknown Period'}`
-      });
-    });
-
-    // Add peak hours data
-    const formattedPeakHours = formatPeakHoursData(peakHoursData);
-    formattedPeakHours.forEach(item => {
-      allData.push({
-        section: 'Peak Hours Analysis',
-        metric: item.name,
-        value: item.count,
-        details: `Peak hour: ${item.dateRange || 'N/A'}`
-      });
-    });
-
-    // Add location data
-    locationIncidents.forEach(item => {
-      Object.keys(item).forEach(key => {
-        if (key !== 'name') {
-          allData.push({
-            section: 'Location Data',
-            metric: `${item.name} - ${key}`,
-            value: item[key],
-            details: 'Barangay-based incident data'
-          });
-        }
-      });
-    });
-
-
-    // Add recent activity
-    recentActivity.forEach(item => {
-      allData.push({
-        section: 'Recent Activity',
-        metric: item.action,
-        value: 1,
-        details: `${item.details} - ${item.user_type}`
-      });
-    });
-
-    const columns: ExportColumn[] = [
-      { key: 'section', label: 'Data Section' },
-      { key: 'metric', label: 'Metric/Type' },
-      { key: 'value', label: 'Value' },
-      { key: 'details', label: 'Details' }
-    ];
-
-    // Capture all chart images for comprehensive export
-    const chartImages = await captureChartImages([
-      { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
-      ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
-      { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
-      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
-    ]);
-
-    setExportData(allData);
-    setExportColumns(columns);
-    setExportTitle('Complete Dashboard Data Export');
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
   };
 
   const fetchTrendsData = async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12) => {
@@ -826,19 +894,30 @@ const AdminDashboard: React.FC = () => {
         <div className="flex items-center space-x-3">
           <div className="relative export-dropdown-container">
             <button 
-              onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+              onClick={() => !exportLoading && setShowExportDropdown(!showExportDropdown)}
+              disabled={exportLoading}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <i className="ri-download-line mr-2"></i>
-              Export Data
-              <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
+              {exportLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <i className="ri-download-line mr-2"></i>
+                  Export Data
+                  <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
+                </>
+              )}
             </button>
-            {showExportDropdown && (
+            {showExportDropdown && !exportLoading && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="py-2">
                   <button
                     onClick={exportAllData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-download-cloud-line mr-3 text-green-600"></i>
                     <span className="font-semibold">Export All Data</span>
@@ -846,49 +925,56 @@ const AdminDashboard: React.FC = () => {
                   <div className="px-2 py-1 text-xs text-gray-500 mb-2">Individual Exports:</div>
                   <button
                     onClick={exportDashboardStats}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-bar-chart-line mr-3 text-blue-500"></i>
                     Dashboard Statistics
                   </button>
                   <button
                     onClick={exportIncidentTypes}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-pie-chart-line mr-3 text-red-500"></i>
                     Incident Types
                   </button>
                   <button
                     onClick={exportWelfareData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
                     Welfare Distribution
                   </button>
                   <button
                     onClick={exportTrendsData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-line-chart-line mr-3 text-green-500"></i>
                     Trends Data
                   </button>
                   <button
                     onClick={exportPeakHoursData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-time-line mr-3 text-yellow-500"></i>
                     Peak Hours Analysis
                   </button>
                   <button
                     onClick={exportLocationData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-map-pin-line mr-3 text-purple-500"></i>
                     Location Data
                   </button>
                   <button
                     onClick={exportRecentActivity}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    disabled={exportLoading}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <i className="ri-history-line mr-3 text-gray-500"></i>
                     Recent Activity
