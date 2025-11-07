@@ -594,277 +594,8 @@ const SafetyProtocolsManagement: React.FC = () => {
         onClose={() => setShowProtocolModal(false)}
         title={isEditing ? (selectedProtocol ? 'Edit Safety Protocol' : 'Add New Safety Protocol') : 'Safety Protocol Details'}
         size="xl"
-      >
-        <div className="flex flex-col h-full">
-          {/* Main Content */}
-          <div className="flex-1 space-y-4 overflow-y-auto">
-            {selectedProtocol && !isEditing ? (
-              <>
-                <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
-                        {selectedProtocol.type ? 
-                          (selectedProtocol.type === 'general' ? 'Other' : 
-                          (selectedProtocol.type.charAt(0).toUpperCase() + selectedProtocol.type.slice(1))) 
-                          : 'General'}
-                      </span>
-                      <span className="text-xs text-gray-500">ID: {selectedProtocol.protocol_id ?? selectedProtocol.id}</span>
-                    </div>
-                    {selectedProtocol.file_attachment && (() => {
-                      // Parse attachments - handle both array and string formats
-                      let attachments: string[] = [];
-                      
-                      // Check if it's already an array (from API)
-                      if (Array.isArray(selectedProtocol.file_attachment)) {
-                        attachments = selectedProtocol.file_attachment;
-                      } else if (typeof selectedProtocol.file_attachment === 'string') {
-                        try {
-                          // Try to parse as JSON array
-                          const parsed = JSON.parse(selectedProtocol.file_attachment);
-                          attachments = Array.isArray(parsed) ? parsed : [selectedProtocol.file_attachment];
-                        } catch {
-                          // Single file (old format)
-                          attachments = [selectedProtocol.file_attachment];
-                        }
-                      }
-
-                      // Filter out empty strings and display
-                      const validAttachments = attachments.filter(a => a && a.trim());
-                      
-                      if (validAttachments.length === 0) return null;
-
-                      return (
-                        <div className="flex flex-wrap gap-2">
-                          {validAttachments.map((url: string, idx: number) => {
-                            // Ensure URL is properly formatted
-                            const fileUrl = url.startsWith('http') ? url : `/uploads/${url}`;
-                            
-                            return (
-                              <a
-                                key={idx}
-                                href={fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
-                              >
-                                <i className={`mr-1.5 ${
-                                  /\.(jpg|jpeg|png|gif|webp)$/i.test(url) ? 'ri-image-line' :
-                                  /\.pdf$/i.test(url) ? 'ri-file-pdf-line' : 'ri-file-text-line'
-                                }`}></i>
-                                {validAttachments.length > 1 ? `File ${idx + 1}` : 'View Attachment'}
-                              </a>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{selectedProtocol.title}</h3>
-                  <p className="text-gray-600 mb-4 whitespace-pre-line">{selectedProtocol.description}</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Created Information</label>
-                      <div className="bg-white p-4 rounded-lg border border-gray-100">
-                        <div className="flex items-center space-x-3 text-sm">
-                          <i className="ri-user-line text-gray-400"></i>
-                          <span className="text-gray-600">Created by:</span>
-                          <span className={`font-medium ${selectedProtocol.creator_name !== 'System' ? 'text-gray-900' : 'text-gray-500 italic'}`}>
-                            {selectedProtocol.creator_name || 'System'}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-3 text-sm mt-2">
-                          <i className="ri-time-line text-gray-400"></i>
-                          <span className="text-gray-600">Date:</span>
-                          <span className="font-medium text-gray-900">
-                            {selectedProtocol.created_at
-                              ? new Date(selectedProtocol.created_at).toLocaleString()
-                              : new Date(selectedProtocol.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Last Update</label>
-                      <div className="bg-white p-4 rounded-lg border border-gray-100">
-                        <div className="flex items-center space-x-3 text-sm">
-                          <i className="ri-history-line text-gray-400"></i>
-                          <span className="text-gray-600">Updated:</span>
-                          <span className="font-medium text-gray-900">
-                            {selectedProtocol.updated_at
-                              ? new Date(selectedProtocol.updated_at).toLocaleString()
-                              : new Date(selectedProtocol.updatedAt).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Title <span className="text-red-500">*</span></label>
-                    <input
-                      type="text"
-                      value={formTitle}
-                      onChange={(e) => setFormTitle(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      placeholder="Enter protocol title"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Type <span className="text-red-500">*</span></label>
-                    <select
-                      value={formType}
-                      onChange={(e) => setFormType(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    >
-                      <option value="">Select Type</option>
-                      <option value="fire">Fire</option>
-                      <option value="earthquake">Earthquake</option>
-                      <option value="medical">Medical</option>
-                      <option value="intrusion">Intrusion</option>
-                      <option value="general">Other</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description <span className="text-red-500">*</span></label>
-                  <textarea
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    rows={4}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    placeholder="Enter detailed protocol description"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    File Attachments ({formFileAttachments.length})
-                  </label>
-                  
-                  {/* Uploaded Files List */}
-                  {formFileAttachments.length > 0 && (
-                    <div className="mb-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {formFileAttachments.map((url, index) => {
-                        const fileName = url.split('/').pop() || `File ${index + 1}`;
-                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-                        const isPdf = /\.pdf$/i.test(url);
-                        
-                        return (
-                          <div key={index} className="relative group bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all overflow-hidden">
-                            {/* Preview Area */}
-                            <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
-                              {isImage ? (
-                                <img 
-                                  src={url} 
-                                  alt={fileName}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className={`w-full h-full flex flex-col items-center justify-center ${
-                                  isPdf ? 'bg-red-50' : 'bg-gray-100'
-                                }`}>
-                                  <i className={`text-4xl mb-2 ${
-                                    isPdf ? 'ri-file-pdf-line text-red-500' : 'ri-file-line text-gray-400'
-                                  }`}></i>
-                                  <span className="text-xs text-gray-500">
-                                    {isPdf ? 'PDF' : 'File'}
-                                  </span>
-                                </div>
-                              )}
-                              
-                              {/* Overlay with actions */}
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
-                                <a
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-2 bg-white/90 hover:bg-white text-gray-700 rounded-lg transition-colors"
-                                  title="Preview"
-                                >
-                                  <i className="ri-eye-line"></i>
-                                </a>
-                                <button
-                                  type="button"
-                                  onClick={() => removeAttachment(index)}
-                                  className="p-2 bg-white/90 hover:bg-white text-red-600 rounded-lg transition-colors"
-                                  title="Remove"
-                                >
-                                  <i className="ri-delete-bin-line"></i>
-                                </button>
-                              </div>
-                              
-                              {/* File number badge */}
-                              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded-full">
-                                {index + 1}
-                              </div>
-                            </div>
-                            
-                            {/* File info */}
-                            <div className="p-2 border-t border-gray-100">
-                              <p className="text-xs font-medium text-gray-700 truncate" title={fileName}>
-                                {fileName}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Upload Area */}
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-lg hover:border-blue-400 transition-all cursor-pointer">
-                    <div className="space-y-2 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <i className="ri-upload-cloud-2-line text-4xl text-gray-400"></i>
-                      </div>
-                      <div className="flex text-sm text-gray-600">
-                        <input
-                          type="file"
-                          accept="*/*"
-                          multiple
-                          onChange={handleAttachmentChange}
-                          className="sr-only"
-                          id="file-upload"
-                          disabled={uploading}
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-700 focus-within:outline-none"
-                        >
-                          <span>Click to upload images</span>
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">Images (JPG, PNG, GIF, WEBP) up to 10MB each</p>
-                   
-                      {uploading && (
-                        <div className="flex items-center justify-center text-sm text-blue-600 pt-2">
-                          <i className="ri-loader-4-line animate-spin mr-2"></i>
-                          Uploading files...
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          
-          {/* Footer */}
-          <div className="pt-4 mt-4 border-t border-gray-200 flex justify-end space-x-3 -mx-6 -mb-6 px-6 pb-6">
+        footer={
+          <div className="flex justify-end space-x-3">
             <button
               onClick={() => setShowProtocolModal(false)}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -877,6 +608,272 @@ const SafetyProtocolsManagement: React.FC = () => {
               </button>
             )}
           </div>
+        }
+      >
+        <div className="space-y-4">
+          {selectedProtocol && !isEditing ? (
+            <>
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
+                      {selectedProtocol.type ? 
+                        (selectedProtocol.type === 'general' ? 'Other' : 
+                        (selectedProtocol.type.charAt(0).toUpperCase() + selectedProtocol.type.slice(1))) 
+                        : 'General'}
+                    </span>
+                    <span className="text-xs text-gray-500">ID: {selectedProtocol.protocol_id ?? selectedProtocol.id}</span>
+                  </div>
+                  {selectedProtocol.file_attachment && (() => {
+                    // Parse attachments - handle both array and string formats
+                    let attachments: string[] = [];
+                    
+                    // Check if it's already an array (from API)
+                    if (Array.isArray(selectedProtocol.file_attachment)) {
+                      attachments = selectedProtocol.file_attachment;
+                    } else if (typeof selectedProtocol.file_attachment === 'string') {
+                      try {
+                        // Try to parse as JSON array
+                        const parsed = JSON.parse(selectedProtocol.file_attachment);
+                        attachments = Array.isArray(parsed) ? parsed : [selectedProtocol.file_attachment];
+                      } catch {
+                        // Single file (old format)
+                        attachments = [selectedProtocol.file_attachment];
+                      }
+                    }
+
+                    // Filter out empty strings and display
+                    const validAttachments = attachments.filter(a => a && a.trim());
+                    
+                    if (validAttachments.length === 0) return null;
+
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {validAttachments.map((url: string, idx: number) => {
+                          // Ensure URL is properly formatted
+                          const fileUrl = url.startsWith('http') ? url : `/uploads/${url}`;
+                          
+                          return (
+                            <a
+                              key={idx}
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                            >
+                              <i className={`mr-1.5 ${
+                                /\.(jpg|jpeg|png|gif|webp)$/i.test(url) ? 'ri-image-line' :
+                                /\.pdf$/i.test(url) ? 'ri-file-pdf-line' : 'ri-file-text-line'
+                              }`}></i>
+                              {validAttachments.length > 1 ? `File ${idx + 1}` : 'View Attachment'}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{selectedProtocol.title}</h3>
+                <p className="text-gray-600 mb-4 whitespace-pre-line">{selectedProtocol.description}</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Created Information</label>
+                    <div className="bg-white p-4 rounded-lg border border-gray-100">
+                      <div className="flex items-center space-x-3 text-sm">
+                        <i className="ri-user-line text-gray-400"></i>
+                        <span className="text-gray-600">Created by:</span>
+                        <span className={`font-medium ${selectedProtocol.creator_name !== 'System' ? 'text-gray-900' : 'text-gray-500 italic'}`}>
+                          {selectedProtocol.creator_name || 'System'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-3 text-sm mt-2">
+                        <i className="ri-time-line text-gray-400"></i>
+                        <span className="text-gray-600">Date:</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedProtocol.created_at
+                            ? new Date(selectedProtocol.created_at).toLocaleString()
+                            : new Date(selectedProtocol.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Last Update</label>
+                    <div className="bg-white p-4 rounded-lg border border-gray-100">
+                      <div className="flex items-center space-x-3 text-sm">
+                        <i className="ri-history-line text-gray-400"></i>
+                        <span className="text-gray-600">Updated:</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedProtocol.updated_at
+                            ? new Date(selectedProtocol.updated_at).toLocaleString()
+                            : new Date(selectedProtocol.updatedAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    placeholder="Enter protocol title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type <span className="text-red-500">*</span></label>
+                  <select
+                    value={formType}
+                    onChange={(e) => setFormType(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  >
+                    <option value="">Select Type</option>
+                    <option value="fire">Fire</option>
+                    <option value="earthquake">Earthquake</option>
+                    <option value="medical">Medical</option>
+                    <option value="intrusion">Intrusion</option>
+                    <option value="general">Other</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description <span className="text-red-500">*</span></label>
+                <textarea
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="Enter detailed protocol description"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  File Attachments ({formFileAttachments.length})
+                </label>
+                
+                {/* Uploaded Files List */}
+                {formFileAttachments.length > 0 && (
+                  <div className="mb-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {formFileAttachments.map((url, index) => {
+                      const fileName = url.split('/').pop() || `File ${index + 1}`;
+                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+                      const isPdf = /\.pdf$/i.test(url);
+                      
+                      return (
+                        <div key={index} className="relative group bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all overflow-hidden">
+                          {/* Preview Area */}
+                          <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
+                            {isImage ? (
+                              <img 
+                                src={url} 
+                                alt={fileName}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex flex-col items-center justify-center ${
+                                isPdf ? 'bg-red-50' : 'bg-gray-100'
+                              }`}>
+                                <i className={`text-4xl mb-2 ${
+                                  isPdf ? 'ri-file-pdf-line text-red-500' : 'ri-file-line text-gray-400'
+                                }`}></i>
+                                <span className="text-xs text-gray-500">
+                                  {isPdf ? 'PDF' : 'File'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Overlay with actions */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-white/90 hover:bg-white text-gray-700 rounded-lg transition-colors"
+                                title="Preview"
+                              >
+                                <i className="ri-eye-line"></i>
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => removeAttachment(index)}
+                                className="p-2 bg-white/90 hover:bg-white text-red-600 rounded-lg transition-colors"
+                                title="Remove"
+                              >
+                                <i className="ri-delete-bin-line"></i>
+                              </button>
+                            </div>
+                            
+                            {/* File number badge */}
+                            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded-full">
+                              {index + 1}
+                            </div>
+                          </div>
+                          
+                          {/* File info */}
+                          <div className="p-2 border-t border-gray-100">
+                            <p className="text-xs font-medium text-gray-700 truncate" title={fileName}>
+                              {fileName}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Upload Area */}
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-lg hover:border-blue-400 transition-all cursor-pointer">
+                  <div className="space-y-2 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <i className="ri-upload-cloud-2-line text-4xl text-gray-400"></i>
+                    </div>
+                    <div className="flex text-sm text-gray-600">
+                      <input
+                        type="file"
+                        accept="*/*"
+                        multiple
+                        onChange={handleAttachmentChange}
+                        className="sr-only"
+                        id="file-upload"
+                        disabled={uploading}
+                      />
+                      <label
+                        htmlFor="file-upload"
+                        className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-700 focus-within:outline-none"
+                      >
+                        <span>Click to upload images</span>
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">Images (JPG, PNG, GIF, WEBP) up to 10MB each</p>
+                 
+                    {uploading && (
+                      <div className="flex items-center justify-center text-sm text-blue-600 pt-2">
+                        <i className="ri-loader-4-line animate-spin mr-2"></i>
+                        Uploading files...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
       <ConfirmModal
