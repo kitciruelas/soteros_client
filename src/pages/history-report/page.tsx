@@ -35,6 +35,7 @@ interface IncidentReport {
   reporter_name?: string
   validation_status?: string
   validation_notes?: string
+  remarks?: string
   assigned_to?: string
   timeline?: TimelineEvent[]
 }
@@ -980,7 +981,7 @@ export default function HistoryReportPage() {
 
                     {/* Footer Section */}
                     <div className="border-t border-gray-200 pt-6">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center">
                             <i className="ri-time-line mr-2 text-blue-500"></i>
@@ -994,13 +995,28 @@ export default function HistoryReportPage() {
                           </div>
                         </div>
 
-                        {report.validation_notes && (
-                          <div className="flex items-start bg-blue-50 p-3 rounded-lg border border-blue-200">
-                            <i className="ri-chat-1-line mr-2 mt-0.5 text-blue-500"></i>
-                            <div>
-                              <span className="text-xs font-medium text-blue-700 block mb-1">Admin Notes:</span>
-                              <span className="text-sm text-blue-800 italic">"{report.validation_notes}"</span>
-                            </div>
+                        {/* Notes Section */}
+                        {(report.validation_notes || report.remarks) && (
+                          <div className="flex flex-col gap-3 w-full lg:w-auto lg:min-w-[300px]">
+                            {report.validation_notes && (
+                              <div className="flex items-start bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                <i className="ri-chat-1-line mr-2 mt-0.5 text-blue-500"></i>
+                                <div className="flex-1">
+                                  <span className="text-xs font-medium text-blue-700 block mb-1">Admin Notes:</span>
+                                  <span className="text-sm text-blue-800 italic">"{report.validation_notes}"</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {report.remarks && (
+                              <div className="flex items-start bg-green-50 p-3 rounded-lg border border-green-200">
+                                <i className="ri-file-edit-line mr-2 mt-0.5 text-green-500"></i>
+                                <div className="flex-1">
+                                  <span className="text-xs font-medium text-green-700 block mb-1">Staff Remarks:</span>
+                                  <span className="text-sm text-green-800 italic">"{report.remarks}"</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
