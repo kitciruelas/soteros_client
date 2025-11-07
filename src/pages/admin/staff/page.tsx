@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ExportUtils from '../../../utils/exportUtils';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import type { ExportColumn } from '../../../utils/exportUtils';
@@ -6,6 +6,23 @@ import { useToast } from '../../../components/base/Toast';
 import PhoneInput, { formatPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { apiRequest } from '../../../utils/api';
+
+// Debounce hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 // Philippine mobile number validation function
 const validatePhilippineMobile = (value: string): boolean => {
@@ -89,8 +106,10 @@ const StaffManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [teamFilter, setTeamFilter] = useState<string>('all');
+  
+  // Debounce search term to avoid excessive API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showTeamAssignmentModal, setShowTeamAssignmentModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -105,24 +124,28 @@ const StaffManagement: React.FC = () => {
   const [updatingStatusStaffId, setUpdatingStatusStaffId] = useState<number | null>(null);
   const [updatingAvailabilityStaffId, setUpdatingAvailabilityStaffId] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchStaff();
-    fetchTeams();
-  }, [currentPage, searchTerm, statusFilter, availabilityFilter, roleFilter, teamFilter]);
-
-  const fetchStaff = async () => {
+  // Fetch staff from API with pagination and filters
+  const fetchStaff = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        search: searchTerm,
-        status: statusFilter,
-        availability: availabilityFilter,
-        role: roleFilter,
-        team_id: teamFilter,
-      });
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', '10');
+      
+      if (debouncedSearchTerm.trim()) {
+        params.append('search', debouncedSearchTerm.trim());
+      }
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      if (availabilityFilter !== 'all') {
+        params.append('availability', availabilityFilter);
+      }
+      if (teamFilter !== 'all') {
+        params.append('team_id', teamFilter);
+      }
 
       console.log('Fetching staff with params:', params.toString());
       const data = await apiRequest(`/staff?${params}`);
@@ -130,10 +153,10 @@ const StaffManagement: React.FC = () => {
       console.log('Staff API response:', data);
       
       if (data.success) {
-        setStaff(data.staff || []);
-        setTotalPages(data.pagination?.pages || 1);
-        setTotalStaff(data.pagination?.total || 0);
-        console.log('Staff data set:', data.staff?.length || 0, 'members');
+        setStaff(data.staff || data.data?.users || []);
+        setTotalPages(data.pagination?.pages || data.data?.pagination?.totalPages || 1);
+        setTotalStaff(data.pagination?.total || data.data?.pagination?.total || 0);
+        console.log('Staff data set:', (data.staff || data.data?.users || []).length, 'members');
       } else {
         setError(data.message || 'Failed to fetch staff');
         setStaff([]);
@@ -144,7 +167,22 @@ const StaffManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, debouncedSearchTerm, statusFilter, availabilityFilter, teamFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, availabilityFilter, teamFilter, debouncedSearchTerm]);
+
+  // Fetch staff when filters or page change
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
+
+  // Fetch teams on mount
+  useEffect(() => {
+    fetchTeams();
+  }, []);
 
   const fetchTeams = async () => {
     try {
@@ -172,9 +210,8 @@ const StaffManagement: React.FC = () => {
       });
 
       if (data.success) {
-        setStaff(prev => prev.map(member =>
-          member.id === staffId ? { ...member, status: newStatus } : member
-        ));
+        // Refetch to ensure consistency
+        await fetchStaff();
         showToast({ type: 'success', message: 'Staff status updated' });
       } else {
         console.error('Failed to update staff status:', data.message);
@@ -197,9 +234,8 @@ const StaffManagement: React.FC = () => {
       });
 
       if (data.success) {
-        setStaff(prev => prev.map(member =>
-          member.id === staffId ? { ...member, availability: newAvailability } : member
-        ));
+        // Refetch to ensure consistency
+        await fetchStaff();
         showToast({ type: 'success', message: 'Staff availability updated' });
       } else {
         console.error('Failed to update staff availability:', data.message);
@@ -361,15 +397,6 @@ const StaffManagement: React.FC = () => {
     }
   };
 
-  const filteredStaff = staff.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
-    const matchesRole = roleFilter === 'all' || member.position === roleFilter;
-    return matchesSearch && matchesStatus && matchesRole;
-  });
 
   const getStatusColor = (status: Staff['status']) => {
     switch (status) {
@@ -553,7 +580,7 @@ const StaffManagement: React.FC = () => {
 
   // Export handler
   const handleExport = async (type: 'csv' | 'pdf' | 'excel' | 'json') => {
-    const exportData = filteredStaff.map(s => ({ ...s }));
+    const exportData = staff.map(s => ({ ...s }));
     const options = {
       filename: 'Staff_Export',
       title: 'Staff List',
@@ -580,13 +607,13 @@ const StaffManagement: React.FC = () => {
 
   // Confirm export to PDF after preview
   const handleConfirmExportPDF = async () => {
-    const exportData = filteredStaff.map(s => ({ ...s }));
+    const exportData = staff.map(s => ({ ...s }));
     // Build dynamic title based on filters
     let title = 'Staff Roster';
     const filterParts = [];
     if (searchTerm.trim()) filterParts.push(`Search: "${searchTerm.trim()}"`);
     if (statusFilter !== 'all') filterParts.push(`Status: ${statusFilter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
-    if (roleFilter !== 'all') filterParts.push(`Role: ${roleFilter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
+    if (availabilityFilter !== 'all') filterParts.push(`Availability: ${availabilityFilter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
     if (teamFilter !== 'all') {
       const teamObj = teams.find(t => t.id.toString() === teamFilter);
       filterParts.push(`Team: ${teamObj ? teamObj.name : teamFilter}`);
@@ -646,7 +673,7 @@ const StaffManagement: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Staff</p>
-              <p className="text-xl font-bold text-gray-900">{staff.length}</p>
+              <p className="text-xl font-bold text-gray-900">{totalStaff}</p>
             </div>
           </div>
         </div>
@@ -658,7 +685,7 @@ const StaffManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Active Staff</p>
               <p className="text-xl font-bold text-gray-900">
-                {staff?.filter(s => s.status === 'active').length || 0}
+                {staff.filter(s => s.status === 'active').length}
               </p>
             </div>
           </div>
@@ -736,7 +763,7 @@ const StaffManagement: React.FC = () => {
             </select>
           </div>
           <div className="text-sm text-gray-600">
-            Showing {filteredStaff.length} of {staff.length} staff members
+            Showing {staff.length} of {totalStaff} staff members
           </div>
         </div>
       </div>
@@ -768,7 +795,7 @@ const StaffManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStaff.length === 0 ? (
+              {staff.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-16">
                     <div className="text-center">
@@ -788,6 +815,7 @@ const StaffManagement: React.FC = () => {
                             setStatusFilter('all');
                             setAvailabilityFilter('all');
                             setTeamFilter('all');
+                            setCurrentPage(1);
                           }}
                           className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
                         >
@@ -799,7 +827,7 @@ const StaffManagement: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredStaff.map((member) => (
+                staff.map((member) => (
                 <tr key={member.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -891,6 +919,33 @@ const StaffManagement: React.FC = () => {
         </div>
       </div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Staff Modal */}
       {showStaffModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -953,7 +1008,7 @@ const StaffManagement: React.FC = () => {
         onExportPDF={handleConfirmExportPDF}
         onExportCSV={() => handleExport('csv')}
         onExportExcel={() => handleExport('excel')}
-        data={filteredStaff}
+        data={staff}
         columns={exportColumns}
       />
       {showTeamAssignmentModal && selectedStaff && (

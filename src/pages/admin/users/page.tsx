@@ -297,7 +297,6 @@ const UserManagement: React.FC = () => {
       const filterParts = [];
       if (searchTerm) filterParts.push(`Search: "${searchTerm}"`);
       if (statusFilter && statusFilter !== 'all') filterParts.push(`Status: ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`);
-      if (userTypeFilter && userTypeFilter !== 'all') filterParts.push(`Type: ${userTypeFilter.charAt(0).toUpperCase() + userTypeFilter.slice(1)}`);
       if (filterParts.length) filterTitle += ` (${filterParts.join(', ')})`;
 
       const options = {
@@ -455,15 +454,6 @@ const UserManagement: React.FC = () => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-            <select
-              value={userTypeFilter}
-              onChange={(e) => setUserTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All User Types</option>
-              <option value="CITIZEN">Citizen</option>
-              <option value="ADMIN">Admin</option>
-            </select>
           </div>
           <div className="text-sm text-gray-600">
             Showing {users.length} of {totalUsers} users
@@ -507,16 +497,15 @@ const UserManagement: React.FC = () => {
                       </div>
                       <h3 className="text-2xl font-semibold text-gray-900 mb-2">No users found</h3>
                       <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                        {searchTerm || statusFilter !== 'all' || userTypeFilter !== 'all'
+                        {searchTerm || statusFilter !== 'all'
                           ? "No users match your current search and filter criteria. Try adjusting your search or filters."
                           : "No users have been registered yet."}
                       </p>
-                      {(searchTerm || statusFilter !== 'all' || userTypeFilter !== 'all') && (
+                      {(searchTerm || statusFilter !== 'all') && (
                         <button
                           onClick={() => {
                             setSearchTerm('');
                             setStatusFilter('all');
-                            setUserTypeFilter('all');
                             setCurrentPage(1);
                           }}
                           className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
@@ -774,7 +763,6 @@ const UserManagement: React.FC = () => {
           const filterParts = [];
           if (searchTerm) filterParts.push(`Search: "${searchTerm}"`);
           if (statusFilter && statusFilter !== 'all') filterParts.push(`Status: ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`);
-          if (userTypeFilter && userTypeFilter !== 'all') filterParts.push(`Type: ${userTypeFilter.charAt(0).toUpperCase() + userTypeFilter.slice(1)}`);
           if (filterParts.length) filterTitle += ` (${filterParts.join(', ')})`;
           return filterTitle;
         })()}
