@@ -222,8 +222,39 @@ const AdminDashboard: React.FC = () => {
       const earliest = formatDateTime(item.earliest_datetime);
       const latest = formatDateTime(item.latest_datetime);
       
+      // Validate that earliest and latest times match the hour bucket
+      // Extract hour from earliest and latest datetimes to ensure they match item.hour
+      const validateHourMatch = (dateTimeString: string, expectedHour: number): boolean => {
+        if (!dateTimeString) return true; // Skip validation if no datetime
+        const date = new Date(dateTimeString);
+        const actualHour = date.getHours();
+        return actualHour === expectedHour;
+      };
+
+      // Check if there's a mismatch (this indicates a backend data issue)
+      const hourMismatch = 
+        (item.earliest_datetime && !validateHourMatch(item.earliest_datetime, item.hour)) ||
+        (item.latest_datetime && !validateHourMatch(item.latest_datetime, item.hour));
+
+      if (hourMismatch) {
+        console.warn(`Hour mismatch detected: Hour bucket is ${item.hour} (${hourLabels[item.hour]}), but datetimes may be from different hours.`, {
+          hour: item.hour,
+          earliest_datetime: item.earliest_datetime,
+          latest_datetime: item.latest_datetime
+        });
+      }
+      
       // Create consecutive date range from the compact format
       const consecutiveDateRange = formattedConsecutiveDates || mostRecent?.date || '';
+
+      // Format time range with validation note if there's a mismatch
+      let timeRangeDisplay = '';
+      if (earliest?.time && latest?.time) {
+        timeRangeDisplay = `${earliest.time} - ${latest.time}`;
+        if (hourMismatch) {
+          timeRangeDisplay += ' ⚠️ (Time mismatch - check backend data)';
+        }
+      }
 
       return {
         name: hourLabels[item.hour] || `${item.hour}:00`,
@@ -240,10 +271,11 @@ const AdminDashboard: React.FC = () => {
         sampleTime: mostRecent?.time || '',
         sampleDateTime: mostRecent?.full || '',
         dateRange: consecutiveDateRange,
-        timeRange: earliest?.time && latest?.time ? `${earliest.time} - ${latest.time}` : '',
+        timeRange: timeRangeDisplay,
         consecutiveDates: formattedConsecutiveDates.split(', '),
         earliestDateTime: item.earliest_datetime,
-        latestDateTime: item.latest_datetime
+        latestDateTime: item.latest_datetime,
+        hourMismatch: hourMismatch // Flag for potential data issues
       };
     });
   };
