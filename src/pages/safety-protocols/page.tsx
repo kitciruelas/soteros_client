@@ -322,20 +322,7 @@ const SafetyProtocolsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Enhanced Info Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-center text-blue-800">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <i className="ri-information-line text-blue-600"></i>
-                </div>
-                <p className="font-semibold text-lg">
-                  Comprehensive safety protocols for all emergency situations
-                </p>
-              </div>
-              <p className="text-blue-600 text-sm mt-2 opacity-80">
-                Updated regularly • Last update: {new Date().toLocaleTimeString()}
-              </p>
-            </div>
+        
           </div>
         </div>
       </div>
@@ -497,19 +484,19 @@ const SafetyProtocolsPage: React.FC = () => {
               <div
                 key={protocol.protocol_id}
                 className={`bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ${
-                  viewMode === 'grid' ? 'p-6 flex flex-col h-full' : 'p-6 flex items-center space-x-6'
+                  viewMode === 'grid' ? 'p-6 flex flex-col h-full' : 'p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6'
                 }`}
               >
                 {/* Protocol Icon and Type */}
-                <div className={`${viewMode === 'list' ? 'flex-shrink-0' : 'flex items-center justify-between mb-4'}`}>
-                  <div className={`relative ${viewMode === 'list' ? 'w-16 h-16' : 'w-14 h-14'} rounded-2xl flex items-center justify-center ${
+                <div className={`${viewMode === 'list' ? 'flex-shrink-0 flex items-center gap-3 sm:gap-0 sm:flex-col' : 'flex items-center justify-between mb-4'}`}>
+                  <div className={`relative ${viewMode === 'list' ? 'w-12 h-12 sm:w-16 sm:h-16' : 'w-14 h-14'} rounded-2xl flex items-center justify-center flex-shrink-0 ${
                     protocol.type === 'fire' ? 'bg-gradient-to-r from-red-500 to-red-600' :
                     protocol.type === 'earthquake' ? 'bg-gradient-to-r from-yellow-500 to-orange-600' :
                     protocol.type === 'medical' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
                     protocol.type === 'intrusion' ? 'bg-gradient-to-r from-purple-500 to-purple-600' :
                     'bg-gradient-to-r from-green-500 to-green-600'
                   } shadow-lg`}>
-                    <i className={`${viewMode === 'list' ? 'text-2xl' : 'text-xl'} text-white ${
+                    <i className={`${viewMode === 'list' ? 'text-xl sm:text-2xl' : 'text-xl'} text-white ${
                       protocol.type === 'fire' ? 'ri-fire-line' :
                       protocol.type === 'earthquake' ? 'ri-earthquake-line' :
                       protocol.type === 'medical' ? 'ri-heart-pulse-line' :
@@ -517,6 +504,18 @@ const SafetyProtocolsPage: React.FC = () => {
                       'ri-alert-line'
                     }`}></i>
                   </div>
+
+                  {viewMode === 'list' && (
+                    <span className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-semibold sm:hidden ${
+                      protocol.type === 'fire' ? 'bg-red-100 text-red-800' :
+                      protocol.type === 'earthquake' ? 'bg-yellow-100 text-yellow-800' :
+                      protocol.type === 'medical' ? 'bg-blue-100 text-blue-800' :
+                      protocol.type === 'intrusion' ? 'bg-purple-100 text-purple-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {protocol.type.charAt(0).toUpperCase() + protocol.type.slice(1)}
+                    </span>
+                  )}
 
                   {viewMode === 'grid' && (
                     <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
@@ -532,22 +531,22 @@ const SafetyProtocolsPage: React.FC = () => {
                 </div>
 
                 {/* Protocol Content */}
-                <div className={`${viewMode === 'list' ? 'flex-1' : 'flex-1 flex flex-col'}`}>
-                  <div className={`${viewMode === 'list' ? 'flex items-start justify-between' : ''}`}>
-                    <div className={`${viewMode === 'list' ? 'flex-1 pr-4' : ''}`}>
-                      <h3 className={`font-bold text-gray-900 mb-2 ${viewMode === 'list' ? 'text-xl' : 'text-lg'}`}>
+                <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 overflow-hidden' : 'flex-1 flex flex-col'}`}>
+                  <div className={`${viewMode === 'list' ? 'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3' : ''}`}>
+                    <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 overflow-hidden pr-0 sm:pr-4' : ''}`}>
+                      <h3 className={`font-bold text-gray-900 mb-2 truncate ${viewMode === 'list' ? 'text-lg sm:text-xl' : 'text-lg'}`}>
                         {protocol.title}
                       </h3>
                       <div className={`relative ${viewMode === 'grid' ? 'mb-4' : ''}`}>
-                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-base mb-1' : 'text-sm line-clamp-3'}`}>
+                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base mb-1 line-clamp-2 sm:line-clamp-none' : 'text-sm line-clamp-3'}`}>
                           {protocol.description}
                         </p>
                       </div>
                     </div>
 
                     {viewMode === 'list' && (
-                      <div className="flex-shrink-0 flex flex-col items-end space-y-2">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                      <div className="flex-shrink-0 flex flex-row sm:flex-col items-start sm:items-end gap-2 sm:space-y-2">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold hidden sm:inline-block ${
                           protocol.type === 'fire' ? 'bg-red-100 text-red-800' :
                           protocol.type === 'earthquake' ? 'bg-yellow-100 text-yellow-800' :
                           protocol.type === 'medical' ? 'bg-blue-100 text-blue-800' :
@@ -729,23 +728,23 @@ const SafetyProtocolsPage: React.FC = () => {
                                   href={`${getFileUrl(fileUrl)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center text-green-600 hover:text-green-700 font-semibold transition-colors group"
+                                  className="inline-flex items-center text-green-600 hover:text-green-700 font-semibold transition-colors group text-xs sm:text-sm"
                                 >
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 transition-colors ${
+                                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center mr-2 transition-colors flex-shrink-0 ${
                                     isImage ? 'bg-blue-100 group-hover:bg-blue-200' :
                                     isPdf ? 'bg-red-100 group-hover:bg-red-200' :
                                     'bg-green-100 group-hover:bg-green-200'
                                   }`}>
-                                    <i className={`text-sm ${
+                                    <i className={`text-xs sm:text-sm ${
                                       isImage ? 'ri-image-line' :
                                       isPdf ? 'ri-file-pdf-line' :
                                       'ri-file-text-line'
                                     }`}></i>
                                   </div>
-                                  <span className="text-sm">
+                                  <span className="truncate max-w-[120px] sm:max-w-none">
                                     {attachments.length > 1 ? `File ${fileIndex + 1}` : 'View Attachment'}
                                   </span>
-                                  <i className="ri-external-link-line ml-1 text-xs"></i>
+                                  <i className="ri-external-link-line ml-1 text-xs flex-shrink-0"></i>
                                 </a>
                               );
                             })}
@@ -756,7 +755,7 @@ const SafetyProtocolsPage: React.FC = () => {
                   })()}
 
                   {/* Footer */}
-                  <div className={`pt-4 border-t border-gray-200 ${viewMode === 'list' ? 'flex items-center justify-between mt-4' : 'mt-auto'}`}>
+                  <div className={`pt-4 border-t border-gray-200 ${viewMode === 'list' ? 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mt-4' : 'mt-auto'}`}>
                     <p className="text-xs text-gray-500">
                       <i className="ri-time-line mr-1"></i>
                       Updated: {new Date(protocol.updated_at).toLocaleDateString()}
@@ -769,7 +768,7 @@ const SafetyProtocolsPage: React.FC = () => {
                         setIsModalOpen(true);
                       }}
                       className={`text-green-600 hover:text-green-700 text-sm font-medium flex items-center space-x-1 transition-colors ${
-                        viewMode === 'grid' ? 'mt-2' : ''
+                        viewMode === 'grid' ? 'mt-2' : 'self-start sm:self-auto'
                       }`}
                     >
                       <span>View Details</span>

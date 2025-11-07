@@ -474,20 +474,7 @@ const EvacuationCenterPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Enhanced Info Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-4 md:p-6 max-w-3xl mx-auto shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-center text-blue-800">
-                <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2 md:mr-3">
-                  <i className="ri-information-line text-blue-600 text-sm md:text-base"></i>
-                </div>
-                <p className="font-semibold text-sm md:text-lg">
-                  Real-time information for all evacuation centers
-                </p>
-              </div>
-              <p className="text-blue-600 text-xs md:text-sm mt-2 opacity-80">
-                Updated every 5 minutes • Last update: {new Date().toLocaleTimeString()}
-              </p>
-            </div>
+          
           </div>
         </div>
       </div>
