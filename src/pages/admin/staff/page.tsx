@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import ExportUtils from '../../../utils/exportUtils';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import type { ExportColumn } from '../../../utils/exportUtils';
@@ -82,6 +82,7 @@ const departmentAvailabilityMapping: { [key: string]: string } = {
 };
 
 const StaffManagement: React.FC = () => {
+  const [allStaff, setAllStaff] = useState<Staff[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +91,6 @@ const StaffManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
   const [teamFilter, setTeamFilter] = useState<string>('all');
-  
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showTeamAssignmentModal, setShowTeamAssignmentModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -104,20 +104,18 @@ const StaffManagement: React.FC = () => {
   const [isAssigningTeam, setIsAssigningTeam] = useState(false);
   const [updatingStatusStaffId, setUpdatingStatusStaffId] = useState<number | null>(null);
   const [updatingAvailabilityStaffId, setUpdatingAvailabilityStaffId] = useState<number | null>(null);
+  const itemsPerPage = 10;
 
-  // Fetch staff from API with pagination and filters
-  const fetchStaff = useCallback(async () => {
+  // Fetch all staff from API (load once)
+  const fetchAllStaff = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       const params = new URLSearchParams();
-      params.append('page', currentPage.toString());
-      params.append('limit', '10');
+      params.append('page', '1');
+      params.append('limit', '10000'); // Large limit to get all staff
       
-      if (searchTerm.trim()) {
-        params.append('search', searchTerm.trim());
-      }
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
       }
@@ -128,19 +126,19 @@ const StaffManagement: React.FC = () => {
         params.append('team_id', teamFilter);
       }
 
-      console.log('Fetching staff with params:', params.toString());
+      console.log('Fetching all staff with params:', params.toString());
       const data = await apiRequest(`/staff?${params}`);
       
       console.log('Staff API response:', data);
       
       if (data.success) {
-        setStaff(data.staff || data.data?.users || []);
-        setTotalPages(data.pagination?.pages || data.data?.pagination?.totalPages || 1);
-        setTotalStaff(data.pagination?.total || data.data?.pagination?.total || 0);
-        console.log('Staff data set:', (data.staff || data.data?.users || []).length, 'members');
+        const staffData = data.staff || data.data?.users || [];
+        setAllStaff(staffData);
+        setTotalStaff(data.pagination?.total || data.data?.pagination?.total || staffData.length);
+        console.log('All staff data set:', staffData.length, 'members');
       } else {
         setError(data.message || 'Failed to fetch staff');
-        setStaff([]);
+        setAllStaff([]);
       }
     } catch (error) {
       setError('Failed to connect to server');
@@ -148,17 +146,65 @@ const StaffManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, statusFilter, availabilityFilter, teamFilter]);
+  }, [statusFilter, availabilityFilter, teamFilter]);
+
+  // Filter and paginate staff client-side
+  const filteredAndPaginatedStaff = useMemo(() => {
+    let filtered = [...allStaff];
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(member =>
+        member.name?.toLowerCase().includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.position?.toLowerCase().includes(query) ||
+        member.department?.toLowerCase().includes(query) ||
+        member.phone?.toLowerCase().includes(query)
+      );
+    }
+
+    // Status filter (already applied in API, but keep for consistency)
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(member => member.status === statusFilter);
+    }
+
+    // Availability filter (already applied in API, but keep for consistency)
+    if (availabilityFilter !== 'all') {
+      filtered = filtered.filter(member => member.availability === availabilityFilter);
+    }
+
+    // Team filter (already applied in API, but keep for consistency)
+    if (teamFilter !== 'all') {
+      filtered = filtered.filter(member => member.team_id?.toString() === teamFilter);
+    }
+
+    // Calculate pagination
+    const total = filtered.length;
+    const totalPagesCount = Math.ceil(total / itemsPerPage);
+    setTotalPages(totalPagesCount);
+    setTotalStaff(total);
+
+    // Paginate
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }, [allStaff, searchTerm, statusFilter, availabilityFilter, teamFilter, currentPage, itemsPerPage]);
+
+  // Update displayed staff when filtered data changes
+  useEffect(() => {
+    setStaff(filteredAndPaginatedStaff);
+  }, [filteredAndPaginatedStaff]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, availabilityFilter, teamFilter, searchTerm]);
 
-  // Fetch staff when filters or page change
+  // Fetch all staff when filters change (but not search)
   useEffect(() => {
-    fetchStaff();
-  }, [fetchStaff]);
+    fetchAllStaff();
+  }, [fetchAllStaff]);
 
   // Fetch teams on mount
   useEffect(() => {
@@ -192,7 +238,7 @@ const StaffManagement: React.FC = () => {
 
       if (data.success) {
         // Refetch to ensure consistency
-        await fetchStaff();
+        await fetchAllStaff();
         showToast({ type: 'success', message: 'Staff status updated' });
       } else {
         console.error('Failed to update staff status:', data.message);
@@ -303,7 +349,7 @@ const StaffManagement: React.FC = () => {
       
       if (data.success) {
         setShowStaffModal(false);
-        fetchStaff(); // Refresh the staff list
+        fetchAllStaff(); // Refresh the staff list
         showToast({ type: 'success', message: selectedStaff ? 'Staff updated successfully' : 'Staff added successfully. Login credentials have been sent via email.' });
       } else {
         console.error('Failed to save staff:', data.message);
@@ -364,7 +410,7 @@ const StaffManagement: React.FC = () => {
       
       if (data.success) {
         setShowTeamAssignmentModal(false);
-        fetchStaff(); // Refresh the staff list
+        fetchAllStaff(); // Refresh the staff list
         showToast({ type: 'success', message: 'Staff assigned to team' });
       } else {
         console.error('Failed to assign staff to team:', data.message);
@@ -559,9 +605,39 @@ const StaffManagement: React.FC = () => {
     { key: 'team_name', label: 'Team' },
   ];
 
+  // Filtered staff for export (all matching, not paginated)
+  const filteredStaffForExport = useMemo(() => {
+    let filtered = [...allStaff];
+
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(member =>
+        member.name?.toLowerCase().includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.position?.toLowerCase().includes(query) ||
+        member.department?.toLowerCase().includes(query) ||
+        member.phone?.toLowerCase().includes(query)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(member => member.status === statusFilter);
+    }
+
+    if (availabilityFilter !== 'all') {
+      filtered = filtered.filter(member => member.availability === availabilityFilter);
+    }
+
+    if (teamFilter !== 'all') {
+      filtered = filtered.filter(member => member.team_id?.toString() === teamFilter);
+    }
+
+    return filtered;
+  }, [allStaff, searchTerm, statusFilter, availabilityFilter, teamFilter]);
+
   // Export handler
   const handleExport = async (type: 'csv' | 'pdf' | 'excel' | 'json') => {
-    const exportData = staff.map(s => ({ ...s }));
+    const exportData = filteredStaffForExport.map(s => ({ ...s }));
     const options = {
       filename: 'Staff_Export',
       title: 'Staff List',
@@ -588,7 +664,7 @@ const StaffManagement: React.FC = () => {
 
   // Confirm export to PDF after preview
   const handleConfirmExportPDF = async () => {
-    const exportData = staff.map(s => ({ ...s }));
+    const exportData = filteredStaffForExport.map(s => ({ ...s }));
     // Build dynamic title based on filters
     let title = 'Staff Roster';
     const filterParts = [];
@@ -989,7 +1065,7 @@ const StaffManagement: React.FC = () => {
         onExportPDF={handleConfirmExportPDF}
         onExportCSV={() => handleExport('csv')}
         onExportExcel={() => handleExport('excel')}
-        data={staff}
+        data={filteredStaffForExport}
         columns={exportColumns}
       />
       {showTeamAssignmentModal && selectedStaff && (

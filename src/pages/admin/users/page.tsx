@@ -58,8 +58,9 @@ const UserManagement: React.FC = () => {
   const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
-  const [allUsersForExport, setAllUsersForExport] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [showExportPreview, setShowExportPreview] = useState(false);
+  const itemsPerPage = 10;
 
   // Define export columns
   const exportColumns: ExportColumn[] = [
@@ -80,29 +81,23 @@ const UserManagement: React.FC = () => {
     },
   ];
 
-  // Fetch users from API with pagination and filters
-  const fetchUsers = useCallback(async () => {
+  // Fetch all users from API (load once)
+  const fetchAllUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const params: any = {
-        page: currentPage,
-        limit: 10,
+        page: 1,
+        limit: 10000, // Large limit to get all users
         status: statusFilter !== 'all' ? statusFilter : undefined,
         barangay: userTypeFilter !== 'all' ? userTypeFilter : undefined
       };
 
-      // Add search parameter if search term exists
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
-
       const response = await userManagementApi.getUsers(params) as ApiResponse;
 
       if (response.success && response.data) {
-        setUsers(response.data.users);
-        setTotalPages(response.data.pagination.totalPages);
+        setAllUsers(response.data.users);
         setTotalUsers(response.data.pagination.total);
       } else {
         setError(response.message || 'Failed to fetch users');
@@ -113,62 +108,94 @@ const UserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, statusFilter, userTypeFilter, searchTerm]);
+  }, [statusFilter, userTypeFilter]);
 
-  // Fetch all users for export (without pagination)
-  const fetchAllUsersForExport = useCallback(async (): Promise<User[]> => {
-    try {
-      const params: any = {
-        page: 1,
-        limit: 1000, // Large limit to get all users
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        barangay: userTypeFilter !== 'all' ? userTypeFilter : undefined
-      };
+  // Filter and paginate users client-side
+  const filteredAndPaginatedUsers = useMemo(() => {
+    let filtered = [...allUsers];
 
-      // Add search parameter if search term exists
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
-
-      const response = await userManagementApi.getUsers(params) as ApiResponse;
-
-      if (response.success && response.data) {
-        return response.data.users;
-      } else {
-        throw new Error(response.message || 'Failed to fetch users for export');
-      }
-    } catch (error) {
-      console.error('Error fetching users for export:', error);
-      throw error;
+    // Search filter
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.name?.toLowerCase().includes(query) ||
+        user.first_name?.toLowerCase().includes(query) ||
+        user.last_name?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query) ||
+        user.phone?.toLowerCase().includes(query)
+      );
     }
-  }, [statusFilter, userTypeFilter, searchTerm]);
 
-  // Fetch all users for export
-  const fetchAllUsersForExportData = useCallback(async () => {
-    try {
-      const allUsers = await fetchAllUsersForExport();
-      setAllUsersForExport(allUsers);
-    } catch (error) {
-      console.error('Error fetching all users for export:', error);
-      // Fallback to current users if fetch fails
-      setAllUsersForExport(users);
+    // Status filter
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        filtered = filtered.filter(user => user.status === 1);
+      } else if (statusFilter === 'inactive') {
+        filtered = filtered.filter(user => user.status === 0);
+      }
     }
-  }, [fetchAllUsersForExport, users]);
 
-  // Reset to page 1 when filters change (but not on initial mount)
+    // User type filter
+    if (userTypeFilter !== 'all') {
+      filtered = filtered.filter(user => user.user_type === userTypeFilter);
+    }
+
+    // Calculate pagination
+    const total = filtered.length;
+    const totalPagesCount = Math.ceil(total / itemsPerPage);
+    setTotalPages(totalPagesCount);
+    setTotalUsers(total);
+
+    // Paginate
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }, [allUsers, searchTerm, statusFilter, userTypeFilter, currentPage, itemsPerPage]);
+
+  // Filtered users for export (all matching, not paginated)
+  const filteredUsersForExport = useMemo(() => {
+    let filtered = [...allUsers];
+
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.name?.toLowerCase().includes(query) ||
+        user.first_name?.toLowerCase().includes(query) ||
+        user.last_name?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query) ||
+        user.phone?.toLowerCase().includes(query)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        filtered = filtered.filter(user => user.status === 1);
+      } else if (statusFilter === 'inactive') {
+        filtered = filtered.filter(user => user.status === 0);
+      }
+    }
+
+    if (userTypeFilter !== 'all') {
+      filtered = filtered.filter(user => user.user_type === userTypeFilter);
+    }
+
+    return filtered;
+  }, [allUsers, searchTerm, statusFilter, userTypeFilter]);
+
+  // Update displayed users when filtered data changes
+  useEffect(() => {
+    setUsers(filteredAndPaginatedUsers);
+  }, [filteredAndPaginatedUsers]);
+
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, userTypeFilter, searchTerm]);
 
-  // Fetch users when filters or page change
+  // Fetch all users when filters change (but not search)
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  // Fetch all users for export when filters change
-  useEffect(() => {
-    fetchAllUsersForExportData();
-  }, [fetchAllUsersForExportData]);
+    fetchAllUsers();
+  }, [fetchAllUsers]);
 
   const handleStatusChange = async (userId: number, newStatus: number) => {
     // Get previous status before updating
@@ -189,10 +216,7 @@ const UserManagement: React.FC = () => {
       }
 
       // Refetch data from server to ensure UI is in sync with database
-      await Promise.all([
-        fetchUsers(),
-        fetchAllUsersForExportData()
-      ]);
+      await fetchAllUsers();
 
       // Update selectedUser again after refetch to ensure it has latest data
       if (selectedUser && selectedUser.user_id === userId) {
@@ -211,10 +235,7 @@ const UserManagement: React.FC = () => {
       
       // Revert optimistic update on error
       if (previousStatus !== undefined) {
-        setUsers(prev => prev.map(user =>
-          user.user_id === userId ? { ...user, status: previousStatus } : user
-        ));
-        setAllUsersForExport(prev => prev.map(user =>
+        setAllUsers(prev => prev.map((user: User) =>
           user.user_id === userId ? { ...user, status: previousStatus } : user
         ));
         
@@ -243,10 +264,7 @@ const UserManagement: React.FC = () => {
       await userManagementApi.deleteUser(userIdToDelete);
       
       // Refetch data from server to ensure UI is in sync with database
-      await Promise.all([
-        fetchUsers(),
-        fetchAllUsersForExportData()
-      ]);
+      await fetchAllUsers();
       
       // Close modal if the deleted user was being viewed
       if (selectedUser && selectedUser.user_id === userIdToDelete) {
@@ -288,13 +306,13 @@ const UserManagement: React.FC = () => {
 
       switch (format) {
         case 'pdf':
-          await ExportUtils.exportToPDF(allUsersForExport, exportColumns, options);
+          await ExportUtils.exportToPDF(filteredUsersForExport, exportColumns, options);
           break;
         case 'csv':
-          ExportUtils.exportToCSV(allUsersForExport, exportColumns, options);
+          ExportUtils.exportToCSV(filteredUsersForExport, exportColumns, options);
           break;
         case 'excel':
-          ExportUtils.exportToExcel(allUsersForExport, exportColumns, options);
+          ExportUtils.exportToExcel(filteredUsersForExport, exportColumns, options);
           break;
       }
 
@@ -345,11 +363,11 @@ const UserManagement: React.FC = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={handleExportPreview}
-            disabled={loading || allUsersForExport.length === 0}
+            disabled={loading || filteredUsersForExport.length === 0}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
               <i className="ri-download-line mr-2"></i>
-            Export Users ({allUsersForExport.length})
+            Export Users ({filteredUsersForExport.length})
           </button>
         </div>
       </div>
@@ -736,7 +754,7 @@ const UserManagement: React.FC = () => {
         onExportPDF={() => handleExport('pdf')}
         onExportCSV={() => handleExport('csv')}
         onExportExcel={() => handleExport('excel')}
-        data={allUsersForExport}
+        data={filteredUsersForExport}
         columns={exportColumns}
         title={(() => {
           let filterTitle = 'Users Data Export';
