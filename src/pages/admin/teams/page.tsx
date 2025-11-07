@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ConfirmModal } from '../../../components/base/Modal';
 import { useToast } from '../../../components/base/Toast';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
@@ -17,6 +17,7 @@ interface Team {
 }
 
 const TeamsManagement: React.FC = () => {
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,7 @@ const TeamsManagement: React.FC = () => {
   const [isAssigningMember, setIsAssigningMember] = useState<number | null>(null);
   const [isRemovingMember, setIsRemovingMember] = useState<number | null>(null);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
     member_no: '',
@@ -118,40 +120,102 @@ const TeamsManagement: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTeams();
-  }, [currentPage]);
-
-  const fetchTeams = async () => {
+  // Fetch all teams from API (load once)
+  const fetchTeams = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       const params = new URLSearchParams({
-        page: currentPage.toString(),
+        page: '1',
+        limit: '10000', // Large limit to get all teams
       });
 
-      console.log('Fetching teams with params:', params.toString());
+      console.log('Fetching all teams with params:', params.toString());
       const data = await apiRequest(`/teams?${params}`);
       
       console.log('Teams API response:', data);
       
       if (data.success) {
-        setTeams(data.teams || []);
-        setTotalPages(data.pagination?.pages || 1);
-        setTotalTeams(data.pagination?.total || data.teams?.length || 0);
-        console.log('Teams data set:', data.teams?.length || 0, 'teams');
+        const teamsData = data.teams || [];
+        setAllTeams(teamsData);
+        setTotalTeams(data.pagination?.total || teamsData.length);
+        console.log('All teams data set:', teamsData.length, 'teams');
       } else {
         setError(data.message || 'Failed to fetch teams');
-        setTeams([]);
+        setAllTeams([]);
       }
     } catch (error) {
       setError('Failed to connect to server');
       console.error('Error fetching teams:', error);
+      setAllTeams([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Filter teams client-side (without pagination)
+  const filteredTeams = useMemo(() => {
+    let filtered = [...allTeams];
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(team =>
+        team.name?.toLowerCase().includes(query) ||
+        team.description?.toLowerCase().includes(query) ||
+        (team.member_no && team.member_no.toLowerCase().includes(query))
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(team => {
+        const memberCount = team.member_count || 0;
+        if (statusFilter === 'full') {
+          return memberCount >= 5;
+        } else if (statusFilter === 'optimal') {
+          return memberCount >= 3 && memberCount < 5;
+        } else if (statusFilter === 'understaffed') {
+          return memberCount < 3;
+        }
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [allTeams, searchTerm, statusFilter]);
+
+  // Calculate pagination and paginate
+  const filteredAndPaginatedTeams = useMemo(() => {
+    const total = filteredTeams.length;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredTeams.slice(startIndex, endIndex);
+  }, [filteredTeams, currentPage, itemsPerPage]);
+
+  // Update pagination state when filtered data changes
+  useEffect(() => {
+    const total = filteredTeams.length;
+    const totalPagesCount = Math.ceil(total / itemsPerPage);
+    setTotalPages(totalPagesCount);
+    setTotalTeams(total);
+  }, [filteredTeams, itemsPerPage]);
+
+  // Update displayed teams when filtered data changes
+  useEffect(() => {
+    setTeams(filteredAndPaginatedTeams);
+  }, [filteredAndPaginatedTeams]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm]);
+
+  // Fetch all teams on mount
+  useEffect(() => {
+    fetchTeams();
+  }, [fetchTeams]);
 
   const handleAddTeam = () => {
     setSelectedTeam(null);
@@ -305,26 +369,6 @@ const TeamsManagement: React.FC = () => {
     }
   };
 
-
-  const filteredTeams = teams.filter(team => {
-    const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         team.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (team.member_no && team.member_no.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const memberCount = team.member_count || 0;
-    let matchesStatus = true;
-    
-    if (statusFilter === 'full') {
-      matchesStatus = memberCount >= 5;
-    } else if (statusFilter === 'optimal') {
-      matchesStatus = memberCount >= 3 && memberCount < 5;
-    } else if (statusFilter === 'understaffed') {
-      matchesStatus = memberCount < 3;
-    }
-    
-    return matchesSearch && matchesStatus;
-  });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -369,7 +413,7 @@ const TeamsManagement: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Teams</p>
-              <p className="text-xl font-bold text-gray-900">{teams.length}</p>
+              <p className="text-xl font-bold text-gray-900">{totalTeams}</p>
             </div>
           </div>
         </div>
@@ -381,10 +425,10 @@ const TeamsManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Total Members</p>
               <p className="text-xl font-bold text-gray-900">
-                {teams.reduce((total, team) => total + (team.member_count || 0), 0)}
+                {allTeams.reduce((total, team) => total + (team.member_count || 0), 0)}
               </p>
               <p className="text-xs text-gray-500">
-                {teams.reduce((total, team) => total + (team.member_count || 0), 0) === 1 ? 'member' : 'members'}
+                {allTeams.reduce((total, team) => total + (team.member_count || 0), 0) === 1 ? 'member' : 'members'}
               </p>
             </div>
           </div>
@@ -397,13 +441,13 @@ const TeamsManagement: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Optimal Teams</p>
               <p className="text-xl font-bold text-gray-900">
-                {teams.filter(team => {
+                {allTeams.filter(team => {
                   const count = team.member_count || 0;
                   return count >= 3 && count <= 5;
                 }).length}
               </p>
               <p className="text-xs text-gray-500">
-                {teams.filter(team => (team.member_count || 0) < 3).length} understaffed, {teams.filter(team => (team.member_count || 0) >= 5).length} full
+                {allTeams.filter(team => (team.member_count || 0) < 3).length} understaffed, {allTeams.filter(team => (team.member_count || 0) >= 5).length} full
               </p>
             </div>
           </div>
@@ -436,7 +480,7 @@ const TeamsManagement: React.FC = () => {
             </select>
           </div>
           <div className="text-sm text-gray-600">
-            Showing {filteredTeams.length} of {teams.length} teams
+            Showing {teams.length} of {totalTeams} teams
           </div>
         </div>
       </div>
@@ -468,7 +512,7 @@ const TeamsManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTeams.length === 0 ? (
+              {teams.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-16">
                     <div className="text-center">
@@ -485,7 +529,7 @@ const TeamsManagement: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredTeams.map((team) => (
+                teams.map((team) => (
                 <tr key={team.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -572,6 +616,33 @@ const TeamsManagement: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Team Modal */}
       {showTeamModal && (
