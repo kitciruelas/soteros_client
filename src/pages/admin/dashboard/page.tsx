@@ -223,36 +223,82 @@ const AdminDashboard: React.FC = () => {
       const latest = formatDateTime(item.latest_datetime);
       
       // Validate that earliest and latest times match the hour bucket
-      // Extract hour from earliest and latest datetimes to ensure they match item.hour
-      const validateHourMatch = (dateTimeString: string, expectedHour: number): boolean => {
-        if (!dateTimeString) return true; // Skip validation if no datetime
+      // Extract hour from datetime string directly to avoid timezone conversion issues
+      const extractHourFromDateTime = (dateTimeString: string): number | null => {
+        if (!dateTimeString) return null;
+        // Try to extract hour directly from the datetime string
+        // Format 1: "YYYY-MM-DD HH:MM:SS" (from earliest_datetime/latest_datetime)
+        let match = dateTimeString.match(/(\d{4}-\d{2}-\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+        if (match) {
+          return parseInt(match[2], 10); // Extract hour (00-23)
+        }
+        // Format 2: "YYYY-MM-DD HH:MM AM/PM" (from sample_datetimes)
+        match = dateTimeString.match(/(\d{4}-\d{2}-\d{2})\s+(\d{1,2}):(\d{2})\s+(AM|PM)/i);
+        if (match) {
+          let hour = parseInt(match[2], 10);
+          const period = match[4].toUpperCase();
+          // Convert 12-hour to 24-hour format
+          if (period === 'PM' && hour !== 12) hour += 12;
+          if (period === 'AM' && hour === 12) hour = 0;
+          return hour;
+        }
+        // Fallback to Date object (may have timezone issues)
         const date = new Date(dateTimeString);
-        const actualHour = date.getHours();
-        return actualHour === expectedHour;
+        return date.getHours();
       };
 
-      // Check if there's a mismatch (this indicates a backend data issue)
+      const earliestHour = extractHourFromDateTime(item.earliest_datetime);
+      const latestHour = extractHourFromDateTime(item.latest_datetime);
+      
+      // Check if there's a mismatch (this indicates a timezone or data issue)
       const hourMismatch = 
-        (item.earliest_datetime && !validateHourMatch(item.earliest_datetime, item.hour)) ||
-        (item.latest_datetime && !validateHourMatch(item.latest_datetime, item.hour));
+        (earliestHour !== null && earliestHour !== item.hour) ||
+        (latestHour !== null && latestHour !== item.hour);
 
       if (hourMismatch) {
-        console.warn(`Hour mismatch detected: Hour bucket is ${item.hour} (${hourLabels[item.hour]}), but datetimes may be from different hours.`, {
+        console.warn(`Hour mismatch detected: Hour bucket is ${item.hour} (${hourLabels[item.hour]}), but datetimes show different hours.`, {
           hour: item.hour,
           earliest_datetime: item.earliest_datetime,
-          latest_datetime: item.latest_datetime
+          earliest_hour_extracted: earliestHour,
+          latest_datetime: item.latest_datetime,
+          latest_hour_extracted: latestHour,
+          note: 'This may be a timezone conversion issue. The time range will be hidden to avoid confusion.'
         });
       }
       
       // Create consecutive date range from the compact format
       const consecutiveDateRange = formattedConsecutiveDates || mostRecent?.date || '';
 
-      // Format time range with validation note if there's a mismatch
+      // Only show time range if it matches the hour bucket (to avoid confusion)
+      // If there's a mismatch, don't show the time range or show a corrected version
       let timeRangeDisplay = '';
       if (earliest?.time && latest?.time) {
-        timeRangeDisplay = `${earliest.time} - ${latest.time}`;
-        if (hourMismatch) {
-          timeRangeDisplay += ' ⚠️ (Time mismatch - check backend data)';
+        if (!hourMismatch) {
+          // Times match the hour bucket - safe to display
+          timeRangeDisplay = `${earliest.time} - ${latest.time}`;
+        } else {
+          // Times don't match - either hide it or show a note
+          // Extract times that actually match the hour bucket from sample_datetimes
+          const matchingTimes = sampleDatetimes
+            .filter((dt: string) => {
+              const hour = extractHourFromDateTime(dt);
+              return hour === item.hour;
+            })
+            .map((dt: string) => {
+              const formatted = formatDateTime(dt);
+              return formatted?.time || '';
+            })
+            .filter(Boolean);
+          
+          if (matchingTimes.length > 0) {
+            // Show times that actually match the hour
+            timeRangeDisplay = matchingTimes.length === 1 
+              ? matchingTimes[0]
+              : `${matchingTimes[matchingTimes.length - 1]} - ${matchingTimes[0]}`;
+          } else {
+            // Can't find matching times - show hour range instead
+            timeRangeDisplay = `${hourLabels[item.hour]} (${item.hour}:00 - ${item.hour}:59)`;
+          }
         }
       }
 
