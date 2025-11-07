@@ -264,60 +264,7 @@ export class ExportUtils {
       doc.line(margin, headerHeight, pageWidth - margin, headerHeight)
     }
 
-    await drawPageHeader()
-
-    // Add title below header
-    if (title && title !== "Data Export") {
-      currentY += 8
-      doc.setFontSize(13)
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(17, 24, 39)
-      doc.text(title, pageWidth / 2, currentY, { align: "center" })
-      currentY += 3
-    }
-
-    // Add chart images if provided
-    if (chartImages && chartImages.length > 0) {
-      currentY += 10
-      for (const chartImage of chartImages) {
-        // Check if we need a new page
-        const chartHeight = chartImage.height ? (chartImage.height * 0.264583) : 80 // Convert px to mm (1px = 0.264583mm)
-        if (currentY + chartHeight + 20 > pageHeight - margin - 15) {
-          await drawPageFooter(pageNumber)
-          doc.addPage(orientationParam as 'p' | 'l')
-          pageNumber++
-          await drawPageHeader()
-          currentY = headerHeight + 15
-        }
-
-        // Add chart title
-        doc.setFontSize(11)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(17, 24, 39)
-        doc.text(chartImage.title, pageWidth / 2, currentY, { align: "center" })
-        currentY += 5
-
-        // Calculate chart dimensions to fit within page width
-        const maxChartWidth = pageWidth - 2 * margin
-        const chartWidth = chartImage.width ? (chartImage.width * 0.264583) : maxChartWidth
-        const chartHeightMm = chartImage.height ? (chartImage.height * 0.264583) : 80
-        const finalChartWidth = Math.min(chartWidth, maxChartWidth)
-        const aspectRatio = chartImage.height && chartImage.width ? chartImage.height / chartImage.width : 0.75
-        const finalChartHeight = finalChartWidth * aspectRatio
-
-        // Add chart image
-        try {
-          const imgX = (pageWidth - finalChartWidth) / 2
-          doc.addImage(chartImage.imageData, "PNG", imgX, currentY, finalChartWidth, finalChartHeight)
-          currentY += finalChartHeight + 10
-        } catch (error) {
-          console.error('Error adding chart image to PDF:', error)
-          currentY += 10
-        }
-      }
-    }
-
-    // Footer drawing function
+    // Footer drawing function (declared before use)
     const drawPageFooter = async (currentPageNumber: number, totalPages?: number) => {
       const footerY = pageHeight - 15
       
@@ -403,6 +350,59 @@ export class ExportUtils {
         ? `Page ${currentPageNumber} of ${totalPages}`
         : `Page ${currentPageNumber}`
       doc.text(footerText, pageWidth / 2, pageHeight - 5, { align: "center" })
+    }
+
+    await drawPageHeader()
+
+    // Add title below header
+    if (title && title !== "Data Export") {
+      currentY += 8
+      doc.setFontSize(13)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(17, 24, 39)
+      doc.text(title, pageWidth / 2, currentY, { align: "center" })
+      currentY += 3
+    }
+
+    // Add chart images if provided
+    if (chartImages && chartImages.length > 0) {
+      currentY += 10
+      for (const chartImage of chartImages) {
+        // Check if we need a new page
+        const chartHeight = chartImage.height ? (chartImage.height * 0.264583) : 80 // Convert px to mm (1px = 0.264583mm)
+        if (currentY + chartHeight + 20 > pageHeight - margin - 15) {
+          await drawPageFooter(pageNumber)
+          doc.addPage(orientationParam as 'p' | 'l')
+          pageNumber++
+          await drawPageHeader()
+          currentY = headerHeight + 15
+        }
+
+        // Add chart title
+        doc.setFontSize(11)
+        doc.setFont("helvetica", "bold")
+        doc.setTextColor(17, 24, 39)
+        doc.text(chartImage.title, pageWidth / 2, currentY, { align: "center" })
+        currentY += 5
+
+        // Calculate chart dimensions to fit within page width
+        const maxChartWidth = pageWidth - 2 * margin
+        const chartWidth = chartImage.width ? (chartImage.width * 0.264583) : maxChartWidth
+        const chartHeightMm = chartImage.height ? (chartImage.height * 0.264583) : 80
+        const finalChartWidth = Math.min(chartWidth, maxChartWidth)
+        const aspectRatio = chartImage.height && chartImage.width ? chartImage.height / chartImage.width : 0.75
+        const finalChartHeight = finalChartWidth * aspectRatio
+
+        // Add chart image
+        try {
+          const imgX = (pageWidth - finalChartWidth) / 2
+          doc.addImage(chartImage.imageData, "PNG", imgX, currentY, finalChartWidth, finalChartHeight)
+          currentY += finalChartHeight + 10
+        } catch (error) {
+          console.error('Error adding chart image to PDF:', error)
+          currentY += 10
+        }
+      }
     }
 
     // ===== ENHANCED TABLE LOGIC =====
