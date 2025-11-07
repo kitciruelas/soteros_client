@@ -7,23 +7,6 @@ import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import ExportUtils, { type ExportColumn } from '../../../utils/exportUtils';
 import { getAuthState } from '../../../utils/auth';
 
-// Debounce hook
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
 interface User {
   user_id: number;
   first_name: string;
@@ -78,9 +61,6 @@ const UserManagement: React.FC = () => {
   const [allUsersForExport, setAllUsersForExport] = useState<User[]>([]);
   const [showExportPreview, setShowExportPreview] = useState(false);
 
-  // Debounce search term to avoid excessive API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
   // Define export columns
   const exportColumns: ExportColumn[] = [
     { key: 'name', label: 'Full Name' },
@@ -113,9 +93,9 @@ const UserManagement: React.FC = () => {
         barangay: userTypeFilter !== 'all' ? userTypeFilter : undefined
       };
 
-      // Add search parameter if debounced search term exists
-      if (debouncedSearchTerm.trim()) {
-        params.search = debouncedSearchTerm.trim();
+      // Add search parameter if search term exists
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
       }
 
       const response = await userManagementApi.getUsers(params) as ApiResponse;
@@ -133,7 +113,7 @@ const UserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, statusFilter, userTypeFilter, debouncedSearchTerm]);
+  }, [currentPage, statusFilter, userTypeFilter, searchTerm]);
 
   // Fetch all users for export (without pagination)
   const fetchAllUsersForExport = useCallback(async (): Promise<User[]> => {
@@ -145,9 +125,9 @@ const UserManagement: React.FC = () => {
         barangay: userTypeFilter !== 'all' ? userTypeFilter : undefined
       };
 
-      // Add search parameter if debounced search term exists
-      if (debouncedSearchTerm.trim()) {
-        params.search = debouncedSearchTerm.trim();
+      // Add search parameter if search term exists
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
       }
 
       const response = await userManagementApi.getUsers(params) as ApiResponse;
@@ -161,7 +141,7 @@ const UserManagement: React.FC = () => {
       console.error('Error fetching users for export:', error);
       throw error;
     }
-  }, [statusFilter, userTypeFilter, debouncedSearchTerm]);
+  }, [statusFilter, userTypeFilter, searchTerm]);
 
   // Fetch all users for export
   const fetchAllUsersForExportData = useCallback(async () => {
@@ -178,7 +158,7 @@ const UserManagement: React.FC = () => {
   // Reset to page 1 when filters change (but not on initial mount)
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, userTypeFilter, debouncedSearchTerm]);
+  }, [statusFilter, userTypeFilter, searchTerm]);
 
   // Fetch users when filters or page change
   useEffect(() => {

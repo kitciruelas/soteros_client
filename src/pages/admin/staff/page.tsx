@@ -7,23 +7,6 @@ import PhoneInput, { formatPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { apiRequest } from '../../../utils/api';
 
-// Debounce hook
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
 // Philippine mobile number validation function
 const validatePhilippineMobile = (value: string): boolean => {
   if (!value) return false;
@@ -108,8 +91,6 @@ const StaffManagement: React.FC = () => {
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
   const [teamFilter, setTeamFilter] = useState<string>('all');
   
-  // Debounce search term to avoid excessive API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showTeamAssignmentModal, setShowTeamAssignmentModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -134,8 +115,8 @@ const StaffManagement: React.FC = () => {
       params.append('page', currentPage.toString());
       params.append('limit', '10');
       
-      if (debouncedSearchTerm.trim()) {
-        params.append('search', debouncedSearchTerm.trim());
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
       }
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
@@ -167,12 +148,12 @@ const StaffManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, debouncedSearchTerm, statusFilter, availabilityFilter, teamFilter]);
+  }, [currentPage, searchTerm, statusFilter, availabilityFilter, teamFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, availabilityFilter, teamFilter, debouncedSearchTerm]);
+  }, [statusFilter, availabilityFilter, teamFilter, searchTerm]);
 
   // Fetch staff when filters or page change
   useEffect(() => {
