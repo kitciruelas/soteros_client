@@ -1859,10 +1859,11 @@ const ViewIncidents: React.FC = () => {
           onClick={closeAssignmentModal}
         >
           <div 
-            className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+            {/* Sticky Header */}
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
               <h3 className="text-lg font-semibold text-gray-900">
                 Assign {assignmentType === 'team' ? 'Team' : assignmentType === 'teams' ? 'Teams' : 'Staff'} to Incident #{selectedIncident.id}
               </h3>
@@ -1874,7 +1875,8 @@ const ViewIncidents: React.FC = () => {
                 <i className="ri-close-line text-xl"></i>
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            {/* Scrollable Body */}
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {assignmentType === 'team' ? (
                 <div>
              
@@ -2251,8 +2253,11 @@ const ViewIncidents: React.FC = () => {
                   )}
                 </div>
               )}
-              
-              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+            </div>
+            
+            {/* Sticky Footer */}
+            <div className="p-6 border-t border-gray-200 bg-white rounded-b-xl sticky bottom-0 z-10">
+              <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-500">
                   {assignmentType === 'teams' && selectedTeamIds.length > 0 && (
                     <div className="flex items-center">
