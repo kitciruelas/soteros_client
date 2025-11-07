@@ -506,12 +506,43 @@ export class ExportUtils {
     currentY += 15 // More space before table
     currentY = drawTableHeader(currentY, pageNumber)
 
+    // Calculate available space on current page - use more of the page if possible
+    const footerSpace = 15 // Space needed for footer (reduced to fit more content)
+    const availablePageHeight = pageHeight - margin - footerSpace
+
     doc.setFont("helvetica", "normal")
     doc.setFontSize(7) // Slightly larger for better readability
+    
+    // Pre-calculate row heights for better pagination decisions
+    const rowHeights: number[] = []
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const row = rows[rowIndex]
+      let maxCellHeight = 8 // Minimum height
+      
+      row.forEach((_, index) => {
+        const colWidth = colWidths[index]
+        const cellText = String(row[index] || "")
+        const lines = doc.splitTextToSize(cellText, colWidth - 6)
+        const cellHeight = (Array.isArray(lines) ? lines.length : 1) * 4 + 4
+        maxCellHeight = Math.max(maxCellHeight, cellHeight)
+      })
+      
+      rowHeights.push(maxCellHeight)
+    }
+    
+    // Calculate total height needed for remaining rows
+    const calculateRemainingHeight = (startIndex: number): number => {
+      let total = 0
+      for (let i = startIndex; i < rowHeights.length; i++) {
+        total += rowHeights[i]
+      }
+      return total
+    }
+
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex]
       let xPos = margin
-      let maxCellHeight = 8 // Increased minimum height
+      const maxCellHeight = rowHeights[rowIndex]
       const cellLines: string[][] = []
 
       row.forEach((_, index) => {
@@ -519,12 +550,14 @@ export class ExportUtils {
         const cellText = String(row[index] || "")
         const lines = doc.splitTextToSize(cellText, colWidth - 6)
         cellLines.push(Array.isArray(lines) ? lines : [lines])
-        const cellHeight = (Array.isArray(lines) ? lines.length : 1) * 4 + 4
-        maxCellHeight = Math.max(maxCellHeight, cellHeight)
       })
 
-      // Check for page break
-      if (currentY + maxCellHeight > pageHeight - margin - 15) {
+      // Smart page break: optimize to fit content on single page when possible
+      const willCurrentRowFit = currentY + maxCellHeight <= availablePageHeight
+      
+      if (!willCurrentRowFit) {
+        // Current row doesn't fit - break to new page
+        // The pre-calculation of row heights helps ensure we maximize content on each page
         await drawPageFooter(pageNumber, Math.ceil(data.length / 25))
         doc.addPage(orientationParam as 'p' | 'l')
         pageNumber++
