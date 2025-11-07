@@ -283,9 +283,17 @@ const TeamsManagement: React.FC = () => {
     // Fetch all staff members
     try {
       setIsLoadingMembers(true);
-      const data = await apiRequest('/staff');
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '10000', // Large limit to get all staff
+      });
+      const data = await apiRequest(`/staff?${params}`);
       if (data.success) {
-        setAllStaff(data.staff || []);
+        // Handle both response formats
+        const staffData = data.staff || data.data?.users || [];
+        setAllStaff(staffData);
+        console.log('Fetched staff for team management:', staffData.length, 'members');
+        console.log('Team ID:', team.id, 'Staff with team_id:', staffData.filter(s => s.team_id === team.id).length);
       }
     } catch (error) {
       console.error('Error fetching staff:', error);
@@ -300,7 +308,12 @@ const TeamsManagement: React.FC = () => {
     
     // Check team size limit when adding members
     if (assign) {
-      const currentTeamMembers = allStaff.filter(staff => staff.team_id === selectedTeam.id);
+      const currentTeamMembers = allStaff.filter(staff => {
+        const staffTeamId = staff.team_id !== null && staff.team_id !== undefined 
+          ? Number(staff.team_id) 
+          : null;
+        return staffTeamId === selectedTeam.id;
+      });
       if (currentTeamMembers.length >= 5) {
         showToast({ type: 'error', message: 'Team is at maximum capacity (5 members). Remove a member first.' });
         return;
@@ -322,9 +335,14 @@ const TeamsManagement: React.FC = () => {
         // Refresh the teams list to update member counts
         fetchTeams();
         // Refresh the staff list
-        const staffData = await apiRequest('/staff');
+        const params = new URLSearchParams({
+          page: '1',
+          limit: '10000', // Large limit to get all staff
+        });
+        const staffData = await apiRequest(`/staff?${params}`);
         if (staffData.success) {
-          setAllStaff(staffData.staff || []);
+          const refreshedStaff = staffData.staff || staffData.data?.users || [];
+          setAllStaff(refreshedStaff);
         }
         showToast({ type: 'success', message: assign ? 'Member added to team' : 'Member removed from team' });
       } else {
@@ -797,7 +815,13 @@ const TeamsManagement: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Current Team Members</h4>
                     <div className="space-y-2">
-                      {allStaff.filter(staff => staff.team_id === selectedTeam.id).map(staff => (
+                      {allStaff.filter(staff => {
+                        // Handle both number and string comparisons
+                        const staffTeamId = staff.team_id !== null && staff.team_id !== undefined 
+                          ? Number(staff.team_id) 
+                          : null;
+                        return staffTeamId === selectedTeam.id;
+                      }).map(staff => (
                         <div key={staff.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                           <div>
                             <p className="font-medium text-gray-900">{staff.name}</p>
@@ -818,7 +842,12 @@ const TeamsManagement: React.FC = () => {
                           )}
                         </div>
                       ))}
-                      {allStaff.filter(staff => staff.team_id === selectedTeam.id).length === 0 && (
+                      {allStaff.filter(staff => {
+                        const staffTeamId = staff.team_id !== null && staff.team_id !== undefined 
+                          ? Number(staff.team_id) 
+                          : null;
+                        return staffTeamId === selectedTeam.id;
+                      }).length === 0 && (
                         <p className="text-gray-500 text-sm">No members assigned to this team</p>
                       )}
                     </div>
@@ -828,7 +857,13 @@ const TeamsManagement: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Available Staff</h4>
                     <div className="space-y-2">
-                      {allStaff.filter(staff => !staff.team_id).map(staff => (
+                      {allStaff.filter(staff => {
+                        // Staff with no team assigned (team_id is null, undefined, or 0)
+                        const staffTeamId = staff.team_id !== null && staff.team_id !== undefined 
+                          ? Number(staff.team_id) 
+                          : null;
+                        return !staffTeamId || staffTeamId === 0;
+                      }).map(staff => (
                         <div key={staff.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div>
                             <p className="font-medium text-gray-900">{staff.name}</p>
@@ -855,7 +890,12 @@ const TeamsManagement: React.FC = () => {
                           )}
                         </div>
                       ))}
-                      {allStaff.filter(staff => !staff.team_id).length === 0 && (
+                      {allStaff.filter(staff => {
+                        const staffTeamId = staff.team_id !== null && staff.team_id !== undefined 
+                          ? Number(staff.team_id) 
+                          : null;
+                        return !staffTeamId || staffTeamId === 0;
+                      }).length === 0 && (
                         <p className="text-gray-500 text-sm">No available staff members</p>
                       )}
                     </div>
