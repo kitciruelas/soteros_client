@@ -1,12 +1,20 @@
 // PDF generation with jsPDF library
 
 import { jsPDF } from "jspdf"
+import html2canvas from "html2canvas"
 
 export interface ExportColumn {
   key: string
   label: string
   format?: (value: any, row?: any) => string
   renderAsImage?: boolean // For PDF exports, render cell as image if value is a valid image URL
+}
+
+export interface ChartImage {
+  title: string
+  imageData: string // base64 image data
+  width?: number
+  height?: number
 }
 
 export interface ExportOptions {
@@ -19,6 +27,7 @@ export interface ExportOptions {
   leftLogoUrl?: string
   rightLogoUrl?: string
   orientation?: 'portrait' | 'landscape'
+  chartImages?: ChartImage[] // Array of chart images to include in PDF
 }
 
 export class ExportUtils {
@@ -67,6 +76,7 @@ export class ExportUtils {
       leftLogoUrl = "/images/partners/lgu-pt.png",
       rightLogoUrl = "/images/partners/MDRRMO.png",
       orientation = 'portrait',
+      chartImages,
     } = options
 
     // Use specific logos if provided, otherwise fall back to logoUrl for both sides
@@ -264,6 +274,47 @@ export class ExportUtils {
       doc.setTextColor(17, 24, 39)
       doc.text(title, pageWidth / 2, currentY, { align: "center" })
       currentY += 3
+    }
+
+    // Add chart images if provided
+    if (chartImages && chartImages.length > 0) {
+      currentY += 10
+      for (const chartImage of chartImages) {
+        // Check if we need a new page
+        const chartHeight = chartImage.height ? (chartImage.height * 0.264583) : 80 // Convert px to mm (1px = 0.264583mm)
+        if (currentY + chartHeight + 20 > pageHeight - margin - 15) {
+          await drawPageFooter(pageNumber)
+          doc.addPage(orientationParam as 'p' | 'l')
+          pageNumber++
+          await drawPageHeader()
+          currentY = headerHeight + 15
+        }
+
+        // Add chart title
+        doc.setFontSize(11)
+        doc.setFont("helvetica", "bold")
+        doc.setTextColor(17, 24, 39)
+        doc.text(chartImage.title, pageWidth / 2, currentY, { align: "center" })
+        currentY += 5
+
+        // Calculate chart dimensions to fit within page width
+        const maxChartWidth = pageWidth - 2 * margin
+        const chartWidth = chartImage.width ? (chartImage.width * 0.264583) : maxChartWidth
+        const chartHeightMm = chartImage.height ? (chartImage.height * 0.264583) : 80
+        const finalChartWidth = Math.min(chartWidth, maxChartWidth)
+        const aspectRatio = chartImage.height && chartImage.width ? chartImage.height / chartImage.width : 0.75
+        const finalChartHeight = finalChartWidth * aspectRatio
+
+        // Add chart image
+        try {
+          const imgX = (pageWidth - finalChartWidth) / 2
+          doc.addImage(chartImage.imageData, "PNG", imgX, currentY, finalChartWidth, finalChartHeight)
+          currentY += finalChartHeight + 10
+        } catch (error) {
+          console.error('Error adding chart image to PDF:', error)
+          currentY += 10
+        }
+      }
     }
 
     // Footer drawing function
@@ -766,6 +817,52 @@ export class ExportUtils {
 
       img.src = imageUrl
     })
+  }
+
+  /**
+   * Convert a chart container element to a base64 image
+   */
+  static async chartToImage(element: HTMLElement | null): Promise<string | null> {
+    if (!element) {
+      return null
+    }
+
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: false,
+      })
+      return canvas.toDataURL('image/png', 1.0)
+    } catch (error) {
+      console.error('Error converting chart to image:', error)
+      return null
+    }
+  }
+
+  /**
+   * Convert multiple chart containers to images
+   */
+  static async chartsToImages(elements: Array<{ element: HTMLElement | null; title: string }>): Promise<ChartImage[]> {
+    const chartImages: ChartImage[] = []
+    
+    for (const { element, title } of elements) {
+      if (element) {
+        const imageData = await this.chartToImage(element)
+        if (imageData) {
+          chartImages.push({
+            title,
+            imageData,
+            width: element.offsetWidth,
+            height: element.offsetHeight,
+          })
+        }
+      }
+    }
+    
+    return chartImages
   }
 }
 

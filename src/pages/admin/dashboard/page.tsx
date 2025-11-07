@@ -1,12 +1,12 @@
 // ...existing code...
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminDashboardApi, apiRequest } from '../../../utils/api';
 import BarChart from '../../../components/charts/BarChart';
 import PieChart from '../../../components/charts/PieChart';
 import StackedBarChart from '../../../components/charts/StackedBarChart';
 import LineChart from '../../../components/charts/LineChart';
 import { useToast } from '../../../components/base/Toast';
-import ExportUtils, { type ExportColumn } from '../../../utils/exportUtils';
+import ExportUtils, { type ExportColumn, type ChartImage } from '../../../utils/exportUtils';
 import ExportPreviewModal from '../../../components/base/ExportPreviewModal';
 import PrivacyNotice from '../../../components/PrivacyNotice';
 
@@ -86,7 +86,16 @@ const AdminDashboard: React.FC = () => {
   const [exportData, setExportData] = useState<any[]>([]);
   const [exportColumns, setExportColumns] = useState<ExportColumn[]>([]);
   const [exportTitle, setExportTitle] = useState('');
+  const [exportChartImages, setExportChartImages] = useState<ChartImage[]>([]);
+  const [exportOrientation, setExportOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const { showToast } = useToast();
+
+  // Chart refs for capturing images
+  const incidentTypesChartRef = useRef<HTMLDivElement>(null);
+  const welfareChartRef = useRef<HTMLDivElement>(null);
+  const trendsChartRef = useRef<HTMLDivElement>(null);
+  const peakHoursChartRef = useRef<HTMLDivElement>(null);
+  const locationChartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -258,8 +267,17 @@ const AdminDashboard: React.FC = () => {
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   };
 
+  // Helper function to capture chart images
+  const captureChartImages = async (chartRefs: Array<{ ref: React.RefObject<HTMLDivElement>; title: string }>): Promise<ChartImage[]> => {
+    const chartElements = chartRefs.map(({ ref, title }) => ({
+      element: ref.current,
+      title
+    }));
+    return await ExportUtils.chartsToImages(chartElements);
+  };
+
   // Export functions
-  const exportDashboardStats = () => {
+  const exportDashboardStats = async () => {
     setShowExportDropdown(false);
     const statsData = [
       { metric: 'Total Incidents', value: stats.totalIncidents },
@@ -275,26 +293,42 @@ const AdminDashboard: React.FC = () => {
       { key: 'value', label: 'Value' }
     ];
 
+    // Capture all chart images for comprehensive export
+    const chartImages = await captureChartImages([
+      { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
+      ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
+      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
+      { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
+      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+    ]);
+
     setExportData(statsData);
     setExportColumns(columns);
     setExportTitle('Dashboard Statistics');
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
-  const exportIncidentTypes = () => {
+  const exportIncidentTypes = async () => {
     setShowExportDropdown(false);
     const columns: ExportColumn[] = [
       { key: 'incident_type', label: 'Incident Type' },
       { key: 'count', label: 'Count' }
     ];
 
+    // Capture the incident types chart
+    const chartImages = await captureChartImages([
+      { ref: incidentTypesChartRef, title: 'Most Common Incident Types' }
+    ]);
+
     setExportData(incidentTypes);
     setExportColumns(columns);
     setExportTitle('Incident Types Distribution');
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
-  const exportWelfareData = () => {
+  const exportWelfareData = async () => {
     setShowExportDropdown(false);
     const welfareData = welfareStats ? [
       { status: 'Safe', count: welfareStats.safeReports },
@@ -307,13 +341,19 @@ const AdminDashboard: React.FC = () => {
       { key: 'count', label: 'Count' }
     ];
 
+    // Capture the welfare chart
+    const chartImages = await captureChartImages([
+      { ref: welfareChartRef, title: 'Welfare Status Overview' }
+    ]);
+
     setExportData(welfareData);
     setExportColumns(columns);
     setExportTitle('Welfare');
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
-  const exportTrendsData = () => {
+  const exportTrendsData = async () => {
     setShowExportDropdown(false);
     const columns: ExportColumn[] = [
       { key: 'period', label: 'Period' },
@@ -322,13 +362,19 @@ const AdminDashboard: React.FC = () => {
       { key: 'high_priority_incidents', label: 'High Priority Incidents' }
     ];
 
+    // Capture the trends chart
+    const chartImages = await captureChartImages([
+      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
+    ]);
+
     setExportData(monthlyIncidents);
     setExportColumns(columns);
     setExportTitle(`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`);
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
-  const exportPeakHoursData = () => {
+  const exportPeakHoursData = async () => {
     setShowExportDropdown(false);
     const formattedData = formatPeakHoursData(peakHoursData);
     const columns: ExportColumn[] = [
@@ -338,13 +384,19 @@ const AdminDashboard: React.FC = () => {
       { key: 'sampleDateTime', label: 'Sample DateTime' }
     ];
 
+    // Capture the peak hours chart
+    const chartImages = await captureChartImages([
+      { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` }
+    ]);
+
     setExportData(formattedData);
     setExportColumns(columns);
     setExportTitle(`Peak Hours Analysis (${peakHoursDateRange})`);
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
-  const exportLocationData = () => {
+  const exportLocationData = async () => {
     setShowExportDropdown(false);
     if (locationIncidents.length === 0) {
       showToast({ message: 'No location data available to export', type: 'warning' });
@@ -358,9 +410,15 @@ const AdminDashboard: React.FC = () => {
         .map(key => ({ key, label: key.charAt(0).toUpperCase() + key.slice(1) }))
     ];
 
+    // Capture the location chart
+    const chartImages = await captureChartImages([
+      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+    ]);
+
     setExportData(locationIncidents);
     setExportColumns(columns);
     setExportTitle('Barangay-based Risk Analysis');
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
@@ -385,7 +443,7 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
-  const exportAllData = () => {
+  const exportAllData = async () => {
     setShowExportDropdown(false);
     // Combine all dashboard data into a comprehensive export
     const allData = [];
@@ -513,9 +571,19 @@ const AdminDashboard: React.FC = () => {
       { key: 'details', label: 'Details' }
     ];
 
+    // Capture all chart images for comprehensive export
+    const chartImages = await captureChartImages([
+      { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
+      ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
+      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
+      { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
+      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+    ]);
+
     setExportData(allData);
     setExportColumns(columns);
     setExportTitle('Complete Dashboard Data Export');
+    setExportChartImages(chartImages);
     setShowExportModal(true);
   };
 
@@ -885,41 +953,45 @@ const AdminDashboard: React.FC = () => {
       {/* Charts Section */}
       <div className={`grid grid-cols-1 ${hasActiveWelfare ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-6`}>
         {/* Most Common Incident Types Chart */}
-        <BarChart
-          data={incidentTypes.map(item => ({
-            name: item.incident_type,
-            count: item.count
-          }))}
-          title="Most Common Incident Types"
-          dataKey="count"
-          color={{
-            medical: '#007BFF',
-            fire: '#DC3545',
-            accident: '#FD7E14',
-            security: '#6610F2',
-            other: '#6C757D'
-          }}
-          height={300}
-        />
+        <div ref={incidentTypesChartRef}>
+          <BarChart
+            data={incidentTypes.map(item => ({
+              name: item.incident_type,
+              count: item.count
+            }))}
+            title="Most Common Incident Types"
+            dataKey="count"
+            color={{
+              medical: '#007BFF',
+              fire: '#DC3545',
+              accident: '#FD7E14',
+              security: '#6610F2',
+              other: '#6C757D'
+            }}
+            height={300}
+          />
+        </div>
 
         {/* Welfare Chart - Only show if there's an active welfare setting */}
         {hasActiveWelfare && (
-          <PieChart
-            data={welfareStats ? [
-              { name: 'Safe', count: welfareStats.safeReports },
-              { name: 'Needs Help', count: welfareStats.needsHelpReports },
-              { name: 'Not Submitted', count: welfareStats.notSubmitted }
-            ] : []}
-            title="Welfare Status Overview"
-            dataKey="count"
-            nameKey="name"
-            height={300}
-            colors={{
-              "Safe": "#10B981",
-              "Needs Help": "#EF4444",
-              "Not Submitted": "#6b7280"
-            }}
-          />
+          <div ref={welfareChartRef}>
+            <PieChart
+              data={welfareStats ? [
+                { name: 'Safe', count: welfareStats.safeReports },
+                { name: 'Needs Help', count: welfareStats.needsHelpReports },
+                { name: 'Not Submitted', count: welfareStats.notSubmitted }
+              ] : []}
+              title="Welfare Status Overview"
+              dataKey="count"
+              nameKey="name"
+              height={300}
+              colors={{
+                "Safe": "#10B981",
+                "Needs Help": "#EF4444",
+                "Not Submitted": "#6b7280"
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -996,15 +1068,17 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
           ) : monthlyIncidents.length > 0 ? (
-            <LineChart
-              data={monthlyIncidents.map(item => ({
-                date: item.period || item.month || 'Unknown',
-                count: item.total_incidents || 0
-              }))}
-              title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`}
-              color="#10b981"
-              height={350}
-            />
+            <div ref={trendsChartRef}>
+              <LineChart
+                data={monthlyIncidents.map(item => ({
+                  date: item.period || item.month || 'Unknown',
+                  count: item.total_incidents || 0
+                }))}
+                title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`}
+                color="#10b981"
+                height={350}
+              />
+            </div>
           ) : (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
@@ -1019,13 +1093,15 @@ const AdminDashboard: React.FC = () => {
 
       {/* Peak Hours Analysis */}
       <div className="grid grid-cols-1 gap-6">
-        <BarChart
-          data={formatPeakHoursData(peakHoursData)}
-          title={`Peak Hours Analysis - Incident Distribution by Time (${peakHoursDateRange || 'Last 30 Days'})`}
-          dataKey="count"
-          color="#f59e0b"
-          height={350}
-        />
+        <div ref={peakHoursChartRef}>
+          <BarChart
+            data={formatPeakHoursData(peakHoursData)}
+            title={`Peak Hours Analysis - Incident Distribution by Time (${peakHoursDateRange || 'Last 30 Days'})`}
+            dataKey="count"
+            color="#f59e0b"
+            height={350}
+          />
+        </div>
         {peakHoursData.length === 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-center">
@@ -1075,13 +1151,15 @@ const AdminDashboard: React.FC = () => {
           );
 
           return (
-            <StackedBarChart
-              data={locationIncidents.length > 0 ? locationIncidents : []}
-              title="Risky Areas by Barangay"
-              stackKeys={allKeys}
-              colors={colors}
-              height={400}
-            />
+            <div ref={locationChartRef}>
+              <StackedBarChart
+                data={locationIncidents.length > 0 ? locationIncidents : []}
+                title="Risky Areas by Barangay"
+                stackKeys={allKeys}
+                colors={colors}
+                height={400}
+              />
+            </div>
           );
         })()}
         {locationIncidents.length === 0 && (
@@ -1109,6 +1187,8 @@ const AdminDashboard: React.FC = () => {
         data={exportData}
         columns={exportColumns}
         title={exportTitle}
+        orientation={exportOrientation}
+        onOrientationChange={(orientation) => setExportOrientation(orientation)}
         onExportCSV={() => {
           try {
             ExportUtils.exportToCSV(exportData, exportColumns, { 
@@ -1135,11 +1215,13 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}
-        onExportPDF={async () => {
+        onExportPDF={async (orientation) => {
           try {
             await ExportUtils.exportToPDF(exportData, exportColumns, { 
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
-              title: exportTitle 
+              title: exportTitle,
+              chartImages: exportChartImages,
+              orientation: orientation || 'portrait'
             });
             showToast({ message: 'Data exported to PDF successfully!', type: 'success' });
             setShowExportModal(false);
