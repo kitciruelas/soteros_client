@@ -72,7 +72,7 @@ const AdminDashboard: React.FC = () => {
   const [hasActiveWelfare, setHasActiveWelfare] = useState(false);
   const [locationIncidents, setLocationIncidents] = useState<Array<{ name: string; [key: string]: string | number }>>([]);
   const [monthlyIncidents, setMonthlyIncidents] = useState<MonthlyIncidentData[]>([]);
-  const [trendsPeriod, setTrendsPeriod] = useState<'days' | 'weeks' | 'months'>('days');
+  const [trendsPeriod, setTrendsPeriod] = useState<'days' | 'months'>('days');
   const [trendsLimit, setTrendsLimit] = useState<number>(7);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursData[]>([]);
   const [peakHoursDateRange, setPeakHoursDateRange] = useState<string>('');
@@ -128,8 +128,6 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (trendsPeriod === 'days' && trendsLimit > 30) {
       setTrendsLimit(7); // Default to 7 days for better performance
-    } else if (trendsPeriod === 'weeks' && trendsLimit > 52) {
-      setTrendsLimit(12); // Default to 12 weeks
     } else if (trendsPeriod === 'months' && trendsLimit > 24) {
       setTrendsLimit(12); // Default to 12 months
     }
@@ -587,7 +585,7 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
-  const fetchTrendsData = async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12) => {
+  const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12) => {
     try {
       setTrendsLoading(true);
       console.log(`Fetching trends data for period: ${period}, limit: ${limit}`);
@@ -1005,11 +1003,10 @@ const AdminDashboard: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Period:</label>
                 <select
                   value={trendsPeriod}
-                  onChange={(e) => setTrendsPeriod(e.target.value as 'days' | 'weeks' | 'months')}
+                  onChange={(e) => setTrendsPeriod(e.target.value as 'days' | 'months')}
                   className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="days">Days</option>
-                  <option value="weeks">Weeks</option>
                   <option value="months">Months</option>
                 </select>
               </div>
@@ -1025,14 +1022,6 @@ const AdminDashboard: React.FC = () => {
                       <option value={7}>7 days</option>
                       <option value={14}>14 days</option>
                       <option value={30}>30 days</option>
-                    </>
-                  )}
-                  {trendsPeriod === 'weeks' && (
-                    <>
-                      <option value={4}>4 weeks</option>
-                      <option value={8}>8 weeks</option>
-                      <option value={12}>12 weeks</option>
-                      <option value={24}>24 weeks</option>
                     </>
                   )}
                   {trendsPeriod === 'months' && (
