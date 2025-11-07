@@ -115,16 +115,16 @@ function colorFor(type: ToastType) {
 
 function Toaster({ toasts, onClose }: { toasts: ToastItem[]; onClose: (id: number) => void }) {
   return (
-    <div className="fixed top-6 right-6 z-[60] space-y-4">
+    <div className="fixed top-4 right-4 left-4 md:top-6 md:right-6 md:left-auto z-[60] space-y-3 md:space-y-4">
       {toasts.map((t, index) => {
         const c = colorFor(t.type)
         return (
           <div
             key={t.id}
             className={`
-              relative flex items-start gap-4 p-5 rounded-xl shadow-xl backdrop-blur-sm
+              relative flex items-start gap-3 md:gap-4 p-4 md:p-5 rounded-xl shadow-xl backdrop-blur-sm
               ${c.bg} ${c.border} border-2
-              min-w-[320px] max-w-md
+              w-full md:min-w-[320px] md:max-w-md
               transform transition-all duration-300 ease-out
               animate-in slide-in-from-right-full fade-in
               hover:shadow-2xl hover:scale-[1.02]
@@ -137,25 +137,26 @@ function Toaster({ toasts, onClose }: { toasts: ToastItem[]; onClose: (id: numbe
             <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${c.accent}`} />
 
             <div className={`flex-shrink-0 ${c.icon} mt-0.5`}>
-              <i className={`${iconFor(t.type)} text-2xl drop-shadow-sm`}></i>
+              <i className={`${iconFor(t.type)} text-xl md:text-2xl drop-shadow-sm`}></i>
             </div>
 
             <div className="flex-1 min-w-0">
-              {t.title && <div className={`font-semibold text-base ${c.text} mb-1 leading-tight`}>{t.title}</div>}
-              <div className={`text-sm ${c.text} opacity-90 leading-relaxed`}>{t.message}</div>
+              {t.title && <div className={`font-semibold text-sm md:text-base ${c.text} mb-1 leading-tight`}>{t.title}</div>}
+              <div className={`text-xs md:text-sm ${c.text} opacity-90 leading-relaxed`}>{t.message}</div>
             </div>
 
             <button
               className={`
-                flex-shrink-0 p-1.5 rounded-lg transition-all duration-200
+                flex-shrink-0 p-1 md:p-1.5 rounded-lg transition-all duration-200
                 ${c.text} opacity-60 hover:opacity-100 
-                hover:bg-white/20 hover:scale-110
+                hover:bg-white/20 hover:scale-110 active:scale-95
                 focus:outline-none focus:ring-2 focus:ring-white/30
+                touch-manipulation
               `}
               onClick={() => onClose(t.id)}
               aria-label="Close notification"
             >
-              <i className="ri-close-line text-lg"></i>
+              <i className="ri-close-line text-base md:text-lg"></i>
             </button>
           </div>
         )
