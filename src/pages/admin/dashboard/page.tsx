@@ -251,19 +251,15 @@ const AdminDashboard: React.FC = () => {
       const latestHour = extractHourFromDateTime(item.latest_datetime);
       
       // Check if there's a mismatch (this indicates a timezone or data issue)
+      // This is expected due to timezone conversion between MySQL server timezone and browser timezone
       const hourMismatch = 
         (earliestHour !== null && earliestHour !== item.hour) ||
         (latestHour !== null && latestHour !== item.hour);
 
-      if (hourMismatch) {
-        console.warn(`Hour mismatch detected: Hour bucket is ${item.hour} (${hourLabels[item.hour]}), but datetimes show different hours.`, {
-          hour: item.hour,
-          earliest_datetime: item.earliest_datetime,
-          earliest_hour_extracted: earliestHour,
-          latest_datetime: item.latest_datetime,
-          latest_hour_extracted: latestHour,
-          note: 'This may be a timezone conversion issue. The time range will be hidden to avoid confusion.'
-        });
+      // Only log in development mode and only once per session to avoid console spam
+      if (hourMismatch && process.env.NODE_ENV === 'development' && !(window as any).__peakHoursMismatchLogged) {
+        console.debug(`Peak Hours: Timezone conversion detected. Hour buckets are based on server timezone, but datetimes are converted to browser timezone. This is handled gracefully in the UI.`);
+        (window as any).__peakHoursMismatchLogged = true;
       }
       
       // Create consecutive date range from the compact format
