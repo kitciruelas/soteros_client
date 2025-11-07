@@ -234,6 +234,58 @@ const StaffManagement: React.FC = () => {
     }
   };
 
+  // Form data state (must be before early return)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+    department: '',
+    availability: 'available',
+    team_id: ''
+  });
+
+  // Export columns definition (must be before early return)
+  const exportColumns: ExportColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'position', label: 'Position' },
+    { key: 'department', label: 'Department' },
+    { key: 'availability', label: 'Availability' },
+    { key: 'team_name', label: 'Team' },
+  ];
+
+  // Filtered staff for export (all matching, not paginated) - must be before early return
+  const filteredStaffForExport = useMemo(() => {
+    let filtered = [...allStaff];
+
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      filtered = filtered.filter(member =>
+        member.name?.toLowerCase().includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.position?.toLowerCase().includes(query) ||
+        member.department?.toLowerCase().includes(query) ||
+        member.phone?.toLowerCase().includes(query)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(member => member.status === statusFilter);
+    }
+
+    if (availabilityFilter !== 'all') {
+      filtered = filtered.filter(member => member.availability === availabilityFilter);
+    }
+
+    if (teamFilter !== 'all') {
+      filtered = filtered.filter(member => member.team_id?.toString() === teamFilter);
+    }
+
+    return filtered;
+  }, [allStaff, searchTerm, statusFilter, availabilityFilter, teamFilter]);
+
 
   const handleStatusChange = async (staffId: number, newStatus: Staff['status']) => {
     try {
@@ -269,7 +321,7 @@ const StaffManagement: React.FC = () => {
 
       if (data.success) {
         // Refetch to ensure consistency
-        await fetchStaff();
+        await fetchAllStaff();
         showToast({ type: 'success', message: 'Staff availability updated' });
       } else {
         console.error('Failed to update staff availability:', data.message);
@@ -282,16 +334,6 @@ const StaffManagement: React.FC = () => {
       setUpdatingAvailabilityStaffId(null);
     }
   };
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    position: '',
-    department: '',
-    availability: 'available',
-    team_id: ''
-  });
 
   const handleAddStaff = () => {
     setSelectedStaff(null);
@@ -600,47 +642,6 @@ const StaffManagement: React.FC = () => {
       </div>
     );
   }
-
-  // Export columns definition
-  const exportColumns: ExportColumn[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
-    { key: 'position', label: 'Position' },
-    { key: 'department', label: 'Department' },
-    { key: 'availability', label: 'Availability' },
-    { key: 'team_name', label: 'Team' },
-  ];
-
-  // Filtered staff for export (all matching, not paginated)
-  const filteredStaffForExport = useMemo(() => {
-    let filtered = [...allStaff];
-
-    if (searchTerm.trim()) {
-      const query = searchTerm.toLowerCase();
-      filtered = filtered.filter(member =>
-        member.name?.toLowerCase().includes(query) ||
-        member.email?.toLowerCase().includes(query) ||
-        member.position?.toLowerCase().includes(query) ||
-        member.department?.toLowerCase().includes(query) ||
-        member.phone?.toLowerCase().includes(query)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(member => member.status === statusFilter);
-    }
-
-    if (availabilityFilter !== 'all') {
-      filtered = filtered.filter(member => member.availability === availabilityFilter);
-    }
-
-    if (teamFilter !== 'all') {
-      filtered = filtered.filter(member => member.team_id?.toString() === teamFilter);
-    }
-
-    return filtered;
-  }, [allStaff, searchTerm, statusFilter, availabilityFilter, teamFilter]);
 
   // Export handler
   const handleExport = async (type: 'csv' | 'pdf' | 'excel' | 'json') => {
