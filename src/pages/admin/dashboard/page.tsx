@@ -1193,7 +1193,8 @@ const AdminDashboard: React.FC = () => {
           try {
             ExportUtils.exportToCSV(exportData, exportColumns, { 
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
-              title: exportTitle 
+              title: exportTitle,
+              hideTotalRecords: true
             });
             showToast({ message: 'Data exported to CSV successfully!', type: 'success' });
             setShowExportModal(false);
@@ -1206,7 +1207,8 @@ const AdminDashboard: React.FC = () => {
           try {
             ExportUtils.exportToExcel(exportData, exportColumns, { 
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
-              title: exportTitle 
+              title: exportTitle,
+              hideTotalRecords: true
             });
             showToast({ message: 'Data exported to Excel successfully!', type: 'success' });
             setShowExportModal(false);
@@ -1221,7 +1223,8 @@ const AdminDashboard: React.FC = () => {
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
               title: exportTitle,
               chartImages: exportChartImages,
-              orientation: orientation || 'portrait'
+              orientation: orientation || 'portrait',
+              hideTotalRecords: true
             });
             showToast({ message: 'Data exported to PDF successfully!', type: 'success' });
             setShowExportModal(false);

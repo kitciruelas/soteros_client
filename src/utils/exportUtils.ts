@@ -28,6 +28,7 @@ export interface ExportOptions {
   rightLogoUrl?: string
   orientation?: 'portrait' | 'landscape'
   chartImages?: ChartImage[] // Array of chart images to include in PDF
+  hideTotalRecords?: boolean // Hide "Total Records:" line in exports
 }
 
 export class ExportUtils {
@@ -77,6 +78,7 @@ export class ExportUtils {
       rightLogoUrl = "/images/partners/MDRRMO.png",
       orientation = 'portrait',
       chartImages,
+      hideTotalRecords = false,
     } = options
 
     // Use specific logos if provided, otherwise fall back to logoUrl for both sides
@@ -584,16 +586,18 @@ export class ExportUtils {
       currentY += maxCellHeight
     }
 
-    currentY += 15
-    doc.setFillColor(239, 246, 255) // Light blue background
-    doc.rect(margin, currentY, availableWidth, 15, "F")
-    doc.setDrawColor(59, 130, 246)
-    doc.setLineWidth(0.3)
-    doc.rect(margin, currentY, availableWidth, 15)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.setTextColor(30, 64, 175)
-    doc.text(`Total Records: ${data.length}`, pageWidth / 2, currentY + 10, { align: "center" })
+    if (!hideTotalRecords) {
+      currentY += 15
+      doc.setFillColor(239, 246, 255) // Light blue background
+      doc.rect(margin, currentY, availableWidth, 15, "F")
+      doc.setDrawColor(59, 130, 246)
+      doc.setLineWidth(0.3)
+      doc.rect(margin, currentY, availableWidth, 15)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(12)
+      doc.setTextColor(30, 64, 175)
+      doc.text(`Total Records: ${data.length}`, pageWidth / 2, currentY + 10, { align: "center" })
+    }
 
     // Draw footer with logo on last page
     await drawPageFooter(pageNumber)
@@ -620,7 +624,7 @@ export class ExportUtils {
    * Export data to Excel format (Enhanced with proper Excel formatting)
    */
   static exportToExcel<T>(data: T[], columns: ExportColumn[], options: ExportOptions = {}): void {
-    const { filename = "export", title = "Data Export", includeTimestamp = true } = options
+    const { filename = "export", title = "Data Export", includeTimestamp = true, hideTotalRecords = false } = options
 
     const headers = columns.map((col) => col.label)
     const rows = data.map((item) =>
@@ -637,7 +641,9 @@ export class ExportUtils {
     if (title) {
       excelContent += `"${title}"\n`
       excelContent += `"Generated on: ${new Date().toLocaleString()}"\n`
-      excelContent += `"Total Records: ${data.length}"\n`
+      if (!hideTotalRecords) {
+        excelContent += `"Total Records: ${data.length}"\n`
+      }
       excelContent += "\n" // Empty row for separation
     }
 
@@ -675,8 +681,10 @@ export class ExportUtils {
       excelContent += dataRow + "\n"
     })
 
-    excelContent += "\n" // Empty row
-    excelContent += `"Summary","Total Records: ${data.length}","Generated: ${new Date().toLocaleDateString()}"\n`
+    if (!hideTotalRecords) {
+      excelContent += "\n" // Empty row
+      excelContent += `"Summary","Total Records: ${data.length}","Generated: ${new Date().toLocaleDateString()}"\n`
+    }
 
     const BOM = "\uFEFF"
     const finalContent = BOM + excelContent
