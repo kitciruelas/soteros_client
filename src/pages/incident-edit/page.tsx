@@ -167,8 +167,8 @@ export default function IncidentEditPage() {
         formDataToSend.append('attachments', file);
       });
 
-      // Submit to guest endpoint
-      const responseData = await apiFormRequest('/incidents/report-guest', formDataToSend);
+      // Submit to edit endpoint (no daily limit)
+      const responseData = await apiFormRequest('/incidents/report-edit', formDataToSend);
 
       console.log('SUCCESS: Incident report saved:', responseData);
 
