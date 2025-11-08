@@ -41,6 +41,87 @@ export default function IncidentEditPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Rosario, Batangas barangays with lat/lng
+  const rosarioBarangays = [
+    { name: 'Alupay', lat: 13.8404, lng: 121.2922 },
+    { name: 'Antipolo', lat: 13.7080, lng: 121.3096 },
+    { name: 'Bagong Pook', lat: 13.8402, lng: 121.2216 },
+    { name: 'Balibago', lat: 13.8512, lng: 121.2855 },
+    { name: 'Barangay A', lat: 13.8457, lng: 121.2104 },
+    { name: 'Barangay B', lat: 13.8461, lng: 121.2065 },
+    { name: 'Barangay C', lat: 13.8467, lng: 121.2032 },
+    { name: 'Barangay D', lat: 13.8440, lng: 121.2035 },
+    { name: 'Barangay E', lat: 13.8415, lng: 121.2047 },
+    { name: 'Bayawang', lat: 13.7944, lng: 121.2798 },
+    { name: 'Baybayin', lat: 13.8277, lng: 121.2589 },
+    { name: 'Bulihan', lat: 13.7967, lng: 121.2351 },
+    { name: 'Cahigam', lat: 13.8021, lng: 121.2501 },
+    { name: 'Calantas', lat: 13.7340, lng: 121.3129 },
+    { name: 'Colongan', lat: 13.8114, lng: 121.1762 },
+    { name: 'Itlugan', lat: 13.8190, lng: 121.2036 },
+    { name: 'Leviste', lat: 13.7694, lng: 121.2868 },
+    { name: 'Lumbangan', lat: 13.8122, lng: 121.2649 },
+    { name: 'Maalas-as', lat: 13.8112, lng: 121.2122 },
+    { name: 'Mabato', lat: 13.8144, lng: 121.2913 },
+    { name: 'Mabunga', lat: 13.7810, lng: 121.2924 },
+    { name: 'Macalamcam A', lat: 13.8551, lng: 121.3046 },
+    { name: 'Macalamcam B', lat: 13.8606, lng: 121.3265 },
+    { name: 'Malaya', lat: 13.8535, lng: 121.1720 },
+    { name: 'Maligaya', lat: 13.8182, lng: 121.2742 },
+    { name: 'Marilag', lat: 13.8562, lng: 121.1764 },
+    { name: 'Masaya', lat: 13.8383, lng: 121.1852 },
+    { name: 'Matamis', lat: 13.7216, lng: 121.3305 },
+    { name: 'Mavalor', lat: 13.8177, lng: 121.2315 },
+    { name: 'Mayuro', lat: 13.7944, lng: 121.2623 },
+    { name: 'Namuco', lat: 13.8382, lng: 121.2036 },
+    { name: 'Namunga', lat: 13.8431, lng: 121.1978 },
+    { name: 'Nasi', lat: 13.7699, lng: 121.3127 },
+    { name: 'Natu', lat: 13.8420, lng: 121.2683 },
+    { name: 'Palakpak', lat: 13.7079, lng: 121.3320 },
+    { name: 'Pinagsibaan', lat: 13.8438, lng: 121.3141 },
+    { name: 'Putingkahoy', lat: 13.8349, lng: 121.3227 },
+    { name: 'Quilib', lat: 13.8603, lng: 121.2002 },
+    { name: 'Salao', lat: 13.8578, lng: 121.3455 },
+    { name: 'San Carlos', lat: 13.8478, lng: 121.2475 },
+    { name: 'San Ignacio', lat: 13.8335, lng: 121.1764 },
+    { name: 'San Isidro', lat: 13.8074, lng: 121.3152 },
+    { name: 'San Jose', lat: 13.8419, lng: 121.2329 },
+    { name: 'San Roque', lat: 13.8518, lng: 121.2039 },
+    { name: 'Santa Cruz', lat: 13.8599, lng: 121.1853 },
+    { name: 'Timbugan', lat: 13.8095, lng: 121.1869 },
+    { name: 'Tiquiwan', lat: 13.8284, lng: 121.2399 },
+    { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
+  ];
+
+  const handleBarangaySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedBarangay = rosarioBarangays.find(b => b.name === e.target.value);
+    if (selectedBarangay) {
+      const locationText = `Barangay ${selectedBarangay.name}, Rosario, Batangas`;
+      setFormData(prev => ({
+        ...prev,
+        location: locationText,
+        latitude: selectedBarangay.lat,
+        longitude: selectedBarangay.lng
+      }));
+      // Clear location error if exists
+      if (errors.location) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.location;
+          return newErrors;
+        });
+      }
+    } else {
+      // Reset if "Select Barangay" is chosen
+      setFormData(prev => ({
+        ...prev,
+        location: '',
+        latitude: null,
+        longitude: null
+      }));
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -307,6 +388,29 @@ export default function IncidentEditPage() {
         {/* Location */}
         <div>
           <h2>Location</h2>
+          
+          {/* Barangay Dropdown */}
+          <div style={{ marginBottom: '10px' }}>
+            <label>
+              Select Barangay (Rosario, Batangas)
+            </label>
+            <select
+              value={rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === formData.location)?.name || ''}
+              onChange={handleBarangaySelect}
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            >
+              <option value="">-- Select Barangay --</option>
+              {rosarioBarangays.map(b => (
+                <option key={b.name} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+              Choose a barangay to quickly fill location and coordinates.
+            </p>
+          </div>
+
           <div style={{ marginBottom: '10px' }}>
             <label>
               Location <span style={{ color: 'red' }}>*</span>
@@ -315,7 +419,18 @@ export default function IncidentEditPage() {
               type="text"
               value={formData.location}
               onChange={(e) => handleInputChange('location', e.target.value)}
-              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                ...(formData.location && formData.location.includes('Barangay') ? {
+                  backgroundColor: '#f0f9ff',
+                  border: '1px solid #0ea5e9'
+                } : {})
+              }}
+              placeholder={formData.location && formData.location.includes('Barangay') 
+                ? 'Barangay selected - location is set' 
+                : 'Enter location description or select a barangay above'}
             />
             {errors.location && <p style={{ color: 'red', fontSize: '12px' }}>{errors.location}</p>}
           </div>
@@ -328,7 +443,16 @@ export default function IncidentEditPage() {
                 step="any"
                 value={formData.latitude || ''}
                 onChange={(e) => handleInputChange('latitude', e.target.value ? parseFloat(e.target.value) : null)}
-                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px', 
+                  marginTop: '5px',
+                  ...(formData.latitude !== null ? {
+                    backgroundColor: '#f0f9ff',
+                    border: '1px solid #0ea5e9'
+                  } : {})
+                }}
+                readOnly={formData.latitude !== null && formData.location.includes('Barangay')}
               />
             </div>
             <div style={{ flex: 1 }}>
@@ -338,7 +462,16 @@ export default function IncidentEditPage() {
                 step="any"
                 value={formData.longitude || ''}
                 onChange={(e) => handleInputChange('longitude', e.target.value ? parseFloat(e.target.value) : null)}
-                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px', 
+                  marginTop: '5px',
+                  ...(formData.longitude !== null ? {
+                    backgroundColor: '#f0f9ff',
+                    border: '1px solid #0ea5e9'
+                  } : {})
+                }}
+                readOnly={formData.longitude !== null && formData.location.includes('Barangay')}
               />
             </div>
           </div>
