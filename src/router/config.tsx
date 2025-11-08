@@ -8,7 +8,6 @@ import ForgotPasswordPage from "../pages/auth/forgot-password/page";
 import VerifyOTPPage from "../pages/auth/verify-otp/page";
 import ResetPasswordPage from "../pages/auth/reset-password/page";
 import IncidentReportPage from "../pages/incident-report/page";
-import IncidentEditPage from "../pages/incident-edit/page";
 import ProfilePage from "../pages/profile/page";
 import EvacuationCenterPage from "../pages/evacuation-center/page";
 import SafetyProtocolsPage from "../pages/safety-protocols/page";
@@ -80,10 +79,6 @@ const routes: RouteObject[] = [
   {
     path: "/incident-report",
     element: <IncidentReportPage />,
-  },
-  {
-    path: "/incident-edit",
-    element: <IncidentEditPage />,
   },
   {
     path: "/profile",
