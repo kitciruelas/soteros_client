@@ -867,9 +867,6 @@ export default function HistoryReportPage() {
                 className="hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm overflow-hidden group"
               >
                 <div className="relative">
-                  {/* Status Indicator Bar */}
-                  <div className={`h-1 w-full ${getPriorityColor(report.priority_level).split(' ')[0]} opacity-60`}></div>
-                  
                   <div className="p-6 lg:p-8">
                     {/* Header Section */}
                     <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6">
@@ -886,17 +883,6 @@ export default function HistoryReportPage() {
                           
                           {/* Status Badges */}
                           <div className="flex flex-wrap gap-2 sm:justify-end">
-                            <span
-                              className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm ${getPriorityColor(report.priority_level)}`}
-                            >
-                              <i className="ri-flag-line mr-1"></i>
-                              <span className="hidden sm:inline">
-                                {report.priority_level?.charAt(0).toUpperCase() + report.priority_level?.slice(1)} Priority
-                              </span>
-                              <span className="sm:hidden">
-                                {report.priority_level?.charAt(0).toUpperCase() + report.priority_level?.slice(1)}
-                              </span>
-                            </span>
                             <span
                               className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm ${getStatusColor(report.status)}`}
                             >
