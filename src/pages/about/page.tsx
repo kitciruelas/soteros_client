@@ -314,14 +314,14 @@ const AboutPage: React.FC = () => {
               {
                 name: "Sharmaine Abrenica",
                 role: "Project Manager",
-                image: "/images/dev/alex.jpg",
+                image: "/images/dev/shar.jpg",
                
               },
               {
                 name: "Clark Alisuag",
                 role: "UI/UX Designer",
 
-                image: "/images/dev/sarah.jpg",
+                image: "/images/dev/clark.jpg",
               
               },
               {
