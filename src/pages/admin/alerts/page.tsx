@@ -117,6 +117,14 @@ const AlertsManagement: React.FC = () => {
   const [showEditBarangayDropdown, setShowEditBarangayDropdown] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [sendingAlertId, setSendingAlertId] = useState<number | null>(null);
+  
+  // Location barangay selection states (separate from recipients)
+  const [locationBarangaySearch, setLocationBarangaySearch] = useState('');
+  const [showLocationBarangayDropdown, setShowLocationBarangayDropdown] = useState(false);
+  const [selectedLocationBarangay, setSelectedLocationBarangay] = useState<string>('');
+  const [editLocationBarangaySearch, setEditLocationBarangaySearch] = useState('');
+  const [showEditLocationBarangayDropdown, setShowEditLocationBarangayDropdown] = useState(false);
+  const [selectedEditLocationBarangay, setSelectedEditLocationBarangay] = useState<string>('');
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -238,6 +246,7 @@ const AlertsManagement: React.FC = () => {
     useMapEvents({
       click: (e) => {
         const { lat, lng } = e.latlng;
+        setSelectedLocationBarangay(''); // Clear barangay selection when clicking on map
         setNewAlert(prev => ({
           ...prev,
           latitude: lat,
@@ -256,6 +265,7 @@ const AlertsManagement: React.FC = () => {
         const { lat, lng } = e.latlng;
         const latNum = Number(lat);
         const lngNum = Number(lng);
+        setSelectedEditLocationBarangay(''); // Clear barangay selection when clicking on map
         setEditAlert(prev => prev ? ({
           ...prev,
           latitude: latNum,
@@ -344,6 +354,8 @@ const AlertsManagement: React.FC = () => {
           radius_km: 5,
           location_text: ''
         });
+        setSelectedLocationBarangay('');
+        setLocationBarangaySearch('');
         setShowCreateModal(false);
         showToast({ type: 'success', message: 'Alert created successfully' });
       } else {
@@ -528,6 +540,46 @@ const AlertsManagement: React.FC = () => {
   const selectedEditBarangaysCount = (editAlert?.recipients || []).filter(recipient =>
     rosarioBarangays.some(barangay => barangay.name === recipient)
   ).length;
+
+  // Handle location barangay selection for create modal
+  const handleLocationBarangaySelect = (barangayName: string) => {
+    const barangay = rosarioBarangays.find(b => b.name === barangayName);
+    if (barangay) {
+      setSelectedLocationBarangay(barangayName);
+      setNewAlert(prev => ({
+        ...prev,
+        latitude: barangay.lat,
+        longitude: barangay.lng,
+        location_text: barangayName
+      }));
+      setShowLocationBarangayDropdown(false);
+    }
+  };
+
+  // Filter barangays for location selection (create modal)
+  const filteredLocationBarangays = rosarioBarangays.filter(barangay =>
+    barangay.name.toLowerCase().includes(locationBarangaySearch.toLowerCase())
+  );
+
+  // Handle location barangay selection for edit modal
+  const handleEditLocationBarangaySelect = (barangayName: string) => {
+    const barangay = rosarioBarangays.find(b => b.name === barangayName);
+    if (barangay) {
+      setSelectedEditLocationBarangay(barangayName);
+      setEditAlert(prev => prev ? ({
+        ...prev,
+        latitude: barangay.lat,
+        longitude: barangay.lng,
+        location_text: barangayName
+      }) : null);
+      setShowEditLocationBarangayDropdown(false);
+    }
+  };
+
+  // Filter barangays for location selection (edit modal)
+  const filteredEditLocationBarangays = rosarioBarangays.filter(barangay =>
+    barangay.name.toLowerCase().includes(editLocationBarangaySearch.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -752,6 +804,13 @@ const AlertsManagement: React.FC = () => {
                         radius_km: alert.radius_km,
                         location_text: alert.location_text || ''
                       });
+                      // Set selected location barangay if location_text matches a barangay name
+                      const matchingBarangay = rosarioBarangays.find(b => b.name === alert.location_text);
+                      if (matchingBarangay) {
+                        setSelectedEditLocationBarangay(matchingBarangay.name);
+                      } else {
+                        setSelectedEditLocationBarangay('');
+                      }
                       setShowEditModal(true);
                     }}
                     className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors"
@@ -780,11 +839,13 @@ const AlertsManagement: React.FC = () => {
           onClick={() => {
             if (!isCreating) {
               setShowCreateModal(false);
+              setSelectedLocationBarangay('');
+              setLocationBarangaySearch('');
             }
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
@@ -802,6 +863,8 @@ const AlertsManagement: React.FC = () => {
                 onClick={() => {
                   if (!isCreating) {
                     setShowCreateModal(false);
+                    setSelectedLocationBarangay('');
+                    setLocationBarangaySearch('');
                   }
                 }}
                 disabled={isCreating}
@@ -814,87 +877,151 @@ const AlertsManagement: React.FC = () => {
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column - Form Fields */}
-                <div className="space-y-4">
-                  {/* Alert Title */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-text mr-1"></i>Alert Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={newAlert.title}
-                      onChange={(e) => setNewAlert(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter alert title"
-                      required
-                    />
-                  </div>
-                  {/* Alert Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-alert-line mr-1"></i>Alert Type *
-                    </label>
-                    <select
-                      value={newAlert.type}
-                      onChange={(e) => setNewAlert(prev => ({ ...prev, type: e.target.value as Alert['type'] }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="info">Information</option>
-                      <option value="warning">Warning</option>
-                      <option value="emergency">Emergency</option>
-                    </select>
-                  </div>
-                  {/* Alert Severity (same as type for now) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-error-warning-line mr-1"></i>Alert Severity
-                    </label>
-                    <select
-                      value={newAlert.type}
-                      onChange={(e) => setNewAlert(prev => ({ ...prev, type: e.target.value as Alert['type'] }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="info">Low - Information</option>
-                      <option value="warning">Medium - Warning</option>
-                      <option value="emergency">High - Emergency</option>
-                    </select>
-                  </div>
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-file-text-line mr-1"></i>Description *
-                    </label>
-                    <textarea
-                      value={newAlert.message}
-                      onChange={(e) => setNewAlert(prev => ({ ...prev, message: e.target.value }))}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter detailed alert description"
-                      required
-                    />
-                  </div>
-                  {/* Location Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-map-pin-line mr-1"></i>Location
-                    </label>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={newAlert.location_text}
-                        onChange={(e) => setNewAlert(prev => ({ ...prev, location_text: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter location or click on map"
-                      />
-                      <div className="text-xs text-gray-500">
-                        Click on the map to select a location, or enter coordinates manually
-                      </div>
+              <div className="space-y-4">
+                {/* Alert Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-text mr-1"></i>Alert Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={newAlert.title}
+                    onChange={(e) => setNewAlert(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter alert title"
+                    required
+                  />
+                </div>
+                {/* Alert Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-alert-line mr-1"></i>Alert Type *
+                  </label>
+                  <select
+                    value={newAlert.type}
+                    onChange={(e) => setNewAlert(prev => ({ ...prev, type: e.target.value as Alert['type'] }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="info">Information</option>
+                    <option value="warning">Warning</option>
+                    <option value="emergency">Emergency</option>
+                  </select>
+                </div>
+                {/* Alert Severity (same as type for now) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-error-warning-line mr-1"></i>Alert Severity
+                  </label>
+                  <select
+                    value={newAlert.type}
+                    onChange={(e) => setNewAlert(prev => ({ ...prev, type: e.target.value as Alert['type'] }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="info">Low - Information</option>
+                    <option value="warning">Medium - Warning</option>
+                    <option value="emergency">High - Emergency</option>
+                  </select>
+                </div>
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-file-text-line mr-1"></i>Description *
+                  </label>
+                  <textarea
+                    value={newAlert.message}
+                    onChange={(e) => setNewAlert(prev => ({ ...prev, message: e.target.value }))}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter detailed alert description"
+                    required
+                  />
+                </div>
+                
+                {/* Location Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-map-pin-line mr-1"></i>Location
+                  </label>
+                  
+                  {/* Barangay Dropdown for Location */}
+                  <div className="mb-3">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowLocationBarangayDropdown(!showLocationBarangayDropdown)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                      >
+                        <span className="text-gray-700">
+                          {selectedLocationBarangay || 'Select barangay for location...'}
+                        </span>
+                        <i className={`ri-arrow-${showLocationBarangayDropdown ? 'up' : 'down'}-s-line text-gray-400`}></i>
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showLocationBarangayDropdown && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                          {/* Search Input */}
+                          <div className="p-2 border-b border-gray-200">
+                            <div className="relative">
+                              <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                              <input
+                                type="text"
+                                placeholder="Search barangays..."
+                                value={locationBarangaySearch}
+                                onChange={(e) => setLocationBarangaySearch(e.target.value)}
+                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Barangay Options */}
+                          <div className="max-h-48 overflow-y-auto">
+                            {filteredLocationBarangays.length > 0 ? (
+                              filteredLocationBarangays.map((barangay, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleLocationBarangaySelect(barangay.name)}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                  <div className="font-medium text-gray-900 text-sm">{barangay.name}</div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-4 text-center text-gray-500 text-sm">
+                                No barangays found
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Manual Location Input */}
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      value={newAlert.location_text}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        setNewAlert(prev => ({ ...prev, location_text: newValue }));
+                        // Clear selected barangay if location_text doesn't match the selected one
+                        if (selectedLocationBarangay && newValue !== selectedLocationBarangay) {
+                          setSelectedLocationBarangay('');
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Or enter location manually"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Select a barangay from dropdown above, or enter location manually, or click on the map below
+                    </div>
+                  </div>
+
                   {/* Alert Radius */}
-                  <div>
+                  <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <i className="ri-focus-3-line mr-1"></i>Alert Radius (km)
                     </label>
@@ -915,87 +1042,76 @@ const AlertsManagement: React.FC = () => {
                       Radius for geographic alert coverage (0.1 - 50 km)
                     </div>
                   </div>
-                  {/* Priority */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-flag-line mr-1"></i>Priority
-                    </label>
-                    <select
-                      value={newAlert.priority || 'medium'}
-                      onChange={(e) => setNewAlert(prev => ({ ...prev, priority: e.target.value as Alert['priority'] }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+
+                  {/* Map Container */}
+                  <div className="w-full h-80 rounded-lg overflow-hidden border border-gray-300 shadow-sm mb-3">
+                    <MapContainer
+                      center={newAlert?.latitude && newAlert?.longitude ? [newAlert.latitude, newAlert.longitude] : mapCenter}
+                      zoom={mapZoom}
+                      style={{ height: '100%', width: '100%' }}
+                      className="z-0"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
-                    </select>
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+
+                      <MapClickHandler />
+
+                      {/* Alert location marker */}
+                      {newAlert?.latitude && newAlert?.longitude && (
+                        <>
+                          <Marker
+                            position={[newAlert.latitude, newAlert.longitude]}
+                            icon={alertMarkerIcon}
+                          />
+                          {/* Alert radius circle */}
+                          <Circle
+                            center={[newAlert.latitude, newAlert.longitude]}
+                            radius={(newAlert.radius_km || 5) * 1000} // Convert km to meters
+                            pathOptions={{
+                              color: '#ef4444',
+                              fillColor: '#ef4444',
+                              fillOpacity: 0.1,
+                              weight: 2,
+                              dashArray: '5, 5'
+                            }}
+                          />
+                        </>
+                      )}
+                    </MapContainer>
                   </div>
+
+                  {/* Location Info */}
+                  {newAlert?.latitude && newAlert?.longitude && (
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="text-sm text-blue-800">
+                        <strong>Selected Location:</strong>
+                      </div>
+                      <div className="text-xs text-blue-600 mt-1">
+                        Latitude: {newAlert.latitude.toFixed(6)}<br />
+                        Longitude: {newAlert.longitude.toFixed(6)}<br />
+                        Radius: {newAlert.radius_km || 5} km
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Right Column - Map */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-map-2-line mr-1"></i>Location Selection
-                    </label>
-                    <div className="text-xs text-gray-500 mb-3">
-                      Click on the map below to select the alert location
-                    </div>
-
-                    {/* Map Container */}
-                    <div className="w-full h-96 rounded-lg overflow-hidden border border-gray-300 shadow-sm">
-                      <MapContainer
-                        center={newAlert?.latitude && newAlert?.longitude ? [newAlert.latitude, newAlert.longitude] : mapCenter}
-                        zoom={mapZoom}
-                        style={{ height: '100%', width: '100%' }}
-                        className="z-0"
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-
-                        <MapClickHandler />
-
-                        {/* Alert location marker */}
-                        {newAlert?.latitude && newAlert?.longitude && (
-                          <>
-                            <Marker
-                              position={[newAlert.latitude, newAlert.longitude]}
-                              icon={alertMarkerIcon}
-                            />
-                            {/* Alert radius circle */}
-                            <Circle
-                              center={[newAlert.latitude, newAlert.longitude]}
-                              radius={(newAlert.radius_km || 5) * 1000} // Convert km to meters
-                              pathOptions={{
-                                color: '#ef4444',
-                                fillColor: '#ef4444',
-                                fillOpacity: 0.1,
-                                weight: 2,
-                                dashArray: '5, 5'
-                              }}
-                            />
-                          </>
-                        )}
-                      </MapContainer>
-                    </div>
-
-                    {/* Location Info */}
-                    {newAlert?.latitude && newAlert?.longitude && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                        <div className="text-sm text-blue-800">
-                          <strong>Selected Location:</strong>
-                        </div>
-                        <div className="text-xs text-blue-600 mt-1">
-                          Latitude: {newAlert.latitude.toFixed(6)}<br />
-                          Longitude: {newAlert.longitude.toFixed(6)}<br />
-                          Radius: {newAlert.radius_km || 5} km
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                {/* Priority */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-flag-line mr-1"></i>Priority
+                  </label>
+                  <select
+                    value={newAlert.priority || 'medium'}
+                    onChange={(e) => setNewAlert(prev => ({ ...prev, priority: e.target.value as Alert['priority'] }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
                 </div>
               </div>
 
@@ -1199,6 +1315,8 @@ const AlertsManagement: React.FC = () => {
                   onClick={() => {
                     if (!isCreating) {
                       setShowCreateModal(false);
+                      setSelectedLocationBarangay('');
+                      setLocationBarangaySearch('');
                     }
                   }}
                   disabled={isCreating}
@@ -1236,11 +1354,13 @@ const AlertsManagement: React.FC = () => {
           onClick={() => {
             if (!isUpdating) {
               setShowEditModal(false);
+              setSelectedEditLocationBarangay('');
+              setEditLocationBarangaySearch('');
             }
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
@@ -1258,6 +1378,8 @@ const AlertsManagement: React.FC = () => {
                 onClick={() => {
                   if (!isUpdating) {
                     setShowEditModal(false);
+                    setSelectedEditLocationBarangay('');
+                    setEditLocationBarangaySearch('');
                   }
                 }}
                 disabled={isUpdating}
@@ -1270,88 +1392,152 @@ const AlertsManagement: React.FC = () => {
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column - Form Fields */}
-                <div className="space-y-4">
-                  {/* Alert Title */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-text mr-1"></i>Alert Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={editAlert?.title || ''}
-                      onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, title: e.target.value }) : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter alert title"
-                      required
-                      disabled={isUpdating}
-                    />
-                  </div>
-                  {/* Alert Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-alert-line mr-1"></i>Alert Type *
-                    </label>
-                    <select
-                      value={editAlert?.type || 'info'}
-                      onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, type: e.target.value as Alert['type'] }) : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="info">Information</option>
-                      <option value="warning">Warning</option>
-                      <option value="emergency">Emergency</option>
-                    </select>
-                  </div>
-                  {/* Alert Severity (same as type for now) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-error-warning-line mr-1"></i>Alert Severity
-                    </label>
-                    <select
-                      value={editAlert?.type || 'info'}
-                      onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, type: e.target.value as Alert['type'] }) : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="info">Low - Information</option>
-                      <option value="warning">Medium - Warning</option>
-                      <option value="emergency">High - Emergency</option>
-                    </select>
-                  </div>
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-file-text-line mr-1"></i>Description *
-                    </label>
-                    <textarea
-                      value={editAlert?.message || ''}
-                      onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, message: e.target.value }) : null)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter detailed alert description"
-                      required
-                    />
-                  </div>
-                  {/* Location Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-map-pin-line mr-1"></i>Location
-                    </label>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editAlert.location_text}
-                        onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, location_text: e.target.value }) : null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter location or click on map"
-                      />
-                      <div className="text-xs text-gray-500">
-                        Click on the map to select a location, or enter coordinates manually
-                      </div>
+              <div className="space-y-4">
+                {/* Alert Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-text mr-1"></i>Alert Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editAlert?.title || ''}
+                    onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, title: e.target.value }) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter alert title"
+                    required
+                    disabled={isUpdating}
+                  />
+                </div>
+                {/* Alert Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-alert-line mr-1"></i>Alert Type *
+                  </label>
+                  <select
+                    value={editAlert?.type || 'info'}
+                    onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, type: e.target.value as Alert['type'] }) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="info">Information</option>
+                    <option value="warning">Warning</option>
+                    <option value="emergency">Emergency</option>
+                  </select>
+                </div>
+                {/* Alert Severity (same as type for now) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-error-warning-line mr-1"></i>Alert Severity
+                  </label>
+                  <select
+                    value={editAlert?.type || 'info'}
+                    onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, type: e.target.value as Alert['type'] }) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="info">Low - Information</option>
+                    <option value="warning">Medium - Warning</option>
+                    <option value="emergency">High - Emergency</option>
+                  </select>
+                </div>
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-file-text-line mr-1"></i>Description *
+                  </label>
+                  <textarea
+                    value={editAlert?.message || ''}
+                    onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, message: e.target.value }) : null)}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter detailed alert description"
+                    required
+                  />
+                </div>
+                
+                {/* Location Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-map-pin-line mr-1"></i>Location
+                  </label>
+                  
+                  {/* Barangay Dropdown for Location */}
+                  <div className="mb-3">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowEditLocationBarangayDropdown(!showEditLocationBarangayDropdown)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                      >
+                        <span className="text-gray-700">
+                          {selectedEditLocationBarangay || 'Select barangay for location...'}
+                        </span>
+                        <i className={`ri-arrow-${showEditLocationBarangayDropdown ? 'up' : 'down'}-s-line text-gray-400`}></i>
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showEditLocationBarangayDropdown && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                          {/* Search Input */}
+                          <div className="p-2 border-b border-gray-200">
+                            <div className="relative">
+                              <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                              <input
+                                type="text"
+                                placeholder="Search barangays..."
+                                value={editLocationBarangaySearch}
+                                onChange={(e) => setEditLocationBarangaySearch(e.target.value)}
+                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Barangay Options */}
+                          <div className="max-h-48 overflow-y-auto">
+                            {filteredEditLocationBarangays.length > 0 ? (
+                              filteredEditLocationBarangays.map((barangay, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleEditLocationBarangaySelect(barangay.name)}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                  <div className="font-medium text-gray-900 text-sm">{barangay.name}</div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-4 text-center text-gray-500 text-sm">
+                                No barangays found
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Manual Location Input */}
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      value={editAlert.location_text || ''}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        setEditAlert(prev => prev ? ({ ...prev, location_text: newValue }) : null);
+                        // Clear selected barangay if location_text doesn't match the selected one
+                        if (selectedEditLocationBarangay && newValue !== selectedEditLocationBarangay) {
+                          setSelectedEditLocationBarangay('');
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Or enter location manually"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Select a barangay from dropdown above, or enter location manually, or click on the map below
+                    </div>
+                  </div>
+
                   {/* Alert Radius */}
-                  <div>
+                  <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <i className="ri-focus-3-line mr-1"></i>Alert Radius (km)
                     </label>
@@ -1361,7 +1547,7 @@ const AlertsManagement: React.FC = () => {
                         min="0.1"
                         max="50"
                         step="0.1"
-                        value={editAlert.radius_km}
+                        value={editAlert.radius_km || 5}
                         onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, radius_km: parseFloat(e.target.value) || 5 }) : null)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="5.0"
@@ -1372,87 +1558,76 @@ const AlertsManagement: React.FC = () => {
                       Radius for geographic alert coverage (0.1 - 50 km)
                     </div>
                   </div>
-                  {/* Priority */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-flag-line mr-1"></i>Priority
-                    </label>
-                    <select
-                      value={editAlert.priority || 'medium'}
-                      onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, priority: e.target.value as Alert['priority'] }) : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+
+                  {/* Map Container */}
+                  <div className="w-full h-80 rounded-lg overflow-hidden border border-gray-300 shadow-sm mb-3">
+                    <MapContainer
+                      center={editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' ? [editAlert.latitude, editAlert.longitude] : mapCenter}
+                      zoom={mapZoom}
+                      style={{ height: '100%', width: '100%' }}
+                      className="z-0"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
-                    </select>
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+
+                      <EditMapClickHandler />
+
+                      {/* Alert location marker */}
+                      {editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' && (
+                        <>
+                          <Marker
+                            position={[editAlert.latitude, editAlert.longitude]}
+                            icon={alertMarkerIcon}
+                          />
+                          {/* Alert radius circle */}
+                          <Circle
+                            center={[editAlert.latitude, editAlert.longitude]}
+                            radius={(editAlert.radius_km || 5) * 1000} // Convert km to meters
+                            pathOptions={{
+                              color: '#ef4444',
+                              fillColor: '#ef4444',
+                              fillOpacity: 0.1,
+                              weight: 2,
+                              dashArray: '5, 5'
+                            }}
+                          />
+                        </>
+                      )}
+                    </MapContainer>
                   </div>
+
+                  {/* Location Info */}
+                  {editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' && (
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="text-sm text-blue-800">
+                        <strong>Selected Location:</strong>
+                      </div>
+                      <div className="text-xs text-blue-600 mt-1">
+                        Latitude: {editAlert.latitude.toFixed(6)}<br />
+                        Longitude: {editAlert.longitude.toFixed(6)}<br />
+                        Radius: {editAlert.radius_km || 5} km
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Right Column - Map */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <i className="ri-map-2-line mr-1"></i>Location Selection
-                    </label>
-                    <div className="text-xs text-gray-500 mb-3">
-                      Click on the map below to select the alert location
-                    </div>
-
-                    {/* Map Container */}
-                    <div className="w-full h-96 rounded-lg overflow-hidden border border-gray-300 shadow-sm">
-                      <MapContainer
-                        center={editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' ? [editAlert.latitude, editAlert.longitude] : mapCenter}
-                        zoom={mapZoom}
-                        style={{ height: '100%', width: '100%' }}
-                        className="z-0"
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-
-                        <EditMapClickHandler />
-
-                        {/* Alert location marker */}
-                        {editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' && (
-                          <>
-                            <Marker
-                              position={[editAlert.latitude, editAlert.longitude]}
-                              icon={alertMarkerIcon}
-                            />
-                            {/* Alert radius circle */}
-                            <Circle
-                              center={[editAlert.latitude, editAlert.longitude]}
-                              radius={(editAlert.radius_km || 5) * 1000} // Convert km to meters
-                              pathOptions={{
-                                color: '#ef4444',
-                                fillColor: '#ef4444',
-                                fillOpacity: 0.1,
-                                weight: 2,
-                                dashArray: '5, 5'
-                              }}
-                            />
-                          </>
-                        )}
-                      </MapContainer>
-                    </div>
-
-                    {/* Location Info */}
-                    {editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                        <div className="text-sm text-blue-800">
-                          <strong>Selected Location:</strong>
-                        </div>
-                        <div className="text-xs text-blue-600 mt-1">
-                          Latitude: {editAlert.latitude.toFixed(6)}<br />
-                          Longitude: {editAlert.longitude.toFixed(6)}<br />
-                          Radius: {editAlert.radius_km || 5} km
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                {/* Priority */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="ri-flag-line mr-1"></i>Priority
+                  </label>
+                  <select
+                    value={editAlert.priority || 'medium'}
+                    onChange={(e) => setEditAlert(prev => prev ? ({ ...prev, priority: e.target.value as Alert['priority'] }) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
                 </div>
               </div>
 
@@ -1656,6 +1831,8 @@ const AlertsManagement: React.FC = () => {
                   onClick={() => {
                     if (!isUpdating) {
                       setShowEditModal(false);
+                      setSelectedEditLocationBarangay('');
+                      setEditLocationBarangaySearch('');
                     }
                   }}
                   disabled={isUpdating}
