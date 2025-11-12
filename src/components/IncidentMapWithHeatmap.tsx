@@ -463,25 +463,22 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
         return true
       }
       
-      // Status filters - only show if not critical (to avoid duplicates)
+      // Status filters - show all incidents matching the status (including critical)
       if (
         activeLegendFilters.has(LEGEND_FILTERS.PENDING) &&
-        incident.status === "pending" &&
-        incident.priority_level !== "critical"
+        incident.status === "pending"
       ) {
         return true
       }
       if (
         activeLegendFilters.has(LEGEND_FILTERS.IN_PROGRESS) &&
-        incident.status === "in_progress" &&
-        incident.priority_level !== "critical"
+        incident.status === "in_progress"
       ) {
         return true
       }
       if (
         activeLegendFilters.has(LEGEND_FILTERS.RESOLVED) &&
-        (incident.status === "resolved" || incident.status === "closed") &&
-        incident.priority_level !== "critical"
+        (incident.status === "resolved" || incident.status === "closed")
       ) {
         return true
       }
