@@ -4,7 +4,7 @@ import Navbar from '../../components/Navbar';
 import EvacuationCenterMap from '../../components/EvacuationCenterMap';
 import useGeolocation from '../../hooks/useGeolocation';
 import { getAuthState, type UserData } from '../../utils/auth';
-import { evacuationCentersApi } from '../../utils/api';
+import { evacuationCentersApi, routingApi } from '../../utils/api';
 
 
 interface EvacuationCenter {
@@ -176,13 +176,55 @@ const EvacuationCenterPage: React.FC = () => {
     return R * c;
   };
 
-  // Calculate route-based distance using Google Maps-like calculation
+  // Calculate route-based distance using actual driving route API
   const calculateRouteDistance = async (lat1: number, lon1: number, lat2: number, lon2: number): Promise<{distance: number, duration: number}> => {
     try {
-      // For real implementation, you would use Google Maps Directions API:
-      // const response = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${lat1},${lon1}&destination=${lat2},${lon2}&key=YOUR_API_KEY`);
-      
-      // For now, we'll use a more realistic approximation based on actual road networks
+      // Try to use the routing API for actual driving route distances
+      try {
+        const routeSummary = await routingApi.getRouteSummary(
+          [lon1, lat1], // OpenRouteService uses [lon, lat] format
+          [lon2, lat2],
+          undefined,
+          { profile: 'driving-car' }
+        );
+
+        if (routeSummary.success && routeSummary.data) {
+          const distance = routeSummary.data.distance / 1000; // Convert meters to kilometers
+          const duration = routeSummary.data.duration / 60; // Convert seconds to minutes
+          
+          return {
+            distance: distance,
+            duration: duration
+          };
+        }
+      } catch (apiError) {
+        console.log('Routing API not available, using approximation:', apiError);
+      }
+
+      // Fallback: Use OSRM (Open Source Routing Machine) - completely free, no API key required
+      // This provides actual driving route distances based on OpenStreetMap data
+      try {
+        const response = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false&alternatives=false&steps=false`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.routes && data.routes[0]) {
+            const distance = data.routes[0].distance / 1000; // meters to km
+            const duration = data.routes[0].duration / 60; // seconds to minutes
+            
+            return {
+              distance: distance,
+              duration: duration
+            };
+          }
+        }
+      } catch (osrmError) {
+        console.log('OSRM API call failed, using approximation:', osrmError);
+      }
+
+      // Final fallback: More realistic approximation based on actual road networks
       const straightDistance = calculateStraightLineDistance(lat1, lon1, lat2, lon2);
       
       // More realistic road distance calculation based on terrain and road network
