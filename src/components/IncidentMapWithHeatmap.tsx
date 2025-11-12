@@ -401,7 +401,7 @@ const DrawController: React.FC<{
 
         // Create draw control
         const drawControl = new (window as any).L.Draw({
-          position: "topright",
+          position: "topleft",
           draw: {
             polygon: {
               allowIntersection: false,
@@ -508,17 +508,21 @@ const MapControls: React.FC<{
   incidents: Incident[]
   showHeatmap: boolean
   filteredIncidentsCount: number
+  enableDraw: boolean
   onCenterUserLocation: () => void
   onShowAllIncidents: () => void
   onToggleHeatmap: () => void
+  onToggleDraw: () => void
 }> = ({
   userLocation,
   incidents,
   showHeatmap,
   filteredIncidentsCount,
+  enableDraw,
   onCenterUserLocation,
   onShowAllIncidents,
   onToggleHeatmap,
+  onToggleDraw,
 }) => (
   <div className="absolute top-4 right-4 z-10 space-y-3">
     {userLocation && (
@@ -548,6 +552,18 @@ const MapControls: React.FC<{
     >
       <i
         className={`ri-fire-line text-lg group-hover:text-blue-700 ${showHeatmap ? "text-blue-600" : "text-gray-600"}`}
+      ></i>
+    </button>
+
+    <button
+      onClick={onToggleDraw}
+      className={`group bg-white/90 backdrop-blur-sm hover:bg-white border border-white/20 rounded-xl p-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 ${
+        enableDraw ? "bg-green-100 border-green-300" : ""
+      }`}
+      title={enableDraw ? "Disable drawing" : "Enable drawing"}
+    >
+      <i
+        className={`ri-edit-line text-lg group-hover:text-blue-700 ${enableDraw ? "text-green-600" : "text-gray-600"}`}
       ></i>
     </button>
 
@@ -581,6 +597,7 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   const [isLegendExpanded, setIsLegendExpanded] = useState(false)
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [heatmapLayer, setHeatmapLayer] = useState<any>(null)
+  const [drawEnabled, setDrawEnabled] = useState(enableDraw)
 
   const mapBounds = useMemo(() => calculateMapBounds(incidents), [incidents])
 
@@ -642,6 +659,11 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   useEffect(() => {
     updateMapCenter()
   }, [updateMapCenter])
+
+  // Sync drawEnabled with enableDraw prop
+  useEffect(() => {
+    setDrawEnabled(enableDraw)
+  }, [enableDraw])
 
   // Ensure Leaflet CSS is loaded
   useEffect(() => {
@@ -721,6 +743,10 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
     setShowHeatmap((prev) => !prev)
   }, [])
 
+  const handleToggleDraw = useCallback(() => {
+    setDrawEnabled((prev) => !prev)
+  }, [])
+
   const handleCenterUserLocation = useCallback(() => {
     if (userLocation) {
       setMapCenter([userLocation.latitude, userLocation.longitude])
@@ -747,9 +773,11 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
         incidents={incidents}
         showHeatmap={showHeatmap}
         filteredIncidentsCount={filteredIncidents.length}
+        enableDraw={drawEnabled}
         onCenterUserLocation={handleCenterUserLocation}
         onShowAllIncidents={handleShowAllIncidents}
         onToggleHeatmap={handleHeatmapToggle}
+        onToggleDraw={handleToggleDraw}
       />
 
       <div
@@ -857,7 +885,7 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
             onHeatmapLayerChange={setHeatmapLayer}
           />
           <DrawController
-            enableDraw={enableDraw}
+            enableDraw={drawEnabled}
             onDrawCreated={onDrawCreated}
             onDrawEdited={onDrawEdited}
             onDrawDeleted={onDrawDeleted}
