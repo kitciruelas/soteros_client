@@ -121,8 +121,50 @@ const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ c
   const map = useMap();
   
   useEffect(() => {
-    map.setView(center, zoom);
+    // Use invalidateSize on iOS to fix rendering issues
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    if (isIOS) {
+      // Delay to ensure map container is fully rendered
+      setTimeout(() => {
+        map.invalidateSize();
+        map.setView(center, zoom);
+      }, 100);
+    } else {
+      map.setView(center, zoom);
+    }
   }, [map, center, zoom]);
+  
+  return null;
+};
+
+// Component to handle iOS map initialization
+const IOSMapInitializer: React.FC<{ onReady: () => void; mapRef: React.MutableRefObject<L.Map | null> }> = ({ onReady, mapRef }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    // Store map reference
+    mapRef.current = map;
+    
+    if (isIOS) {
+      // Force map to recalculate size on iOS
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+        // Trigger a resize event
+        window.dispatchEvent(new Event('resize'));
+        onReady();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    } else {
+      mapRef.current = map;
+      onReady();
+    }
+  }, [map, onReady, mapRef]);
   
   return null;
 };
@@ -155,6 +197,8 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
   const [mapLoading, setMapLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
   const [legendVisible, setLegendVisible] = useState(true);
+  const [isIOS, setIsIOS] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
 
   // Update map center when user location is available
   useEffect(() => {
@@ -168,10 +212,60 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
     }
   }, [userLocation, evacuationCenters]);
 
+  // Detect iOS
+  useEffect(() => {
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOS(iOS);
+    
+    // Add iOS-specific CSS fixes
+    if (iOS) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .leaflet-container {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          touch-action: pan-x pan-y;
+        }
+        .leaflet-map-pane {
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+        }
+        .leaflet-tile-container {
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   // Ensure Leaflet CSS is loaded
   useEffect(() => {
     ensureLeafletCSS();
   }, []);
+
+  // Handle window resize for iOS (Safari address bar show/hide)
+  useEffect(() => {
+    if (!isIOS) return;
+    
+    const handleResize = () => {
+      // Small delay to let iOS Safari finish resizing
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      }, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [isIOS]);
 
   // Add timeout for map loading
   useEffect(() => {
@@ -181,7 +275,7 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
         setMapError(true);
         setMapLoading(false);
       }
-    }, 10000); // 10 second timeout
+    }, 15000); // Increased to 15 seconds for iOS
 
     return () => clearTimeout(timeout);
   }, [mapLoading]);
@@ -273,7 +367,11 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
         style={{ 
           height,
           minHeight: '300px',
-          position: 'relative'
+          position: 'relative',
+          WebkitTransform: isIOS ? 'translateZ(0)' : undefined,
+          transform: isIOS ? 'translateZ(0)' : undefined,
+          WebkitBackfaceVisibility: isIOS ? 'hidden' : undefined,
+          backfaceVisibility: isIOS ? 'hidden' : undefined
         }}
       >
         {/* Loading overlay */}
@@ -289,21 +387,46 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
         {/* Error overlay */}
         {mapError && (
           <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-20">
-            <div className="text-center">
+            <div className="text-center px-4">
               <i className="ri-error-warning-line text-4xl text-red-400 mb-4"></i>
-              <p className="text-gray-600 mb-2">Failed to load interactive map</p>
+              <p className="text-gray-600 mb-2 font-semibold">Failed to load interactive map</p>
+              {isIOS && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-left max-w-md mx-auto">
+                  <p className="text-xs text-yellow-800 font-semibold mb-1">
+                    <i className="ri-information-line mr-1"></i>
+                    iOS Tips:
+                  </p>
+                  <ul className="text-xs text-yellow-700 space-y-1 list-disc list-inside">
+                    <li>Make sure you have a stable internet connection</li>
+                    <li>Try refreshing the page</li>
+                    <li>Check if Safari is blocking content</li>
+                    <li>Try closing and reopening Safari</li>
+                  </ul>
+                </div>
+              )}
               <p className="text-sm text-gray-500 mb-4">Showing static map instead</p>
-              <button 
-                onClick={() => {
-                  setMapError(false);
-                  setMapLoading(true);
-                  // Force re-render
-                  window.location.reload();
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Retry Interactive Map
-              </button>
+              <div className="flex gap-2 justify-center">
+                <button 
+                  onClick={() => {
+                    setMapError(false);
+                    setMapLoading(true);
+                    if (mapRef.current) {
+                      mapRef.current.invalidateSize();
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Retry Map
+                </button>
+                <button 
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Refresh Page
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -348,14 +471,39 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
         <MapContainer
           center={mapCenter}
           zoom={mapZoom}
-          style={{ height: '100%', width: '100%' }}
+          style={{ 
+            height: '100%', 
+            width: '100%',
+            WebkitTransform: isIOS ? 'translateZ(0)' : undefined,
+            transform: isIOS ? 'translateZ(0)' : undefined
+          }}
           className="z-0"
           zoomControl={false} // We'll add custom zoom controls
-          whenReady={() => {
+          whenReady={(map) => {
             console.log('Map is ready!');
-            setMapLoading(false);
+            mapRef.current = map.target;
+            const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            
+            if (isIOSDevice) {
+              // Force invalidateSize on iOS after a short delay
+              setTimeout(() => {
+                map.target.invalidateSize();
+                setMapLoading(false);
+              }, 200);
+            } else {
+              setMapLoading(false);
+            }
           }}
         >
+          <IOSMapInitializer 
+            mapRef={mapRef}
+            onReady={() => {
+              if (mapLoading) {
+                setMapLoading(false);
+              }
+            }} 
+          />
           <MapController center={mapCenter} zoom={mapZoom} />
 
           {/* Custom Zoom Control */}
@@ -367,12 +515,35 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
             errorTileUrl="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+            crossOrigin={true}
             eventHandlers={{
-              loading: () => console.log('Tiles loading...'),
-              load: () => console.log('Tiles loaded successfully'),
+              loading: () => {
+                console.log('Tiles loading...');
+                // Don't set error on initial load
+              },
+              load: () => {
+                console.log('Tiles loaded successfully');
+                setMapError(false);
+              },
               tileerror: (e) => {
                 console.error('Tile loading error:', e);
-                setMapError(true);
+                // Only set error after a delay to avoid false positives on iOS
+                const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                if (!isIOSDevice) {
+                  // On non-iOS, set error immediately
+                  setMapError(true);
+                } else {
+                  // On iOS, wait a bit before setting error (might be temporary network issue)
+                  setTimeout(() => {
+                    if (mapRef.current) {
+                      const tiles = mapRef.current.getContainer().querySelectorAll('.leaflet-tile-loaded');
+                      if (tiles.length === 0) {
+                        setMapError(true);
+                      }
+                    }
+                  }, 3000);
+                }
               }
             }}
           />
