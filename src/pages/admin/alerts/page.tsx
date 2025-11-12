@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { alertsApi } from '../../../utils/api';
-import { MapContainer, Marker, Circle, useMapEvents, TileLayer } from 'react-leaflet';
+import { MapContainer, Marker, Circle, useMapEvents, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -274,6 +274,32 @@ const AlertsManagement: React.FC = () => {
         }) : null);
       },
     });
+    return null;
+  };
+
+  // Component to center map when coordinates change (for create modal)
+  const MapCenterHandler = ({ center }: { center: [number, number] | null }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+      if (center) {
+        map.setView(center, map.getZoom());
+      }
+    }, [center, map]);
+    
+    return null;
+  };
+
+  // Component to center map when coordinates change (for edit modal)
+  const EditMapCenterHandler = ({ center }: { center: [number, number] | null }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+      if (center) {
+        map.setView(center, map.getZoom());
+      }
+    }, [center, map]);
+    
     return null;
   };
 
@@ -1057,6 +1083,7 @@ const AlertsManagement: React.FC = () => {
                       />
 
                       <MapClickHandler />
+                      <MapCenterHandler center={newAlert?.latitude && newAlert?.longitude ? [newAlert.latitude, newAlert.longitude] : null} />
 
                       {/* Alert location marker */}
                       {newAlert?.latitude && newAlert?.longitude && (
@@ -1573,6 +1600,7 @@ const AlertsManagement: React.FC = () => {
                       />
 
                       <EditMapClickHandler />
+                      <EditMapCenterHandler center={editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' ? [editAlert.latitude, editAlert.longitude] : null} />
 
                       {/* Alert location marker */}
                       {editAlert?.latitude && editAlert?.longitude && typeof editAlert.latitude === 'number' && typeof editAlert.longitude === 'number' && (
