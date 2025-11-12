@@ -291,6 +291,16 @@ const EvacuationCenterPage: React.FC = () => {
     return imageUrl;
   };
 
+  // Helper function to get contact person with fallback
+  const getContactPerson = (contactPerson: string | null | undefined): string => {
+    return contactPerson && contactPerson.trim() ? contactPerson : 'MSWDO';
+  };
+
+  // Helper function to get contact number with fallback
+  const getContactNumber = (contactNumber: string | null | undefined): string => {
+    return contactNumber && contactNumber.trim() ? contactNumber : '0939 038 0295';
+  };
+
   // Check if image exists and is accessible
   const checkImageExists = async (url: string): Promise<boolean> => {
     try {
@@ -382,7 +392,7 @@ const EvacuationCenterPage: React.FC = () => {
   const filteredCenters = evacuationCenters.filter(center => {
     const matchesSearch = searchQuery === '' ||
       center.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      center.contact_person?.toLowerCase().includes(searchQuery.toLowerCase());
+      getContactPerson(center.contact_person).toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || center.status === statusFilter;
 
@@ -838,7 +848,7 @@ const EvacuationCenterPage: React.FC = () => {
 
                           <div className="flex items-center space-x-2 min-w-0">
                             <i className="ri-phone-line text-gray-500 text-sm flex-shrink-0"></i>
-                            <span className="text-sm text-gray-600 truncate">{center.contact_number}</span>
+                            <span className="text-sm text-gray-600 truncate">{getContactNumber(center.contact_number)}</span>
                           </div>
 
                           {/* Resources Summary */}
@@ -872,7 +882,7 @@ const EvacuationCenterPage: React.FC = () => {
                             Directions
                           </button>
                           <button
-                            onClick={() => window.open(`tel:${center.contact_number}`, '_self')}
+                            onClick={() => window.open(`tel:${getContactNumber(center.contact_number)}`, '_self')}
                             className="flex-1 border border-blue-600 text-blue-600 py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-blue-50 transition-colors"
                           >
                             <i className="ri-phone-line mr-1"></i>
@@ -1090,7 +1100,7 @@ const EvacuationCenterPage: React.FC = () => {
                               <i className="ri-user-line text-blue-600 text-xs"></i>
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-900 truncate">{center.contact_person}</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">{getContactPerson(center.contact_person)}</p>
                               <p className="text-xs text-gray-500">Contact Person</p>
                             </div>
                           </div>
@@ -1100,7 +1110,7 @@ const EvacuationCenterPage: React.FC = () => {
                               <i className="ri-phone-line text-green-600 text-xs"></i>
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-900 truncate">{center.contact_number}</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">{getContactNumber(center.contact_number)}</p>
                               <p className="text-xs text-gray-500">Phone Number</p>
                             </div>
                           </div>
@@ -1192,7 +1202,7 @@ const EvacuationCenterPage: React.FC = () => {
                           <span>Directions</span>
                         </button>
                         <button
-                          onClick={() => window.open(`tel:${center.contact_number}`, '_self')}
+                          onClick={() => window.open(`tel:${getContactNumber(center.contact_number)}`, '_self')}
                           className="flex-1 border border-blue-600 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-medium text-sm flex items-center justify-center space-x-2"
                         >
                           <i className="ri-phone-line text-sm"></i>
@@ -1417,7 +1427,7 @@ const EvacuationCenterPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="bg-white rounded-lg p-4 border border-blue-200">
-                    <p className="text-xl font-bold text-gray-900 truncate">{selectedContactInfo.contact_person}</p>
+                    <p className="text-xl font-bold text-gray-900 truncate">{getContactPerson(selectedContactInfo.contact_person)}</p>
                     <p className="text-sm text-gray-500 mt-1">Emergency Contact</p>
                   </div>
                 </div>
@@ -1436,11 +1446,11 @@ const EvacuationCenterPage: React.FC = () => {
                   <div className="bg-white rounded-lg p-4 border border-green-200">
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0 flex-1 overflow-hidden">
-                        <p className="text-xl font-bold text-gray-900 truncate">{selectedContactInfo.contact_number}</p>
+                        <p className="text-xl font-bold text-gray-900 truncate">{getContactNumber(selectedContactInfo.contact_number)}</p>
                         <p className="text-sm text-gray-500 mt-1">Available 24/7</p>
                       </div>
                       <button
-                        onClick={() => window.open(`tel:${selectedContactInfo.contact_number}`, '_self')}
+                        onClick={() => window.open(`tel:${getContactNumber(selectedContactInfo.contact_number)}`, '_self')}
                         className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center space-x-2 flex-shrink-0"
                       >
                         <i className="ri-phone-line"></i>
@@ -1462,7 +1472,7 @@ const EvacuationCenterPage: React.FC = () => {
                       <span>Get Directions</span>
                     </button>
                     <button
-                      onClick={() => window.open(`tel:${selectedContactInfo.contact_number}`, '_self')}
+                      onClick={() => window.open(`tel:${getContactNumber(selectedContactInfo.contact_number)}`, '_self')}
                       className="bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center justify-center space-x-2"
                     >
                       <i className="ri-phone-line"></i>
@@ -1606,7 +1616,7 @@ const EvacuationCenterPage: React.FC = () => {
                     <span>Get Directions</span>
                   </button>
                   <button
-                    onClick={() => window.open(`tel:${selectedCenterDetails.contact_number}`, '_self')}
+                    onClick={() => window.open(`tel:${getContactNumber(selectedCenterDetails.contact_number)}`, '_self')}
                     className="bg-green-600 text-white py-3 px-4 rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center justify-center space-x-2"
                   >
                     <i className="ri-phone-line"></i>
