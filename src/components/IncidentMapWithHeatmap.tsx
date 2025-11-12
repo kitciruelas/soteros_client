@@ -1,9 +1,10 @@
 "use client"
 import type React from "react"
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import "leaflet-draw/dist/leaflet.draw.css"
 
 // Dynamic import for heatmap plugin to avoid TypeScript issues
 const loadHeatmapPlugin = async () => {
@@ -11,6 +12,15 @@ const loadHeatmapPlugin = async () => {
     await import("leaflet.heat")
   } catch (error) {
     console.warn("Heatmap plugin not available:", error)
+  }
+}
+
+// Dynamic import for leaflet-draw plugin
+const loadDrawPlugin = async () => {
+  try {
+    await import("leaflet-draw")
+  } catch (error) {
+    console.warn("Leaflet Draw plugin not available:", error)
   }
 }
 
@@ -24,6 +34,15 @@ const ensureLeafletCSS = () => {
     newLink.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     newLink.crossOrigin = ""
     document.head.appendChild(newLink)
+  }
+  
+  // Ensure Leaflet Draw CSS is loaded
+  const drawLink = document.querySelector('link[href*="leaflet.draw"]')
+  if (!drawLink) {
+    const newDrawLink = document.createElement("link")
+    newDrawLink.rel = "stylesheet"
+    newDrawLink.href = "https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    document.head.appendChild(newDrawLink)
   }
 }
 
@@ -98,6 +117,10 @@ interface IncidentMapProps {
   height?: string
   showUserLocation?: boolean
   userLocation?: { latitude: number; longitude: number } | null
+  onDrawCreated?: (layer: L.Layer) => void
+  onDrawEdited?: (e: L.DrawEvents.Edited) => void
+  onDrawDeleted?: (e: L.DrawEvents.Deleted) => void
+  enableDraw?: boolean
 }
 
 // Component to handle map centering
@@ -336,6 +359,115 @@ const HeatmapController: React.FC<{
   return null
 }
 
+// Component to handle Leaflet Draw control
+const DrawController: React.FC<{
+  enableDraw: boolean
+  onDrawCreated?: (layer: L.Layer) => void
+  onDrawEdited?: (e: L.DrawEvents.Edited) => void
+  onDrawDeleted?: (e: L.DrawEvents.Deleted) => void
+}> = ({ enableDraw, onDrawCreated, onDrawEdited, onDrawDeleted }) => {
+  const map = useMap()
+  const drawControlRef = useRef<L.Control.Draw | null>(null)
+  const drawnLayersRef = useRef<L.FeatureGroup>(new L.FeatureGroup())
+
+  useEffect(() => {
+    if (!enableDraw) {
+      // Remove draw control if disabled
+      if (drawControlRef.current) {
+        map.removeControl(drawControlRef.current)
+        drawControlRef.current = null
+      }
+      if (map.hasLayer(drawnLayersRef.current)) {
+        map.removeLayer(drawnLayersRef.current)
+      }
+      return
+    }
+
+    let cleanup: (() => void) | undefined
+
+    const initializeDraw = async () => {
+      await loadDrawPlugin()
+
+      if ((window as any).L && (window as any).L.Draw) {
+        // Remove existing control if any
+        if (drawControlRef.current) {
+          map.removeControl(drawControlRef.current)
+        }
+
+        // Add drawn layers to map
+        if (!map.hasLayer(drawnLayersRef.current)) {
+          drawnLayersRef.current.addTo(map)
+        }
+
+        // Create draw control
+        const drawControl = new (window as any).L.Draw({
+          position: "topright",
+          draw: {
+            polygon: {
+              allowIntersection: false,
+              showArea: true,
+            },
+            polyline: true,
+            rectangle: true,
+            circle: true,
+            circlemarker: false,
+            marker: true,
+          },
+          edit: {
+            featureGroup: drawnLayersRef.current,
+            remove: true,
+          },
+        })
+
+        drawControlRef.current = drawControl
+        map.addControl(drawControl)
+
+        // Handle draw events
+        const handleDrawCreated = (e: L.DrawEvents.Created) => {
+          const layer = e.layer
+          drawnLayersRef.current.addLayer(layer)
+          onDrawCreated?.(layer)
+        }
+
+        const handleDrawEdited = (e: L.DrawEvents.Edited) => {
+          onDrawEdited?.(e)
+        }
+
+        const handleDrawDeleted = (e: L.DrawEvents.Deleted) => {
+          onDrawDeleted?.(e)
+        }
+
+        map.on((window as any).L.Draw.Event.CREATED, handleDrawCreated)
+        map.on((window as any).L.Draw.Event.EDITED, handleDrawEdited)
+        map.on((window as any).L.Draw.Event.DELETED, handleDrawDeleted)
+
+        cleanup = () => {
+          map.off((window as any).L.Draw.Event.CREATED, handleDrawCreated)
+          map.off((window as any).L.Draw.Event.EDITED, handleDrawEdited)
+          map.off((window as any).L.Draw.Event.DELETED, handleDrawDeleted)
+        }
+      }
+    }
+
+    initializeDraw()
+
+    return () => {
+      if (cleanup) {
+        cleanup()
+      }
+      if (drawControlRef.current) {
+        map.removeControl(drawControlRef.current)
+        drawControlRef.current = null
+      }
+      if (map.hasLayer(drawnLayersRef.current)) {
+        map.removeLayer(drawnLayersRef.current)
+      }
+    }
+  }, [map, enableDraw, onDrawCreated, onDrawEdited, onDrawDeleted])
+
+  return null
+}
+
 // Color mapping for dynamic Tailwind classes
 const getLegendColors = (color: string) => {
   const colorMap: { [key: string]: { bg: string; border: string; ring: string; text: string; gradient: string } } = {
@@ -434,6 +566,10 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   height = "24rem",
   showUserLocation = false,
   userLocation = null,
+  onDrawCreated,
+  onDrawEdited,
+  onDrawDeleted,
+  enableDraw = false,
 }) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER)
   const [mapZoom, setMapZoom] = useState(13)
@@ -719,6 +855,12 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
             incidents={filteredIncidents}
             showHeatmap={showHeatmap}
             onHeatmapLayerChange={setHeatmapLayer}
+          />
+          <DrawController
+            enableDraw={enableDraw}
+            onDrawCreated={onDrawCreated}
+            onDrawEdited={onDrawEdited}
+            onDrawDeleted={onDrawDeleted}
           />
 
           {/* TileLayer */}
