@@ -1,10 +1,9 @@
 "use client"
 import type React from "react"
-import { useState, useEffect, useMemo, useCallback, useRef } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
-import "leaflet-draw/dist/leaflet.draw.css"
 
 // Dynamic import for heatmap plugin to avoid TypeScript issues
 const loadHeatmapPlugin = async () => {
@@ -12,39 +11,6 @@ const loadHeatmapPlugin = async () => {
     await import("leaflet.heat")
   } catch (error) {
     console.warn("Heatmap plugin not available:", error)
-  }
-}
-
-// Dynamic import for leaflet-draw plugin (similar to heatmap)
-const loadDrawPlugin = async () => {
-  try {
-    // Ensure L is available on window for leaflet-draw to attach
-    if (typeof window !== 'undefined' && !(window as any).L) {
-      (window as any).L = L
-    }
-    
-    // Import leaflet-draw - it should attach to L when imported
-    await import("leaflet-draw")
-    
-    // Give it a moment to attach
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
-    // Also try to manually attach if it didn't auto-attach
-    try {
-      const drawModule = await import("leaflet-draw")
-      // Some versions export differently, try to access
-      if (drawModule && typeof drawModule === 'object') {
-        // Check if there's an export we can use
-        console.log("Draw module:", drawModule)
-      }
-    } catch (e) {
-      // Ignore
-    }
-    
-    return true
-  } catch (error) {
-    console.error("Failed to load leaflet-draw:", error)
-    return false
   }
 }
 
@@ -58,36 +24,6 @@ const ensureLeafletCSS = () => {
     newLink.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     newLink.crossOrigin = ""
     document.head.appendChild(newLink)
-  }
-  
-  // Ensure Leaflet Draw CSS is loaded
-  const drawLink = document.querySelector('link[href*="leaflet.draw"]')
-  if (!drawLink) {
-    const newDrawLink = document.createElement("link")
-    newDrawLink.rel = "stylesheet"
-    newDrawLink.href = "https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
-    document.head.appendChild(newDrawLink)
-  }
-  
-  // Add fallback styles for Leaflet Draw toolbar
-  if (!document.querySelector('style[data-leaflet-draw-fallback]')) {
-    const drawStyle = document.createElement("style")
-    drawStyle.setAttribute('data-leaflet-draw-fallback', 'true')
-    drawStyle.textContent = `
-      .leaflet-draw-toolbar {
-        margin-top: 10px;
-        z-index: 1000;
-      }
-      .leaflet-draw-toolbar a {
-        background-color: #fff;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-      .leaflet-draw-toolbar a:hover {
-        background-color: #f4f4f4;
-      }
-    `
-    document.head.appendChild(drawStyle)
   }
 }
 
@@ -162,10 +98,6 @@ interface IncidentMapProps {
   height?: string
   showUserLocation?: boolean
   userLocation?: { latitude: number; longitude: number } | null
-  onDrawCreated?: (layer: L.Layer) => void
-  onDrawEdited?: (e: L.DrawEvents.Edited) => void
-  onDrawDeleted?: (e: L.DrawEvents.Deleted) => void
-  enableDraw?: boolean
 }
 
 // Component to handle map centering
@@ -404,151 +336,6 @@ const HeatmapController: React.FC<{
   return null
 }
 
-// Component to handle Leaflet Draw control
-const DrawController: React.FC<{
-  enableDraw: boolean
-  onDrawCreated?: (layer: L.Layer) => void
-  onDrawEdited?: (e: L.DrawEvents.Edited) => void
-  onDrawDeleted?: (e: L.DrawEvents.Deleted) => void
-}> = ({ enableDraw, onDrawCreated, onDrawEdited, onDrawDeleted }) => {
-  const map = useMap()
-  const drawControlRef = useRef<L.Control.Draw | null>(null)
-  const drawnLayersRef = useRef<L.FeatureGroup>(new L.FeatureGroup())
-
-  useEffect(() => {
-    if (!enableDraw) {
-      // Remove draw control if disabled
-      if (drawControlRef.current) {
-        map.removeControl(drawControlRef.current)
-        drawControlRef.current = null
-      }
-      if (map.hasLayer(drawnLayersRef.current)) {
-        map.removeLayer(drawnLayersRef.current)
-      }
-      return
-    }
-
-    let cleanup: (() => void) | undefined
-
-    const initializeDraw = async () => {
-      // Load the plugin first
-      const loaded = await loadDrawPlugin()
-      if (!loaded) {
-        console.error("Failed to load leaflet-draw plugin")
-        return
-      }
-
-      // Check if Draw is available - leaflet-draw attaches to L.Control.Draw
-      let DrawClass: any = null
-      
-      // Try multiple ways to access Draw
-      if ((window as any).L && (window as any).L.Control && (window as any).L.Control.Draw) {
-        DrawClass = (window as any).L.Control.Draw
-      } else if (L.Control && (L.Control as any).Draw) {
-        DrawClass = (L.Control as any).Draw
-      } else if ((window as any).L && (window as any).L.Draw) {
-        DrawClass = (window as any).L.Draw
-      }
-
-      if (!DrawClass) {
-        console.error("Leaflet Draw is not available after import.")
-        console.log("window.L:", (window as any).L)
-        console.log("window.L.Control:", (window as any).L?.Control)
-        console.log("window.L.Control.Draw:", (window as any).L?.Control?.Draw)
-        console.log("L.Control:", L.Control)
-        console.log("L.Control.Draw:", (L.Control as any)?.Draw)
-        return
-      }
-
-      // Remove existing control if any
-      if (drawControlRef.current) {
-        map.removeControl(drawControlRef.current)
-      }
-
-      // Add drawn layers to map
-      if (!map.hasLayer(drawnLayersRef.current)) {
-        drawnLayersRef.current.addTo(map)
-      }
-
-      // Create draw control
-      const drawControl = new DrawClass({
-          position: "topleft",
-          draw: {
-            polygon: {
-              allowIntersection: false,
-              showArea: true,
-            },
-            polyline: true,
-            rectangle: true,
-            circle: true,
-            circlemarker: false,
-            marker: true,
-          },
-          edit: {
-            featureGroup: drawnLayersRef.current,
-            remove: true,
-          },
-        })
-
-        drawControlRef.current = drawControl
-        map.addControl(drawControl)
-
-        // Handle draw events
-        const handleDrawCreated = (e: L.DrawEvents.Created) => {
-          const layer = e.layer
-          drawnLayersRef.current.addLayer(layer)
-          onDrawCreated?.(layer)
-        }
-
-        const handleDrawEdited = (e: L.DrawEvents.Edited) => {
-          onDrawEdited?.(e)
-        }
-
-        const handleDrawDeleted = (e: L.DrawEvents.Deleted) => {
-          onDrawDeleted?.(e)
-        }
-
-        // Get Draw Event constants - leaflet-draw events are on L.Draw.Event
-        const DrawEvents = (L.Control as any).Draw?.Event || 
-                         (window as any).L?.Control?.Draw?.Event ||
-                         (window as any).L?.Draw?.Event
-        
-        if (DrawEvents) {
-          map.on(DrawEvents.CREATED as any, handleDrawCreated as any)
-          map.on(DrawEvents.EDITED as any, handleDrawEdited as any)
-          map.on(DrawEvents.DELETED as any, handleDrawDeleted as any)
-
-          cleanup = () => {
-            map.off(DrawEvents.CREATED as any, handleDrawCreated as any)
-            map.off(DrawEvents.EDITED as any, handleDrawEdited as any)
-            map.off(DrawEvents.DELETED as any, handleDrawDeleted as any)
-          }
-        } else {
-          console.warn("Leaflet Draw Events not found. DrawClass:", DrawClass)
-        }
-    }
-
-    initializeDraw().catch((err: any) => {
-      console.error("Error initializing draw:", err)
-    })
-
-    return () => {
-      if (cleanup) {
-        cleanup()
-      }
-      if (drawControlRef.current) {
-        map.removeControl(drawControlRef.current)
-        drawControlRef.current = null
-      }
-      if (map.hasLayer(drawnLayersRef.current)) {
-        map.removeLayer(drawnLayersRef.current)
-      }
-    }
-  }, [map, enableDraw, onDrawCreated, onDrawEdited, onDrawDeleted])
-
-  return null
-}
-
 // Color mapping for dynamic Tailwind classes
 const getLegendColors = (color: string) => {
   const colorMap: { [key: string]: { bg: string; border: string; ring: string; text: string; gradient: string } } = {
@@ -589,23 +376,19 @@ const MapControls: React.FC<{
   incidents: Incident[]
   showHeatmap: boolean
   filteredIncidentsCount: number
-  enableDraw: boolean
   onCenterUserLocation: () => void
   onShowAllIncidents: () => void
   onToggleHeatmap: () => void
-  onToggleDraw: () => void
 }> = ({
   userLocation,
   incidents,
   showHeatmap,
   filteredIncidentsCount,
-  enableDraw,
   onCenterUserLocation,
   onShowAllIncidents,
   onToggleHeatmap,
-  onToggleDraw,
 }) => (
-  <div className="absolute top-4 right-4 z-[1000] space-y-3">
+  <div className="absolute top-4 right-4 z-10 space-y-3">
     {userLocation && (
       <button
         onClick={onCenterUserLocation}
@@ -636,18 +419,6 @@ const MapControls: React.FC<{
       ></i>
     </button>
 
-    <button
-      onClick={onToggleDraw}
-      className={`group bg-white/90 backdrop-blur-sm hover:bg-white border border-white/20 rounded-xl p-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 ${
-        enableDraw ? "bg-green-100 border-green-300" : ""
-      }`}
-      title={enableDraw ? "Disable drawing" : "Enable drawing"}
-    >
-      <i
-        className={`ri-edit-line text-lg group-hover:text-blue-700 ${enableDraw ? "text-green-600" : "text-gray-600"}`}
-      ></i>
-    </button>
-
     <div className="bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl p-3 shadow-xl">
       <div className="text-center">
         <div className="text-lg font-bold text-blue-600">{filteredIncidentsCount}</div>
@@ -663,10 +434,6 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   height = "24rem",
   showUserLocation = false,
   userLocation = null,
-  onDrawCreated,
-  onDrawEdited,
-  onDrawDeleted,
-  enableDraw = false,
 }) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER)
   const [mapZoom, setMapZoom] = useState(13)
@@ -678,7 +445,6 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   const [isLegendExpanded, setIsLegendExpanded] = useState(false)
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [heatmapLayer, setHeatmapLayer] = useState<any>(null)
-  const [drawEnabled, setDrawEnabled] = useState(enableDraw)
 
   const mapBounds = useMemo(() => calculateMapBounds(incidents), [incidents])
 
@@ -740,11 +506,6 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   useEffect(() => {
     updateMapCenter()
   }, [updateMapCenter])
-
-  // Sync drawEnabled with enableDraw prop
-  useEffect(() => {
-    setDrawEnabled(enableDraw)
-  }, [enableDraw])
 
   // Ensure Leaflet CSS is loaded
   useEffect(() => {
@@ -824,10 +585,6 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
     setShowHeatmap((prev) => !prev)
   }, [])
 
-  const handleToggleDraw = useCallback(() => {
-    setDrawEnabled((prev) => !prev)
-  }, [])
-
   const handleCenterUserLocation = useCallback(() => {
     if (userLocation) {
       setMapCenter([userLocation.latitude, userLocation.longitude])
@@ -854,11 +611,9 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
         incidents={incidents}
         showHeatmap={showHeatmap}
         filteredIncidentsCount={filteredIncidents.length}
-        enableDraw={drawEnabled}
         onCenterUserLocation={handleCenterUserLocation}
         onShowAllIncidents={handleShowAllIncidents}
         onToggleHeatmap={handleHeatmapToggle}
-        onToggleDraw={handleToggleDraw}
       />
 
       <div
@@ -964,12 +719,6 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
             incidents={filteredIncidents}
             showHeatmap={showHeatmap}
             onHeatmapLayerChange={setHeatmapLayer}
-          />
-          <DrawController
-            enableDraw={drawEnabled}
-            onDrawCreated={onDrawCreated}
-            onDrawEdited={onDrawEdited}
-            onDrawDeleted={onDrawDeleted}
           />
 
           {/* TileLayer */}
