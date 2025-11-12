@@ -6,6 +6,10 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import "leaflet-draw/dist/leaflet.draw.css"
 
+// Import leaflet-draw as side-effect to attach to L
+// This needs to be a top-level import for proper initialization
+import "leaflet-draw"
+
 // Dynamic import for heatmap plugin to avoid TypeScript issues
 const loadHeatmapPlugin = async () => {
   try {
@@ -15,13 +19,10 @@ const loadHeatmapPlugin = async () => {
   }
 }
 
-// Dynamic import for leaflet-draw plugin
-const loadDrawPlugin = async () => {
-  try {
-    await import("leaflet-draw")
-  } catch (error) {
-    console.warn("Leaflet Draw plugin not available:", error)
-  }
+// Check if Draw plugin is loaded
+const isDrawPluginLoaded = () => {
+  return !!(L.Control && (L.Control as any).Draw) || 
+         !!((window as any).L && (window as any).L.Control && (window as any).L.Control.Draw)
 }
 
 // Ensure Leaflet CSS is loaded
@@ -406,22 +407,38 @@ const DrawController: React.FC<{
 
     let cleanup: (() => void) | undefined
 
-    const initializeDraw = async () => {
-      await loadDrawPlugin()
+    const initializeDraw = () => {
+      // Check if Draw is available - leaflet-draw attaches to L.Control.Draw
+      let DrawClass: any = null
+      
+      // Try L.Control.Draw first (standard way leaflet-draw attaches)
+      if (L.Control && (L.Control as any).Draw) {
+        DrawClass = (L.Control as any).Draw
+      } else if ((window as any).L && (window as any).L.Control && (window as any).L.Control.Draw) {
+        DrawClass = (window as any).L.Control.Draw
+      } else if ((window as any).L && (window as any).L.Draw) {
+        DrawClass = (window as any).L.Draw
+      }
 
-      if ((window as any).L && (window as any).L.Draw) {
-        // Remove existing control if any
-        if (drawControlRef.current) {
-          map.removeControl(drawControlRef.current)
-        }
+      if (!DrawClass) {
+        console.error("Leaflet Draw is not available. Make sure leaflet-draw is installed.")
+        console.log("L.Control:", L.Control)
+        console.log("L.Control.Draw:", L.Control ? (L.Control as any).Draw : "N/A")
+        return
+      }
 
-        // Add drawn layers to map
-        if (!map.hasLayer(drawnLayersRef.current)) {
-          drawnLayersRef.current.addTo(map)
-        }
+      // Remove existing control if any
+      if (drawControlRef.current) {
+        map.removeControl(drawControlRef.current)
+      }
 
-        // Create draw control
-        const drawControl = new (window as any).L.Draw({
+      // Add drawn layers to map
+      if (!map.hasLayer(drawnLayersRef.current)) {
+        drawnLayersRef.current.addTo(map)
+      }
+
+      // Create draw control
+      const drawControl = new DrawClass({
           position: "topleft",
           draw: {
             polygon: {
@@ -458,14 +475,23 @@ const DrawController: React.FC<{
           onDrawDeleted?.(e)
         }
 
-        map.on((window as any).L.Draw.Event.CREATED, handleDrawCreated)
-        map.on((window as any).L.Draw.Event.EDITED, handleDrawEdited)
-        map.on((window as any).L.Draw.Event.DELETED, handleDrawDeleted)
+        // Get Draw Event constants - leaflet-draw events are on L.Draw.Event
+        const DrawEvents = (L.Control as any).Draw?.Event || 
+                         (window as any).L?.Control?.Draw?.Event ||
+                         (window as any).L?.Draw?.Event
+        
+        if (DrawEvents) {
+          map.on(DrawEvents.CREATED, handleDrawCreated)
+          map.on(DrawEvents.EDITED, handleDrawEdited)
+          map.on(DrawEvents.DELETED, handleDrawDeleted)
 
-        cleanup = () => {
-          map.off((window as any).L.Draw.Event.CREATED, handleDrawCreated)
-          map.off((window as any).L.Draw.Event.EDITED, handleDrawEdited)
-          map.off((window as any).L.Draw.Event.DELETED, handleDrawDeleted)
+          cleanup = () => {
+            map.off(DrawEvents.CREATED, handleDrawCreated)
+            map.off(DrawEvents.EDITED, handleDrawEdited)
+            map.off(DrawEvents.DELETED, handleDrawDeleted)
+          }
+        } else {
+          console.warn("Leaflet Draw Events not found. DrawClass:", DrawClass)
         }
       }
     }
