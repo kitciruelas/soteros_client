@@ -350,26 +350,23 @@ const getLegendColors = (color: string) => {
 const LegendItem: React.FC<{
   type: string
   label: string
-  color: string
+  icon: string
+  iconColor: string
   isActive: boolean
   onClick: () => void
-}> = ({ type, label, color, isActive, onClick }) => {
-  const colors = getLegendColors(color)
-
+}> = ({ type, label, icon, iconColor, isActive, onClick }) => {
   return (
     <div
       className={`flex items-center text-sm cursor-pointer rounded-lg p-2 transition-all duration-200 hover:bg-gray-50 ${
-        isActive ? `${colors.bg} border ${colors.border}` : "opacity-60"
+        isActive ? "bg-gray-50 border border-gray-200" : "opacity-60"
       }`}
       onClick={onClick}
     >
-      <div
-        className={`w-4 h-4 bg-gradient-to-r ${colors.gradient} rounded-full mr-3 shadow-sm ${
-          isActive ? `ring-2 ${colors.ring}` : ""
-        }`}
-      ></div>
+      <i
+        className={`${icon} mr-3 text-lg ${isActive ? iconColor : "text-gray-400"}`}
+      ></i>
       <span className={`font-medium ${isActive ? "text-gray-900" : "text-gray-500"}`}>{label}</span>
-      {isActive && <i className={`ri-check-line ml-auto ${colors.text} text-sm`}></i>}
+      {isActive && <i className={`ri-check-line ml-auto ${iconColor} text-sm`}></i>}
     </div>
   )
 }
@@ -878,29 +875,33 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
           <div className="space-y-2">
             <LegendItem
               type={LEGEND_FILTERS.CRITICAL}
-              label="Critical (All)"
-              color="red"
+              label="All"
+              icon="ri-error-warning-fill"
+              iconColor="text-red-600"
               isActive={activeLegendFilters.has(LEGEND_FILTERS.CRITICAL)}
               onClick={() => handleLegendClick(LEGEND_FILTERS.CRITICAL)}
             />
             <LegendItem
               type={LEGEND_FILTERS.PENDING}
               label="Pending"
-              color="amber"
+              icon="ri-time-line"
+              iconColor="text-amber-600"
               isActive={activeLegendFilters.has(LEGEND_FILTERS.PENDING)}
               onClick={() => handleLegendClick(LEGEND_FILTERS.PENDING)}
             />
             <LegendItem
               type={LEGEND_FILTERS.IN_PROGRESS}
               label="In Progress"
-              color="blue"
+              icon="ri-loader-4-line"
+              iconColor="text-blue-600"
               isActive={activeLegendFilters.has(LEGEND_FILTERS.IN_PROGRESS)}
               onClick={() => handleLegendClick(LEGEND_FILTERS.IN_PROGRESS)}
             />
             <LegendItem
               type={LEGEND_FILTERS.RESOLVED}
               label="Resolved/Closed"
-              color="green"
+              icon="ri-checkbox-circle-line"
+              iconColor="text-green-600"
               isActive={activeLegendFilters.has(LEGEND_FILTERS.RESOLVED)}
               onClick={() => handleLegendClick(LEGEND_FILTERS.RESOLVED)}
             />
