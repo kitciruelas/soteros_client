@@ -6,10 +6,6 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import "leaflet-draw/dist/leaflet.draw.css"
 
-// Import leaflet-draw as side-effect to attach to L
-// This needs to be a top-level import for proper initialization
-import "leaflet-draw"
-
 // Dynamic import for heatmap plugin to avoid TypeScript issues
 const loadHeatmapPlugin = async () => {
   try {
@@ -19,10 +15,37 @@ const loadHeatmapPlugin = async () => {
   }
 }
 
-// Check if Draw plugin is loaded
-const isDrawPluginLoaded = () => {
-  return !!(L.Control && (L.Control as any).Draw) || 
-         !!((window as any).L && (window as any).L.Control && (window as any).L.Control.Draw)
+// Dynamic import for leaflet-draw plugin (similar to heatmap)
+const loadDrawPlugin = async () => {
+  try {
+    // Ensure L is available on window for leaflet-draw to attach
+    if (typeof window !== 'undefined' && !(window as any).L) {
+      (window as any).L = L
+    }
+    
+    // Import leaflet-draw - it should attach to L when imported
+    await import("leaflet-draw")
+    
+    // Give it a moment to attach
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Also try to manually attach if it didn't auto-attach
+    try {
+      const drawModule = await import("leaflet-draw")
+      // Some versions export differently, try to access
+      if (drawModule && typeof drawModule === 'object') {
+        // Check if there's an export we can use
+        console.log("Draw module:", drawModule)
+      }
+    } catch (e) {
+      // Ignore
+    }
+    
+    return true
+  } catch (error) {
+    console.error("Failed to load leaflet-draw:", error)
+    return false
+  }
 }
 
 // Ensure Leaflet CSS is loaded
@@ -407,23 +430,33 @@ const DrawController: React.FC<{
 
     let cleanup: (() => void) | undefined
 
-    const initializeDraw = () => {
+    const initializeDraw = async () => {
+      // Load the plugin first
+      const loaded = await loadDrawPlugin()
+      if (!loaded) {
+        console.error("Failed to load leaflet-draw plugin")
+        return
+      }
+
       // Check if Draw is available - leaflet-draw attaches to L.Control.Draw
       let DrawClass: any = null
       
-      // Try L.Control.Draw first (standard way leaflet-draw attaches)
-      if (L.Control && (L.Control as any).Draw) {
-        DrawClass = (L.Control as any).Draw
-      } else if ((window as any).L && (window as any).L.Control && (window as any).L.Control.Draw) {
+      // Try multiple ways to access Draw
+      if ((window as any).L && (window as any).L.Control && (window as any).L.Control.Draw) {
         DrawClass = (window as any).L.Control.Draw
+      } else if (L.Control && (L.Control as any).Draw) {
+        DrawClass = (L.Control as any).Draw
       } else if ((window as any).L && (window as any).L.Draw) {
         DrawClass = (window as any).L.Draw
       }
 
       if (!DrawClass) {
-        console.error("Leaflet Draw is not available. Make sure leaflet-draw is installed.")
+        console.error("Leaflet Draw is not available after import.")
+        console.log("window.L:", (window as any).L)
+        console.log("window.L.Control:", (window as any).L?.Control)
+        console.log("window.L.Control.Draw:", (window as any).L?.Control?.Draw)
         console.log("L.Control:", L.Control)
-        console.log("L.Control.Draw:", L.Control ? (L.Control as any).Draw : "N/A")
+        console.log("L.Control.Draw:", (L.Control as any)?.Draw)
         return
       }
 
@@ -481,22 +514,23 @@ const DrawController: React.FC<{
                          (window as any).L?.Draw?.Event
         
         if (DrawEvents) {
-          map.on(DrawEvents.CREATED, handleDrawCreated)
-          map.on(DrawEvents.EDITED, handleDrawEdited)
-          map.on(DrawEvents.DELETED, handleDrawDeleted)
+          map.on(DrawEvents.CREATED as any, handleDrawCreated as any)
+          map.on(DrawEvents.EDITED as any, handleDrawEdited as any)
+          map.on(DrawEvents.DELETED as any, handleDrawDeleted as any)
 
           cleanup = () => {
-            map.off(DrawEvents.CREATED, handleDrawCreated)
-            map.off(DrawEvents.EDITED, handleDrawEdited)
-            map.off(DrawEvents.DELETED, handleDrawDeleted)
+            map.off(DrawEvents.CREATED as any, handleDrawCreated as any)
+            map.off(DrawEvents.EDITED as any, handleDrawEdited as any)
+            map.off(DrawEvents.DELETED as any, handleDrawDeleted as any)
           }
         } else {
           console.warn("Leaflet Draw Events not found. DrawClass:", DrawClass)
         }
-      }
     }
 
-    initializeDraw()
+    initializeDraw().catch((err: any) => {
+      console.error("Error initializing draw:", err)
+    })
 
     return () => {
       if (cleanup) {
