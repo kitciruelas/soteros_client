@@ -414,8 +414,10 @@ const Navbar: React.FC<NavbarProps> = () => {
     processNotificationQueueRef.current = processNotificationQueue;
   }, [processNotificationQueue]);
 
-  // Get unread notifications count (like AdminLayout)
-  const unreadCount = notifications.filter(notif => !readNotifications.has(notif.id)).length;
+  // Get unread notifications count (like AdminLayout) - exclude welfare notifications
+  const unreadCount = notifications.filter(notif => 
+    !readNotifications.has(notif.id) && notif.type !== 'welfare'
+  ).length;
 
 
   const toggleNotificationDropdown = () => {
