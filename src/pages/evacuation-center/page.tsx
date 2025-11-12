@@ -631,6 +631,18 @@ const EvacuationCenterPage: React.FC = () => {
                       </div>
                       <p className="text-red-700 font-medium mb-2">Location Access Denied</p>
                       <p className="text-red-600 text-sm mb-3">{locationError}</p>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3 text-left">
+                        <p className="text-xs text-yellow-800 font-semibold mb-1">
+                          <i className="ri-information-line mr-1"></i>
+                          How to enable location access:
+                        </p>
+                        <ul className="text-xs text-yellow-700 space-y-1 list-disc list-inside">
+                          <li>Click the lock icon in your browser's address bar</li>
+                          <li>Find "Location" or "Site settings"</li>
+                          <li>Change it to "Allow" or "Ask"</li>
+                          <li>Refresh this page</li>
+                        </ul>
+                      </div>
                       <button
                         onClick={getCurrentLocation}
                         className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors font-medium"
