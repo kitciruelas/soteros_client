@@ -122,6 +122,7 @@ const BATANGAS_BOUNDS = {
 const DEFAULT_CENTER: [number, number] = [13.84542, 121.206189]
 
 const LEGEND_FILTERS = {
+  CRITICAL: "critical",
   PENDING: "pending",
   IN_PROGRESS: "in_progress",
   RESOLVED: "resolved",
@@ -442,7 +443,7 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   const [mapLoading, setMapLoading] = useState(true)
   const [mapError, setMapError] = useState(false)
   const [activeLegendFilters, setActiveLegendFilters] = useState<Set<string>>(
-    new Set([LEGEND_FILTERS.PENDING, LEGEND_FILTERS.IN_PROGRESS, LEGEND_FILTERS.RESOLVED]),
+    new Set([LEGEND_FILTERS.CRITICAL, LEGEND_FILTERS.PENDING, LEGEND_FILTERS.IN_PROGRESS, LEGEND_FILTERS.RESOLVED]),
   )
   const [isLegendExpanded, setIsLegendExpanded] = useState(false)
   const [showHeatmap, setShowHeatmap] = useState(false)
@@ -454,21 +455,33 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
     return incidents.filter((incident) => {
       if (activeLegendFilters.size === 0) return true
 
+      // Critical filter - shows all critical incidents regardless of status
+      if (
+        activeLegendFilters.has(LEGEND_FILTERS.CRITICAL) &&
+        incident.priority_level === "critical"
+      ) {
+        return true
+      }
+      
+      // Status filters - only show if not critical (to avoid duplicates)
       if (
         activeLegendFilters.has(LEGEND_FILTERS.PENDING) &&
-        incident.status === "pending"
+        incident.status === "pending" &&
+        incident.priority_level !== "critical"
       ) {
         return true
       }
       if (
         activeLegendFilters.has(LEGEND_FILTERS.IN_PROGRESS) &&
-        incident.status === "in_progress"
+        incident.status === "in_progress" &&
+        incident.priority_level !== "critical"
       ) {
         return true
       }
       if (
         activeLegendFilters.has(LEGEND_FILTERS.RESOLVED) &&
-        (incident.status === "resolved" || incident.status === "closed")
+        (incident.status === "resolved" || incident.status === "closed") &&
+        incident.priority_level !== "critical"
       ) {
         return true
       }
@@ -570,7 +583,7 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
 
   const handleShowAll = useCallback(() => {
     setActiveLegendFilters(
-      new Set([LEGEND_FILTERS.PENDING, LEGEND_FILTERS.IN_PROGRESS, LEGEND_FILTERS.RESOLVED]),
+      new Set([LEGEND_FILTERS.CRITICAL, LEGEND_FILTERS.PENDING, LEGEND_FILTERS.IN_PROGRESS, LEGEND_FILTERS.RESOLVED]),
     )
   }, [])
 
@@ -866,6 +879,13 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
             </button>
           </div>
           <div className="space-y-2">
+            <LegendItem
+              type={LEGEND_FILTERS.CRITICAL}
+              label="Critical (All)"
+              color="red"
+              isActive={activeLegendFilters.has(LEGEND_FILTERS.CRITICAL)}
+              onClick={() => handleLegendClick(LEGEND_FILTERS.CRITICAL)}
+            />
             <LegendItem
               type={LEGEND_FILTERS.PENDING}
               label="Pending"
