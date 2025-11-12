@@ -44,6 +44,27 @@ const ensureLeafletCSS = () => {
     newDrawLink.href = "https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
     document.head.appendChild(newDrawLink)
   }
+  
+  // Add fallback styles for Leaflet Draw toolbar
+  if (!document.querySelector('style[data-leaflet-draw-fallback]')) {
+    const drawStyle = document.createElement("style")
+    drawStyle.setAttribute('data-leaflet-draw-fallback', 'true')
+    drawStyle.textContent = `
+      .leaflet-draw-toolbar {
+        margin-top: 10px;
+        z-index: 1000;
+      }
+      .leaflet-draw-toolbar a {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .leaflet-draw-toolbar a:hover {
+        background-color: #f4f4f4;
+      }
+    `
+    document.head.appendChild(drawStyle)
+  }
 }
 
 // Fix for default markers in react-leaflet
@@ -524,7 +545,7 @@ const MapControls: React.FC<{
   onToggleHeatmap,
   onToggleDraw,
 }) => (
-  <div className="absolute top-4 right-4 z-10 space-y-3">
+  <div className="absolute top-4 right-4 z-[1000] space-y-3">
     {userLocation && (
       <button
         onClick={onCenterUserLocation}
