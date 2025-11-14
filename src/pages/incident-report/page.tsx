@@ -560,9 +560,18 @@ export default function IncidentReportPage() {
     { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
   ];
 
+  // Additional boundary reference points for more accurate boundary calculation
+  const additionalBoundaryPoints = [
+    { lat: 13.701325, lng: 121.319271 },
+    { lat: 13.7032933079099, lng: 121.32814414565625 },
+  ];
+
+  // Combine barangays and additional boundary points for boundary calculation
+  const allBoundaryPoints = [...rosarioBarangays, ...additionalBoundaryPoints];
+
   // Calculate convex hull (boundary) from barangay coordinates using Graham scan algorithm
   const calculateRosarioBoundary = (): [number, number][] => {
-    const points = rosarioBarangays.map(b => [b.lng, b.lat] as [number, number]);
+    const points = allBoundaryPoints.map(b => [b.lng, b.lat] as [number, number]);
     
     if (points.length < 3) {
       // If less than 3 points, return bounding box
@@ -1390,8 +1399,8 @@ export default function IncidentReportPage() {
 
                   {/* Fit bounds to show boundary */}
                   <MapBounds bounds={[
-                    [Math.min(...rosarioBarangays.map(b => b.lat)), Math.min(...rosarioBarangays.map(b => b.lng))],
-                    [Math.max(...rosarioBarangays.map(b => b.lat)), Math.max(...rosarioBarangays.map(b => b.lng))]
+                    [Math.min(...allBoundaryPoints.map(b => b.lat)), Math.min(...allBoundaryPoints.map(b => b.lng))],
+                    [Math.max(...allBoundaryPoints.map(b => b.lat)), Math.max(...allBoundaryPoints.map(b => b.lng))]
                   ]} />
                 </MapContainer>
                 <div className="bg-red-50 border-t border-red-200 p-3">
