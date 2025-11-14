@@ -52,6 +52,7 @@ export default function IncidentReportPage() {
   const [isReverseGeocoding] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [boundaryError, setBoundaryError] = useState('');
+  const lastToastRef = useRef<{ lat: number | null; lng: number | null; time: number } | null>(null);
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -755,12 +756,21 @@ export default function IncidentReportPage() {
     // Check if within Rosario boundary
     if (!isWithinRosarioBoundary(lat, lng)) {
       setBoundaryError(''); // Clear error message
-      showToast({
-        type: 'error',
-        title: 'Location Outside Boundary',
-        message: 'This location is outside Rosario, Batangas. Please select a location within the municipality.',
-        durationMs: 5000
-      });
+      const now = Date.now();
+      const lastToast = lastToastRef.current;
+      // Only show toast if not already shown for these coordinates recently
+      if (!lastToast || 
+          lastToast.lat !== lat || 
+          lastToast.lng !== lng || 
+          (now - lastToast.time) >= 2000) { // More than 2 seconds ago
+        lastToastRef.current = { lat, lng, time: now };
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'This location is outside Rosario, Batangas. Please select a location within the municipality.',
+          durationMs: 5000
+        });
+      }
       return;
     }
     
@@ -779,12 +789,21 @@ export default function IncidentReportPage() {
       // Check if within Rosario boundary
       if (!isWithinRosarioBoundary(latitude, longitude)) {
         setBoundaryError(''); // Clear error message
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
-          durationMs: 5000
-        });
+        const now = Date.now();
+        const lastToast = lastToastRef.current;
+        // Only show toast if not already shown for these coordinates recently
+        if (!lastToast || 
+            lastToast.lat !== latitude || 
+            lastToast.lng !== longitude || 
+            (now - lastToast.time) >= 2000) { // More than 2 seconds ago
+          lastToastRef.current = { lat: latitude, lng: longitude, time: now };
+          showToast({
+            type: 'error',
+            title: 'Location Outside Boundary',
+            message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
+            durationMs: 5000
+          });
+        }
         setLocationMethod('manual');
         return;
       }
@@ -827,9 +846,21 @@ export default function IncidentReportPage() {
         
         // Only convert if we have valid coordinates
         if (!isNaN(lat) && !isNaN(lng)) {
+          // Skip validation if coordinates already validated (from auto-detect)
+          // This prevents duplicate toasts when auto-detect sets GPS: coordinates
+          const now = Date.now();
+          const lastToast = lastToastRef.current;
+          if (lastToast && 
+              lastToast.lat === lat && 
+              lastToast.lng === lng && 
+              (now - lastToast.time) < 2000) { // Within 2 seconds
+            return; // Skip validation to avoid duplicate toast
+          }
+          
           // Check if within Rosario boundary
           if (!isWithinRosarioBoundary(lat, lng)) {
             setBoundaryError(''); // Clear error message
+            lastToastRef.current = { lat, lng, time: Date.now() };
             showToast({
               type: 'error',
               title: 'Location Outside Boundary',
@@ -971,12 +1002,21 @@ export default function IncidentReportPage() {
     const raw = getValues();
     if (!isWithinRosarioBoundary(raw.latitude, raw.longitude)) {
       setBoundaryError(''); // Clear error message
-      showToast({
-        type: 'error',
-        title: 'Location Outside Boundary',
-        message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
-        durationMs: 5000
-      });
+      const now = Date.now();
+      const lastToast = lastToastRef.current;
+      // Only show toast if not already shown for these coordinates recently
+      if (!lastToast || 
+          lastToast.lat !== raw.latitude || 
+          lastToast.lng !== raw.longitude || 
+          (now - lastToast.time) >= 2000) { // More than 2 seconds ago
+        lastToastRef.current = { lat: raw.latitude, lng: raw.longitude, time: now };
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
+          durationMs: 5000
+        });
+      }
       return;
     }
 
@@ -1240,12 +1280,21 @@ export default function IncidentReportPage() {
                     // Verify barangay is within boundary (should always be true, but check anyway)
                     if (!isWithinRosarioBoundary(selected.lat, selected.lng)) {
                       setBoundaryError(''); // Clear error message
-                      showToast({
-                        type: 'error',
-                        title: 'Location Outside Boundary',
-                        message: 'Selected barangay is outside Rosario, Batangas boundary.',
-                        durationMs: 5000
-                      });
+                      const now = Date.now();
+                      const lastToast = lastToastRef.current;
+                      // Only show toast if not already shown for these coordinates recently
+                      if (!lastToast || 
+                          lastToast.lat !== selected.lat || 
+                          lastToast.lng !== selected.lng || 
+                          (now - lastToast.time) >= 2000) { // More than 2 seconds ago
+                        lastToastRef.current = { lat: selected.lat, lng: selected.lng, time: now };
+                        showToast({
+                          type: 'error',
+                          title: 'Location Outside Boundary',
+                          message: 'Selected barangay is outside Rosario, Batangas boundary.',
+                          durationMs: 5000
+                        });
+                      }
                       return;
                     }
                     
