@@ -13,6 +13,17 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import PrivacyPolicyModal from '../../components/PrivacyPolicyModal';
 import TermsOfServiceModal from '../../components/TermsOfServiceModal';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
 
 interface IncidentReportFormData {
@@ -66,6 +77,8 @@ export default function IncidentReportPage() {
   const SUBMISSION_SUCCESS_KEY = 'incident_report_submission_success';
   const MAX_RETRIES = 3;
   const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff in ms
+  const [radius, setRadius] = useState<number>(10); // Default radius in kilometers
+  const [showMap, setShowMap] = useState(false);
 
   // Get user location
   const { latitude, longitude, error: locationError, loading: locationLoading, getCurrentLocation } = useGeolocation();
@@ -546,6 +559,72 @@ export default function IncidentReportPage() {
     { name: 'Tiquiwan', lat: 13.8284, lng: 121.2399 },
     { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
   ];
+
+  // Calculate distance between two points using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Calculate minimum radius to cover all barangays
+  const getMinRadiusToCoverAll = useMemo(() => {
+    const incidentLat = fields.latitude.value;
+    const incidentLng = fields.longitude.value;
+    
+    if (!incidentLat || !incidentLng) return 0;
+    
+    const distances = rosarioBarangays.map(barangay => 
+      calculateDistance(incidentLat, incidentLng, barangay.lat, barangay.lng)
+    );
+    
+    return Math.ceil(Math.max(...distances)) + 1; // Add 1km buffer and round up
+  }, [fields.latitude.value, fields.longitude.value]);
+
+  // Get barangays within radius
+  const getBarangaysInRadius = useMemo(() => {
+    const incidentLat = fields.latitude.value;
+    const incidentLng = fields.longitude.value;
+    
+    if (!incidentLat || !incidentLng) return [];
+    
+    return rosarioBarangays
+      .map(barangay => ({
+        ...barangay,
+        distance: calculateDistance(incidentLat, incidentLng, barangay.lat, barangay.lng)
+      }))
+      .filter(barangay => barangay.distance <= radius)
+      .sort((a, b) => a.distance - b.distance);
+  }, [fields.latitude.value, fields.longitude.value, radius]);
+
+  // Auto-show map when location is selected
+  useEffect(() => {
+    if (fields.latitude.value && fields.longitude.value) {
+      if (!showMap) {
+        setShowMap(true);
+      }
+      // Set radius to cover all barangays by default when location changes
+      if (getMinRadiusToCoverAll > 0 && radius < getMinRadiusToCoverAll) {
+        setRadius(getMinRadiusToCoverAll);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields.latitude.value, fields.longitude.value, getMinRadiusToCoverAll]);
+
+  // Map controller component to update map view
+  const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(center, zoom);
+    }, [map, center, zoom]);
+    return null;
+  };
 
 
   // Completely local location search function
@@ -1123,6 +1202,210 @@ export default function IncidentReportPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Map Section */}
+            {fields.latitude.value && fields.longitude.value && (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    <i className="ri-map-line mr-2 text-red-600"></i>
+                    Location Map with Radius
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowMap(!showMap)}
+                    className="px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all flex items-center gap-2"
+                  >
+                    <i className={`ri-${showMap ? 'eye-off' : 'eye'}-line`}></i>
+                    {showMap ? 'Hide Map' : 'Show Map'}
+                  </button>
+                </div>
+
+                {showMap && (
+                  <div className="space-y-4">
+                    {/* Radius Input */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Radius (kilometers): {radius} km
+                        </label>
+                        {getMinRadiusToCoverAll > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setRadius(getMinRadiusToCoverAll)}
+                            className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all flex items-center gap-1"
+                          >
+                            <i className="ri-focus-3-line"></i>
+                            Cover All Barangays ({getMinRadiusToCoverAll} km)
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max={Math.max(50, getMinRadiusToCoverAll + 10)}
+                        value={radius}
+                        onChange={(e) => setRadius(Number(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600"
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>1 km</span>
+                        <span>{Math.max(50, getMinRadiusToCoverAll + 10) / 2} km</span>
+                        <span>{Math.max(50, getMinRadiusToCoverAll + 10)} km</span>
+                      </div>
+                      {getMinRadiusToCoverAll > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Minimum radius to cover all barangays: {getMinRadiusToCoverAll} km
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Map Container */}
+                    <div className="border-2 border-gray-300 rounded-xl overflow-hidden" style={{ height: '500px' }}>
+                      <MapContainer
+                        center={[fields.latitude.value, fields.longitude.value]}
+                        zoom={12}
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom={true}
+                      >
+                        <MapController 
+                          center={[fields.latitude.value, fields.longitude.value]} 
+                          zoom={12} 
+                        />
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        
+                        {/* Incident Location Marker */}
+                        <Marker position={[fields.latitude.value, fields.longitude.value]}>
+                          <Popup>
+                            <div className="text-center">
+                              <strong className="text-red-600">Incident Location</strong>
+                              <p className="text-sm mt-1">{fields.location.value || 'Selected Location'}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {fields.latitude.value.toFixed(6)}, {fields.longitude.value.toFixed(6)}
+                              </p>
+                            </div>
+                          </Popup>
+                        </Marker>
+
+                        {/* Radius Circle */}
+                        <Circle
+                          center={[fields.latitude.value, fields.longitude.value]}
+                          radius={radius * 1000} // Convert km to meters
+                          pathOptions={{
+                            color: '#ef4444',
+                            fillColor: '#ef4444',
+                            fillOpacity: 0.2,
+                            weight: 2
+                          }}
+                        >
+                          <Popup>
+                            <div className="text-center">
+                              <strong>Radius: {radius} km</strong>
+                              <p className="text-sm mt-1">
+                                {getBarangaysInRadius.length} barangay(s) within radius
+                              </p>
+                            </div>
+                          </Popup>
+                        </Circle>
+
+                        {/* Barangay Markers */}
+                        {rosarioBarangays.map((barangay) => {
+                          const distance = calculateDistance(
+                            fields.latitude.value!,
+                            fields.longitude.value!,
+                            barangay.lat,
+                            barangay.lng
+                          );
+                          const isInRadius = distance <= radius;
+                          
+                          const barangayIcon = L.divIcon({
+                            html: `
+                              <div style="
+                                background-color: ${isInRadius ? '#10b981' : '#6b7280'};
+                                width: 20px;
+                                height: 20px;
+                                border-radius: 50%;
+                                border: 3px solid white;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                              ">
+                                <i class="ri-map-pin-fill" style="color: white; font-size: 10px;"></i>
+                              </div>
+                            `,
+                            className: 'barangay-marker',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10],
+                          });
+
+                          return (
+                            <Marker
+                              key={barangay.name}
+                              position={[barangay.lat, barangay.lng]}
+                              icon={barangayIcon}
+                            >
+                              <Popup>
+                                <div className="text-center">
+                                  <strong className={isInRadius ? 'text-green-600' : 'text-gray-600'}>
+                                    {barangay.name}
+                                  </strong>
+                                  <p className="text-sm mt-1">
+                                    Distance: {distance.toFixed(2)} km
+                                  </p>
+                                  <p className={`text-xs mt-1 font-semibold ${isInRadius ? 'text-green-600' : 'text-gray-500'}`}>
+                                    {isInRadius ? '✓ Within Radius' : 'Outside Radius'}
+                                  </p>
+                                </div>
+                              </Popup>
+                            </Marker>
+                          );
+                        })}
+                      </MapContainer>
+                    </div>
+
+                    {/* Barangays List */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-gray-800 flex items-center">
+                          <i className="ri-community-line mr-2 text-green-600"></i>
+                          Barangays within {radius} km radius
+                        </h4>
+                        <div className="text-sm">
+                          <span className="font-semibold text-green-600">{getBarangaysInRadius.length}</span>
+                          <span className="text-gray-600"> / {rosarioBarangays.length} barangays</span>
+                          <span className="text-gray-500 ml-2">
+                            ({Math.round((getBarangaysInRadius.length / rosarioBarangays.length) * 100)}%)
+                          </span>
+                        </div>
+                      </div>
+                      {getBarangaysInRadius.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                          {getBarangaysInRadius.map((barangay) => (
+                            <div
+                              key={barangay.name}
+                              className="flex items-center justify-between bg-white p-2 rounded border border-green-200"
+                            >
+                              <span className="text-sm font-medium text-gray-700">{barangay.name}</span>
+                              <span className="text-xs text-green-600 font-semibold">
+                                {barangay.distance.toFixed(1)} km
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-2">
+                          No barangays within the selected radius. Try increasing the radius.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
