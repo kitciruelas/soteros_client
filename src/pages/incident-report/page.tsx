@@ -13,6 +13,17 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import PrivacyPolicyModal from '../../components/PrivacyPolicyModal';
 import TermsOfServiceModal from '../../components/TermsOfServiceModal';
+import { MapContainer, TileLayer, Marker, Polygon, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
 
 interface IncidentReportFormData {
@@ -39,6 +50,8 @@ export default function IncidentReportPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [isReverseGeocoding] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [boundaryError, setBoundaryError] = useState('');
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -547,6 +560,124 @@ export default function IncidentReportPage() {
     { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
   ];
 
+  // Calculate convex hull (boundary) from barangay coordinates using Graham scan algorithm
+  const calculateRosarioBoundary = (): [number, number][] => {
+    const points = rosarioBarangays.map(b => [b.lng, b.lat] as [number, number]);
+    
+    if (points.length < 3) {
+      // If less than 3 points, return bounding box
+      const lngs = points.map(p => p[0]);
+      const lats = points.map(p => p[1]);
+      const minLng = Math.min(...lngs) - 0.005;
+      const maxLng = Math.max(...lngs) + 0.005;
+      const minLat = Math.min(...lats) - 0.005;
+      const maxLat = Math.max(...lats) + 0.005;
+      return [
+        [minLng, minLat],
+        [maxLng, minLat],
+        [maxLng, maxLat],
+        [minLng, maxLat],
+        [minLng, minLat],
+      ];
+    }
+
+    // Find the bottom-most point (or left-most in case of tie)
+    let bottom = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i][1] < points[bottom][1] || 
+          (points[i][1] === points[bottom][1] && points[i][0] < points[bottom][0])) {
+        bottom = i;
+      }
+    }
+
+    // Swap bottom point with first point
+    [points[0], points[bottom]] = [points[bottom], points[0]];
+
+    // Sort points by polar angle with respect to bottom point
+    const p0 = points[0];
+    const sortedPoints = [points[0], ...points.slice(1).sort((a, b) => {
+      const angleA = Math.atan2(a[1] - p0[1], a[0] - p0[0]);
+      const angleB = Math.atan2(b[1] - p0[1], b[0] - p0[0]);
+      if (angleA !== angleB) return angleA - angleB;
+      return Math.hypot(a[0] - p0[0], a[1] - p0[1]) - Math.hypot(b[0] - p0[0], b[1] - p0[1]);
+    })];
+
+    // Build convex hull
+    const hull: [number, number][] = [sortedPoints[0], sortedPoints[1]];
+    
+    for (let i = 2; i < sortedPoints.length; i++) {
+      while (hull.length > 1) {
+        const p1 = hull[hull.length - 2];
+        const p2 = hull[hull.length - 1];
+        const p3 = sortedPoints[i];
+        
+        // Cross product to determine turn direction
+        const cross = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+        
+        if (cross <= 0) {
+          hull.pop();
+        } else {
+          break;
+        }
+      }
+      hull.push(sortedPoints[i]);
+    }
+
+    // Close the polygon
+    if (hull.length > 0 && (hull[0][0] !== hull[hull.length - 1][0] || hull[0][1] !== hull[hull.length - 1][1])) {
+      hull.push(hull[0]);
+    }
+
+    return hull.length > 0 ? hull : [
+      [121.17, 13.70],
+      [121.35, 13.70],
+      [121.35, 13.87],
+      [121.17, 13.87],
+      [121.17, 13.70],
+    ];
+  };
+
+  // Get Rosario boundary polygon
+  const rosarioBoundary = useMemo(() => calculateRosarioBoundary(), []);
+
+  // Calculate center of Rosario for map view
+  const rosarioCenter: [number, number] = useMemo(() => {
+    const avgLat = rosarioBarangays.reduce((sum, b) => sum + b.lat, 0) / rosarioBarangays.length;
+    const avgLng = rosarioBarangays.reduce((sum, b) => sum + b.lng, 0) / rosarioBarangays.length;
+    return [avgLat, avgLng];
+  }, []);
+
+  // Point-in-polygon test using ray casting algorithm
+  const isPointInPolygon = (point: [number, number], polygon: [number, number][]): boolean => {
+    const [lng, lat] = point;
+    let inside = false;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      
+      const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    
+    return inside;
+  };
+
+  // Check if coordinates are within Rosario boundaries
+  const isWithinRosarioBoundary = (lat: number | null, lng: number | null): boolean => {
+    if (lat === null || lng === null) return false;
+    return isPointInPolygon([lng, lat], rosarioBoundary);
+  };
+
+  // Map component to fit bounds
+  const MapBounds = ({ bounds }: { bounds: [[number, number], [number, number]] }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }, [map, bounds]);
+    return null;
+  };
+
 
   // Completely local location search function
   const searchLocation = async (query: string) => {
@@ -595,18 +726,49 @@ export default function IncidentReportPage() {
 
   // Handle location suggestion selection
   const handleLocationSelect = (suggestion: any) => {
+    const lat = parseFloat(suggestion.lat);
+    const lng = parseFloat(suggestion.lon);
+    
+    // Check if within Rosario boundary
+    if (!isWithinRosarioBoundary(lat, lng)) {
+      setBoundaryError('This location is outside Rosario, Batangas. Please select a location within the municipality.');
+      showToast({
+        type: 'error',
+        title: 'Location Outside Boundary',
+        message: 'Please select a location within Rosario, Batangas.',
+        durationMs: 5000
+      });
+      return;
+    }
+    
     setValue('location', suggestion.display_name);
-    setValue('latitude', parseFloat(suggestion.lat));
-    setValue('longitude', parseFloat(suggestion.lon));
+    setValue('latitude', lat);
+    setValue('longitude', lng);
     setShowSuggestions(false);
     setLocationMethod('manual');
+    setBoundaryError('');
   };
+
 
   // Auto-fill location when geolocation is available
   useEffect(() => {
     if (latitude && longitude && locationMethod === 'auto') {
+      // Check if within Rosario boundary
+      if (!isWithinRosarioBoundary(latitude, longitude)) {
+        setBoundaryError('Your current location is outside Rosario, Batangas. Please select a location within the municipality or use manual entry.');
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
+          durationMs: 5000
+        });
+        setLocationMethod('manual');
+        return;
+      }
+      
       setValue('latitude', latitude);
       setValue('longitude', longitude);
+      setBoundaryError('');
 
       // Perform reverse geocoding using the external utility
       const getGeocodedLocation = async () => {
@@ -627,7 +789,7 @@ export default function IncidentReportPage() {
 
       getGeocodedLocation();
     }
-  }, [latitude, longitude, locationMethod, setValue, showToast]);
+  }, [latitude, longitude, locationMethod, setValue, showToast, isWithinRosarioBoundary]);
 
   // Convert GPS coordinates in location field to location name
   useEffect(() => {
@@ -642,6 +804,18 @@ export default function IncidentReportPage() {
         
         // Only convert if we have valid coordinates
         if (!isNaN(lat) && !isNaN(lng)) {
+          // Check if within Rosario boundary
+          if (!isWithinRosarioBoundary(lat, lng)) {
+            setBoundaryError('GPS coordinates are outside Rosario, Batangas. Please select a location within the municipality.');
+            showToast({
+              type: 'error',
+              title: 'Location Outside Boundary',
+              message: 'GPS coordinates are outside Rosario, Batangas. Please select a location within the municipality.',
+              durationMs: 5000
+            });
+            return;
+          }
+
           const convertToLocationName = async () => {
             try {
               const result = await reverseGeocode(lat, lng);
@@ -652,6 +826,7 @@ export default function IncidentReportPage() {
                   setValue('latitude', lat);
                   setValue('longitude', lng);
                 }
+                setBoundaryError('');
               }
             } catch (error) {
               console.error('Failed to convert GPS coordinates to location name:', error);
@@ -662,7 +837,7 @@ export default function IncidentReportPage() {
         }
       }
     }
-  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue]);
+  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue, isWithinRosarioBoundary, showToast]);
 
   // Handle auto-location
   const handleAutoLocation = async () => {
@@ -769,6 +944,19 @@ export default function IncidentReportPage() {
       return;
     }
 
+    // Validate location is within Rosario boundary
+    const raw = getValues();
+    if (!isWithinRosarioBoundary(raw.latitude, raw.longitude)) {
+      setBoundaryError('The selected location is outside Rosario, Batangas. Please select a location within the municipality.');
+      showToast({
+        type: 'error',
+        title: 'Location Outside Boundary',
+        message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
+        durationMs: 5000
+      });
+      return;
+    }
+
     // Check if offline and save data for later
     if (!navigator.onLine) {
       const raw = getValues();
@@ -786,6 +974,7 @@ export default function IncidentReportPage() {
     const endpoint = isAuthenticated ? '/incidents/report' : '/incidents/report-guest';
 
     setIsSubmitting(true);
+    setBoundaryError(''); // Clear any previous boundary errors
 
     try {
       const raw = getValues();
@@ -1025,17 +1214,25 @@ export default function IncidentReportPage() {
                 onChange={e => {
                   const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
                   if (selected) {
+                    // Verify barangay is within boundary (should always be true, but check anyway)
+                    if (!isWithinRosarioBoundary(selected.lat, selected.lng)) {
+                      setBoundaryError('Selected barangay is outside Rosario, Batangas boundary.');
+                      return;
+                    }
+                    
                     const locationText = `Barangay ${selected.name}, Rosario, Batangas`;
                     setValue('location', locationText);
                     setValue('latitude', selected.lat);
                     setValue('longitude', selected.lng);
                     setShowSuggestions(false);
                     setLocationMethod('manual');
+                    setBoundaryError('');
                     console.log('Barangay selected:', locationText, 'Coordinates:', selected.lat, selected.lng);
                   } else {
                     setValue('location', '');
                     setValue('latitude', null);
                     setValue('longitude', null);
+                    setBoundaryError('');
                   }
                 }}
               >
@@ -1122,6 +1319,86 @@ export default function IncidentReportPage() {
                       Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Boundary Error */}
+            {boundaryError && (
+              <p className="text-red-600 text-sm mt-2">
+                <i className="ri-error-warning-line mr-1"></i>
+                {boundaryError}
+              </p>
+            )}
+
+            {/* Show Map Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowMap(!showMap)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                <i className={showMap ? 'ri-map-close-line' : 'ri-map-2-line'}></i>
+                {showMap ? 'Hide Map' : 'Show Map'}
+              </button>
+            </div>
+
+            {/* Map Component */}
+            {showMap && (
+              <div className="mt-4 rounded-xl overflow-hidden border border-gray-300 shadow-lg" style={{ height: '400px', zIndex: 1 }}>
+                <MapContainer
+                  center={fields.latitude.value && fields.longitude.value 
+                    ? [fields.latitude.value, fields.longitude.value] 
+                    : rosarioCenter}
+                  zoom={fields.latitude.value && fields.longitude.value ? 14 : 12}
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  
+                  {/* Rosario Boundary Polygon */}
+                  <Polygon
+                    positions={rosarioBoundary.map(([lng, lat]) => [lat, lng])}
+                    pathOptions={{
+                      color: '#ef4444',
+                      fillColor: '#fee2e2',
+                      fillOpacity: 0.3,
+                      weight: 2,
+                      dashArray: '5, 5'
+                    }}
+                  />
+
+                  {/* Location Marker */}
+                  {fields.latitude.value && fields.longitude.value && (
+                    <Marker
+                      position={[fields.latitude.value, fields.longitude.value]}
+                    >
+                      <Popup>
+                        <div>
+                          <p className="font-semibold">Incident Location</p>
+                          <p className="text-sm text-gray-600">{fields.location.value || 'Location'}</p>
+                          <p className="text-xs text-gray-500">
+                            {fields.latitude.value.toFixed(6)}, {fields.longitude.value.toFixed(6)}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  )}
+
+                  {/* Fit bounds to show boundary */}
+                  <MapBounds bounds={[
+                    [Math.min(...rosarioBarangays.map(b => b.lat)), Math.min(...rosarioBarangays.map(b => b.lng))],
+                    [Math.max(...rosarioBarangays.map(b => b.lat)), Math.max(...rosarioBarangays.map(b => b.lng))]
+                  ]} />
+                </MapContainer>
+                <div className="bg-red-50 border-t border-red-200 p-3">
+                  <p className="text-xs text-red-700 flex items-center">
+                    <i className="ri-map-pin-line mr-2"></i>
+                    <span>The red dashed boundary shows the municipality of Rosario, Batangas. Incidents can only be reported within this area.</span>
+                  </p>
                 </div>
               </div>
             )}
