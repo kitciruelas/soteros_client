@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, ZoomControl, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, ZoomControl, Polyline, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -198,6 +198,8 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
   const [mapError, setMapError] = useState(false);
   const [legendVisible, setLegendVisible] = useState(true);
   const [isIOS, setIsIOS] = useState(false);
+  const [rosarioPolygon, setRosarioPolygon] = useState<[number, number][] | null>(null);
+  const [showPolygon, setShowPolygon] = useState(true);
   const mapRef = useRef<L.Map | null>(null);
 
   // Update map center when user location is available
@@ -243,6 +245,105 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
   // Ensure Leaflet CSS is loaded
   useEffect(() => {
     ensureLeafletCSS();
+  }, []);
+
+  // Fetch Rosario, Batangas boundary polygon from OpenStreetMap
+  const fetchRosarioPolygon = async (): Promise<[number, number][] | null> => {
+    try {
+      // Check cache first
+      const cachedPolygon = localStorage.getItem('rosario_boundary_polygon');
+      if (cachedPolygon) {
+        try {
+          const polygon = JSON.parse(cachedPolygon);
+          if (Array.isArray(polygon) && polygon.length > 0) {
+            // Convert to [lat, lng] format for Leaflet
+            return polygon.map((coord: number[]) => [coord[0], coord[1]] as [number, number]);
+          }
+        } catch (error) {
+          console.error('Error parsing cached polygon:', error);
+        }
+      }
+
+      // Fetch from OpenStreetMap Overpass API
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          relation(11259957);
+        );
+        (._;>;);
+        out geom;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `data=${encodeURIComponent(overpassQuery)}`,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch boundary data');
+      }
+
+      const data = await response.json();
+      
+      if (data.elements && data.elements.length > 0) {
+        const relation = data.elements.find((e: any) => e.type === 'relation');
+        if (relation && relation.members) {
+          const outerWays = relation.members
+            .filter((m: any) => m.role === 'outer' && m.type === 'way')
+            .map((m: any) => {
+              const way = data.elements.find((e: any) => e.type === 'way' && e.id === m.ref);
+              return way;
+            })
+            .filter((way: any) => way && way.geometry);
+
+          if (outerWays.length > 0) {
+            const way = outerWays[0];
+            if (way.geometry && way.geometry.length > 0) {
+              // Convert to [lat, lng] format for Leaflet
+              const coordinates = way.geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
+              
+              // Close polygon if needed
+              if (coordinates.length > 0) {
+                const first = coordinates[0];
+                const last = coordinates[coordinates.length - 1];
+                if (first[0] !== last[0] || first[1] !== last[1]) {
+                  coordinates.push([first[0], first[1]]);
+                }
+              }
+              
+              // Cache the polygon
+              try {
+                localStorage.setItem('rosario_boundary_polygon', JSON.stringify(coordinates));
+              } catch (error) {
+                console.error('Error caching polygon:', error);
+              }
+              
+              return coordinates;
+            }
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching Rosario boundary polygon:', error);
+      return null;
+    }
+  };
+
+  // Load Rosario boundary polygon
+  useEffect(() => {
+    const loadPolygon = async () => {
+      const polygon = await fetchRosarioPolygon();
+      if (polygon && polygon.length > 0) {
+        setRosarioPolygon(polygon);
+      }
+    };
+
+    loadPolygon();
   }, []);
 
   // Handle window resize for iOS (Safari address bar show/hide)
@@ -353,6 +454,18 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
         >
           <i className="ri-fullscreen-line text-blue-600 text-lg group-hover:text-blue-700"></i>
         </button>
+
+        {rosarioPolygon && (
+          <button
+            onClick={() => setShowPolygon(!showPolygon)}
+            className={`group bg-white/90 backdrop-blur-sm hover:bg-white border border-white/20 rounded-xl p-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 ${
+              showPolygon ? 'ring-2 ring-red-500' : ''
+            }`}
+            title={showPolygon ? "Hide Rosario Boundary" : "Show Rosario Boundary"}
+          >
+            <i className={`ri-map-2-${showPolygon ? 'fill' : 'line'} text-red-600 text-lg group-hover:text-red-700`}></i>
+          </button>
+        )}
 
         <div className="bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl p-3 shadow-xl">
           <div className="text-center">
@@ -548,6 +661,28 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
             }}
           />
 
+          {/* Rosario, Batangas Boundary Polygon */}
+          {rosarioPolygon && showPolygon && (
+            <Polygon
+              positions={rosarioPolygon}
+              pathOptions={{
+                color: '#dc2626',
+                fillColor: '#fef2f2',
+                fillOpacity: 0.2,
+                weight: 2,
+                opacity: 0.8
+              }}
+            >
+              <Popup>
+                <div className="text-center">
+                  <strong className="text-red-600">Rosario, Batangas</strong>
+                  <br />
+                  <small className="text-gray-600">Municipality Boundary</small>
+                </div>
+              </Popup>
+            </Polygon>
+          )}
+
         {/* User location marker */}
         {userLocation && (
           <Marker
@@ -681,6 +816,12 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
               <div className="flex items-center text-sm border-t border-gray-200 pt-2 mt-2">
                 <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mr-3 shadow-sm animate-pulse"></div>
                 <span className="text-gray-700 font-medium">Your Location</span>
+              </div>
+            )}
+            {rosarioPolygon && (
+              <div className="flex items-center text-sm border-t border-gray-200 pt-2 mt-2">
+                <div className="w-4 h-4 border-2 border-red-600 bg-red-50 mr-3"></div>
+                <span className="text-gray-700 font-medium">Rosario Boundary</span>
               </div>
             )}
           </div>
