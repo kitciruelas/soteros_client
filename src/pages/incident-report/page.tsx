@@ -684,10 +684,12 @@ export default function IncidentReportPage() {
   // Function to fetch OSM boundary coordinates from Overpass API
   const fetchOSMBoundary = React.useCallback(async (): Promise<[number, number][]> => {
     try {
-      // Use Overpass API to get relation data
+      // Use Overpass API to get relation data with expanded ways
+      // The query expands the relation to get all ways with their geometries
       const overpassQuery = `
         [out:json][timeout:25];
         relation(${ROSARIO_OSM_RELATION_ID});
+        >>;
         out geom;
       `;
       
@@ -705,34 +707,108 @@ export default function IncidentReportPage() {
 
       const data = await response.json();
       
+      console.log('Overpass API response:', data);
+      
       if (!data.elements || data.elements.length === 0) {
+        console.error('Empty response from Overpass API. Response:', data);
         throw new Error('No boundary data found');
       }
 
+      // Find the relation to get member roles
       const relation = data.elements.find((el: any) => el.type === 'relation');
+      console.log('Found relation:', relation ? { id: relation.id, membersCount: relation.members?.length } : 'none');
+      
       if (!relation || !relation.members) {
+        console.error('Relation not found or has no members. Available elements:', data.elements.map((e: any) => ({ type: e.type, id: e.id })));
         throw new Error('Invalid relation data');
+      }
+
+      // Get way IDs for outer members
+      const outerWayIds = relation.members
+        .filter((m: any) => m.role === 'outer' && m.type === 'way')
+        .map((m: any) => m.ref);
+
+      if (outerWayIds.length === 0) {
+        throw new Error('No outer ways found in relation');
       }
 
       // Collect all coordinates from outer ways
       const allCoordinates: [number, number][] = [];
-      const outerWays = relation.members.filter((m: any) => m.role === 'outer' && m.type === 'way');
+      const ways = data.elements.filter((el: any) => el.type === 'way' && outerWayIds.includes(el.id));
       
-      for (const way of outerWays) {
+      for (const way of ways) {
         if (way.geometry && Array.isArray(way.geometry)) {
           const wayCoords = way.geometry.map((point: any) => [point.lon, point.lat] as [number, number]);
+          allCoordinates.push(...wayCoords);
+        } else if (way.nodes && Array.isArray(way.nodes)) {
+          // If geometry is not available, try to get from nodes
+          const nodeIds = way.nodes;
+          const nodes = data.elements.filter((el: any) => el.type === 'node' && nodeIds.includes(el.id));
+          const wayCoords = nodes
+            .filter((n: any) => n.lat && n.lon)
+            .map((n: any) => [n.lon, n.lat] as [number, number]);
           allCoordinates.push(...wayCoords);
         }
       }
 
-      // Remove duplicate coordinates
-      const uniqueCoords = Array.from(
-        new Map(allCoordinates.map(coord => [`${coord[0]},${coord[1]}`, coord])).values()
-      );
+      if (allCoordinates.length === 0) {
+        throw new Error('No coordinates found in ways');
+      }
+
+      // Remove duplicate coordinates (with small tolerance for floating point differences)
+      const uniqueCoords: [number, number][] = [];
+      const seen = new Set<string>();
+      
+      for (const coord of allCoordinates) {
+        const key = `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueCoords.push(coord);
+        }
+      }
 
       return uniqueCoords.length > 0 ? uniqueCoords : [];
     } catch (error) {
-      console.error('Failed to fetch OSM boundary:', error);
+      console.error('Failed to fetch OSM boundary from relation:', error);
+      
+      // Fallback: Try fetching ways directly using way IDs
+      try {
+        console.log('Attempting fallback: fetching ways directly...');
+        const wayIdsString = rosarioOSMWayIds.slice(0, 10).join(','); // Limit to first 10 to avoid query size issues
+        const fallbackQuery = `
+          [out:json][timeout:25];
+          way(id:${wayIdsString});
+          out geom;
+        `;
+        
+        const fallbackResponse = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: fallbackQuery,
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+        });
+
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          if (fallbackData.elements && fallbackData.elements.length > 0) {
+            const coords: [number, number][] = [];
+            for (const way of fallbackData.elements) {
+              if (way.geometry && Array.isArray(way.geometry)) {
+                const wayCoords = way.geometry.map((point: any) => [point.lon, point.lat] as [number, number]);
+                coords.push(...wayCoords);
+              }
+            }
+            if (coords.length > 0) {
+              console.log('Fallback successful: got', coords.length, 'coordinates');
+              return coords;
+            }
+          }
+        }
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
+      
       return [];
     }
   }, []);
