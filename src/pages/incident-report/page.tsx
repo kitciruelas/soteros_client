@@ -768,26 +768,6 @@ export default function IncidentReportPage() {
   // Auto-fill location when geolocation is available
   useEffect(() => {
     if (latitude && longitude && locationMethod === 'auto') {
-      // Check if location is within Rosario, Batangas boundary
-      const withinBoundary = checkWithinBoundary(latitude, longitude);
-      setIsWithinBoundary(withinBoundary);
-
-      if (!withinBoundary) {
-        setBoundaryError('You are outside Rosario, Batangas. Auto-detect is only available within the municipality boundary. Please select a barangay manually.');
-        setValue('location', '');
-        setValue('latitude', null);
-        setValue('longitude', null);
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'You must be within Rosario, Batangas to use auto-detect. Please select a barangay from the dropdown instead.',
-          durationMs: 6000
-        });
-        return;
-      }
-
-      // Clear boundary error if within boundary
-      setBoundaryError('');
       setValue('latitude', latitude);
       setValue('longitude', longitude);
 
@@ -903,23 +883,6 @@ export default function IncidentReportPage() {
     console.log('Form submission started...');
     console.log('Current form values:', getValues());
     console.log('Authentication status:', isAuthenticated);
-
-    // Check boundary if using auto-detect
-    if (locationMethod === 'auto' && fields.latitude.value && fields.longitude.value) {
-      const lat = typeof fields.latitude.value === 'number' ? fields.latitude.value : parseFloat(String(fields.latitude.value));
-      const lng = typeof fields.longitude.value === 'number' ? fields.longitude.value : parseFloat(String(fields.longitude.value));
-      
-      if (!checkWithinBoundary(lat, lng)) {
-        setBoundaryError('You are outside Rosario, Batangas. Auto-detect is only available within the municipality boundary. Please select a barangay manually.');
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'You must be within Rosario, Batangas to submit a report using auto-detect. Please select a barangay from the dropdown instead.',
-          durationMs: 6000
-        });
-        return;
-      }
-    }
 
     // Validate all fields
     const isValid = validateAll();
@@ -1182,10 +1145,6 @@ export default function IncidentReportPage() {
               </button>
             </div>
           </div>
-          <p className="text-gray-500 text-xs mt-2">
-            <i className="ri-information-line mr-1"></i>
-            Auto-detect is only available when you are within Rosario, Batangas boundary.
-          </p>
 
           {/* Location Input with Search */}
           <div className="relative">
