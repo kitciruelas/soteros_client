@@ -650,7 +650,7 @@ export default function IncidentReportPage() {
         // Find the relation
         const relation = data.elements.find((e: any) => e.type === 'relation');
         if (relation && relation.members) {
-          // Get all outer ways and combine them
+          // Get all outer ways
           const outerWays = relation.members
             .filter((m: any) => m.role === 'outer' && m.type === 'way')
             .map((m: any) => {
@@ -661,22 +661,101 @@ export default function IncidentReportPage() {
             .filter((way: any) => way && way.geometry);
 
           if (outerWays.length > 0) {
-            // Use the first outer way (largest boundary)
-            // For multipolygons, you might need to combine multiple ways
-            const way = outerWays[0];
-            if (way.geometry && way.geometry.length > 0) {
-              // Extract coordinates: [lat, lng] format
-              const coordinates = way.geometry.map((point: any) => [point.lat, point.lon]);
-              // Close the polygon if not already closed
-              if (coordinates.length > 0) {
-                const first = coordinates[0];
-                const last = coordinates[coordinates.length - 1];
-                if (first[0] !== last[0] || first[1] !== last[1]) {
-                  coordinates.push([first[0], first[1]]);
+            // Combine all outer ways to form complete polygon
+            // For multipolygons, we need to connect all ways in order
+            const allCoordinates: number[][] = [];
+            
+            // Function to connect ways by matching endpoints
+            const connectWays = (ways: any[]): number[][] => {
+              if (ways.length === 0) return [];
+              
+              const result: number[][] = [];
+              const used = new Set<number>();
+              
+              // Start with the first way
+              let currentWay = ways[0];
+              used.add(0);
+              
+              // Extract coordinates from first way
+              let currentPath = currentWay.geometry.map((point: any) => [point.lat, point.lon]);
+              
+              // Try to connect remaining ways
+              while (used.size < ways.length) {
+                let found = false;
+                const lastPoint = currentPath[currentPath.length - 1];
+                
+                // Find a way that connects to the current path
+                for (let i = 0; i < ways.length; i++) {
+                  if (used.has(i)) continue;
+                  
+                  const way = ways[i];
+                  const wayCoords = way.geometry.map((point: any) => [point.lat, point.lon]);
+                  const firstPoint = wayCoords[0];
+                  const lastWayPoint = wayCoords[wayCoords.length - 1];
+                  
+                  // Check if this way connects to the end of current path
+                  const tolerance = 0.0001; // Small tolerance for floating point comparison
+                  const connectsToEnd = 
+                    (Math.abs(firstPoint[0] - lastPoint[0]) < tolerance && 
+                     Math.abs(firstPoint[1] - lastPoint[1]) < tolerance);
+                  const connectsReversed = 
+                    (Math.abs(lastWayPoint[0] - lastPoint[0]) < tolerance && 
+                     Math.abs(lastWayPoint[1] - lastPoint[1]) < tolerance);
+                  
+                  if (connectsToEnd) {
+                    // Add way coordinates (skip first point as it's already in path)
+                    currentPath = [...currentPath, ...wayCoords.slice(1)];
+                    used.add(i);
+                    found = true;
+                    break;
+                  } else if (connectsReversed) {
+                    // Add way coordinates in reverse (skip last point)
+                    currentPath = [...currentPath, ...wayCoords.reverse().slice(1)];
+                    used.add(i);
+                    found = true;
+                    break;
+                  }
+                }
+                
+                if (!found) {
+                  // No more ways to connect, save current path and start new one
+                  result.push(...currentPath);
+                  
+                  // Find next unused way
+                  for (let i = 0; i < ways.length; i++) {
+                    if (!used.has(i)) {
+                      currentWay = ways[i];
+                      currentPath = currentWay.geometry.map((point: any) => [point.lat, point.lon]);
+                      used.add(i);
+                      found = true;
+                      break;
+                    }
+                  }
+                  
+                  if (!found) break;
                 }
               }
-              console.log('Rosario boundary polygon loaded:', coordinates.length, 'points');
-              return coordinates;
+              
+              // Add remaining path
+              if (currentPath.length > 0) {
+                result.push(...currentPath);
+              }
+              
+              return result;
+            };
+            
+            const combinedCoordinates = connectWays(outerWays);
+            
+            if (combinedCoordinates.length > 0) {
+              // Close the polygon if not already closed
+              const first = combinedCoordinates[0];
+              const last = combinedCoordinates[combinedCoordinates.length - 1];
+              if (first[0] !== last[0] || first[1] !== last[1]) {
+                combinedCoordinates.push([first[0], first[1]]);
+              }
+              
+              console.log('Rosario boundary polygon loaded:', combinedCoordinates.length, 'points from', outerWays.length, 'ways');
+              return combinedCoordinates;
             }
           }
         }
