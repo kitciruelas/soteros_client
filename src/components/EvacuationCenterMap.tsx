@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, ZoomControl, Polyline, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, ZoomControl, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -198,8 +198,6 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
   const [mapError, setMapError] = useState(false);
   const [legendVisible, setLegendVisible] = useState(true);
   const [isIOS, setIsIOS] = useState(false);
-  const [rosarioPolygon, setRosarioPolygon] = useState<[number, number][] | null>(null);
-  const [showPolygon, setShowPolygon] = useState(true);
   const mapRef = useRef<L.Map | null>(null);
 
   // Update map center when user location is available
@@ -245,220 +243,6 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
   // Ensure Leaflet CSS is loaded
   useEffect(() => {
     ensureLeafletCSS();
-  }, []);
-
-  // Fetch Rosario, Batangas boundary polygon from OpenStreetMap
-  const fetchRosarioPolygon = async (): Promise<[number, number][] | null> => {
-    try {
-      // Check cache first
-      const cachedPolygon = localStorage.getItem('rosario_boundary_polygon');
-      if (cachedPolygon) {
-        try {
-          const polygon = JSON.parse(cachedPolygon);
-          if (Array.isArray(polygon) && polygon.length > 0) {
-            // Convert to [lat, lng] format for Leaflet
-            return polygon.map((coord: number[]) => [coord[0], coord[1]] as [number, number]);
-          }
-        } catch (error) {
-          console.error('Error parsing cached polygon:', error);
-        }
-      }
-
-      // Fetch from OpenStreetMap Overpass API
-      const overpassQuery = `
-        [out:json][timeout:25];
-        (
-          relation(11259957);
-        );
-        (._;>;);
-        out geom;
-      `;
-
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `data=${encodeURIComponent(overpassQuery)}`,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch boundary data');
-      }
-
-      const data = await response.json();
-      
-      if (data.elements && data.elements.length > 0) {
-        const relation = data.elements.find((e: any) => e.type === 'relation');
-        if (relation && relation.members) {
-          const outerWays = relation.members
-            .filter((m: any) => m.role === 'outer' && m.type === 'way')
-            .map((m: any) => {
-              const way = data.elements.find((e: any) => e.type === 'way' && e.id === m.ref);
-              return way;
-            })
-            .filter((way: any) => way && way.geometry);
-
-          if (outerWays.length > 0) {
-            console.log(`Found ${outerWays.length} outer ways in Rosario boundary relation`);
-            
-            // Combine all outer ways to form complete polygon
-            // For multipolygons, we need to connect all ways in order
-            const connectWays = (ways: any[]): [number, number][] => {
-              if (ways.length === 0) return [];
-              if (ways.length === 1) {
-                // Single way, just return its coordinates
-                return ways[0].geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
-              }
-              
-              const used = new Set<number>();
-              const allPaths: [number, number][][] = [];
-              
-              // Try to build connected paths
-              while (used.size < ways.length) {
-                // Find first unused way
-                let startIdx = -1;
-                for (let i = 0; i < ways.length; i++) {
-                  if (!used.has(i)) {
-                    startIdx = i;
-                    break;
-                  }
-                }
-                
-                if (startIdx === -1) break;
-                
-                // Start building a path from this way
-                let currentPath: [number, number][] = ways[startIdx].geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
-                used.add(startIdx);
-                let pathStartWayId = ways[startIdx].id;
-                
-                // Try to extend this path by connecting other ways
-                let extended = true;
-                let iterations = 0;
-                const maxIterations = ways.length * 2; // Prevent infinite loops
-                
-                while (extended && used.size < ways.length && iterations < maxIterations) {
-                  iterations++;
-                  extended = false;
-                  const lastPoint = currentPath[currentPath.length - 1];
-                  const firstPoint = currentPath[0];
-                  
-                  // Try to find a way that connects to either end
-                  for (let i = 0; i < ways.length; i++) {
-                    if (used.has(i)) continue;
-                    
-                    const way = ways[i];
-                    if (!way.geometry || way.geometry.length === 0) continue;
-                    
-                    const wayCoords = way.geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
-                    const wayFirst = wayCoords[0];
-                    const wayLast = wayCoords[wayCoords.length - 1];
-                    
-                    const tolerance = 0.0001; // ~11 meters
-                    
-                    // Check if connects to end of current path
-                    if (Math.abs(wayFirst[0] - lastPoint[0]) < tolerance && 
-                        Math.abs(wayFirst[1] - lastPoint[1]) < tolerance) {
-                      currentPath = [...currentPath, ...wayCoords.slice(1)];
-                      used.add(i);
-                      extended = true;
-                      break;
-                    } else if (Math.abs(wayLast[0] - lastPoint[0]) < tolerance && 
-                               Math.abs(wayLast[1] - lastPoint[1]) < tolerance) {
-                      currentPath = [...currentPath, ...wayCoords.reverse().slice(1)];
-                      used.add(i);
-                      extended = true;
-                      break;
-                    }
-                    // Check if connects to start of current path (reverse order)
-                    else if (Math.abs(wayLast[0] - firstPoint[0]) < tolerance && 
-                             Math.abs(wayLast[1] - firstPoint[1]) < tolerance) {
-                      currentPath = [...wayCoords.slice(0, -1).reverse(), ...currentPath];
-                      used.add(i);
-                      extended = true;
-                      break;
-                    } else if (Math.abs(wayFirst[0] - firstPoint[0]) < tolerance && 
-                               Math.abs(wayFirst[1] - firstPoint[1]) < tolerance) {
-                      currentPath = [...wayCoords.slice(0, -1), ...currentPath];
-                      used.add(i);
-                      extended = true;
-                      break;
-                    }
-                  }
-                }
-                
-                allPaths.push(currentPath);
-                console.log(`Connected path ${allPaths.length}: ${currentPath.length} points, started from way ${pathStartWayId}, used ${used.size}/${ways.length} ways`);
-              }
-              
-              // Return the longest path (main boundary) or combine all if needed
-              if (allPaths.length === 0) {
-                console.warn('No paths could be built from ways');
-                return [];
-              }
-              
-              // Find the longest path (likely the main boundary)
-              const mainPath = allPaths.reduce((longest, path) => 
-                path.length > longest.length ? path : longest
-              );
-              
-              console.log(`Selected main boundary path with ${mainPath.length} points from ${allPaths.length} path(s)`);
-              
-              return mainPath;
-            };
-            
-            const combinedCoordinates = connectWays(outerWays);
-            
-            if (combinedCoordinates.length > 0) {
-              // Close the polygon if not already closed
-              const first = combinedCoordinates[0];
-              const last = combinedCoordinates[combinedCoordinates.length - 1];
-              const distance = Math.sqrt(
-                Math.pow(first[0] - last[0], 2) + Math.pow(first[1] - last[1], 2)
-              );
-              
-              if (distance > 0.0001) {
-                combinedCoordinates.push([first[0], first[1]]);
-                console.log('Polygon closed (endpoints were', distance.toFixed(6), 'degrees apart)');
-              } else {
-                console.log('Polygon already closed');
-              }
-              
-              // Cache the polygon
-              try {
-                localStorage.setItem('rosario_boundary_polygon', JSON.stringify(combinedCoordinates));
-              } catch (error) {
-                console.error('Error caching polygon:', error);
-              }
-              
-              console.log('✅ Rosario boundary polygon loaded:', combinedCoordinates.length, 'points from', outerWays.length, 'ways');
-              return combinedCoordinates;
-            } else {
-              console.error('Failed to combine ways into polygon');
-            }
-          } else {
-            console.warn('No outer ways found in relation');
-          }
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error fetching Rosario boundary polygon:', error);
-      return null;
-    }
-  };
-
-  // Load Rosario boundary polygon
-  useEffect(() => {
-    const loadPolygon = async () => {
-      const polygon = await fetchRosarioPolygon();
-      if (polygon && polygon.length > 0) {
-        setRosarioPolygon(polygon);
-      }
-    };
-
-    loadPolygon();
   }, []);
 
   // Handle window resize for iOS (Safari address bar show/hide)
@@ -569,18 +353,6 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
         >
           <i className="ri-fullscreen-line text-blue-600 text-lg group-hover:text-blue-700"></i>
         </button>
-
-        {rosarioPolygon && (
-          <button
-            onClick={() => setShowPolygon(!showPolygon)}
-            className={`group bg-white/90 backdrop-blur-sm hover:bg-white border border-white/20 rounded-xl p-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 ${
-              showPolygon ? 'ring-2 ring-red-500' : ''
-            }`}
-            title={showPolygon ? "Hide Rosario Boundary" : "Show Rosario Boundary"}
-          >
-            <i className={`ri-map-2-${showPolygon ? 'fill' : 'line'} text-red-600 text-lg group-hover:text-red-700`}></i>
-          </button>
-        )}
 
         <div className="bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl p-3 shadow-xl">
           <div className="text-center">
@@ -776,28 +548,6 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
             }}
           />
 
-          {/* Rosario, Batangas Boundary Polygon */}
-          {rosarioPolygon && showPolygon && (
-            <Polygon
-              positions={rosarioPolygon}
-              pathOptions={{
-                color: '#dc2626',
-                fillColor: '#fef2f2',
-                fillOpacity: 0.2,
-                weight: 2,
-                opacity: 0.8
-              }}
-            >
-              <Popup>
-                <div className="text-center">
-                  <strong className="text-red-600">Rosario, Batangas</strong>
-                  <br />
-                  <small className="text-gray-600">Municipality Boundary</small>
-                </div>
-              </Popup>
-            </Polygon>
-          )}
-
         {/* User location marker */}
         {userLocation && (
           <Marker
@@ -931,12 +681,6 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
               <div className="flex items-center text-sm border-t border-gray-200 pt-2 mt-2">
                 <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mr-3 shadow-sm animate-pulse"></div>
                 <span className="text-gray-700 font-medium">Your Location</span>
-              </div>
-            )}
-            {rosarioPolygon && (
-              <div className="flex items-center text-sm border-t border-gray-200 pt-2 mt-2">
-                <div className="w-4 h-4 border-2 border-red-600 bg-red-50 mr-3"></div>
-                <span className="text-gray-700 font-medium">Rosario Boundary</span>
               </div>
             )}
           </div>
