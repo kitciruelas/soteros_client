@@ -73,7 +73,7 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     }
 
     // The backend proxy already processes the location name
-    const locationName = data.display_name;
+    let locationName = data.display_name;
     const detailedInfo: DetailedLocationInfo | undefined = data.detailed_info ? {
       barangay: data.detailed_info.barangay,
       municipality: data.detailed_info.municipality,
@@ -84,6 +84,24 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
         longitude: data.detailed_info.coordinates.longitude
       }
     } : undefined;
+
+    // Format Rosario locations as "BarangayName, Rosario"
+    if (detailedInfo && detailedInfo.municipality?.toLowerCase().includes('rosario') && 
+        detailedInfo.province?.toLowerCase().includes('batangas')) {
+      if (detailedInfo.barangay) {
+        locationName = `${detailedInfo.barangay}, Rosario`;
+      } else {
+        // If no barangay info, try to extract from display_name
+        const parts = locationName.split(',');
+        if (parts.length > 0) {
+          const firstPart = parts[0].trim();
+          // Check if first part looks like a barangay name
+          if (firstPart && !firstPart.toLowerCase().includes('rosario')) {
+            locationName = `${firstPart}, Rosario`;
+          }
+        }
+      }
+    }
 
     return {
       success: true,
@@ -142,21 +160,39 @@ async function reverseGeocodeDirect(latitude: number, longitude: number): Promis
     // Try to create a more readable format
     if (data.address) {
       const addr = data.address;
-      const parts: string[] = [];
+      const municipality = (addr.city || addr.town || addr.municipality || '').toLowerCase();
+      const province = (addr.province || addr.state || '').toLowerCase();
       
-      if (addr.road) parts.push(addr.road);
-      if (addr.village || addr.town || addr.city || addr.municipality) {
-        parts.push(addr.village || addr.town || addr.city || addr.municipality);
-      }
-      if (addr.province || addr.state) {
-        parts.push(addr.province || addr.state);
-      }
-      if (addr.country) {
-        parts.push(addr.country);
-      }
-      
-      if (parts.length > 0) {
-        locationName = parts.join(', ');
+      // Check if location is in Rosario, Batangas
+      if (municipality.includes('rosario') && province.includes('batangas')) {
+        // Format as "BarangayName, Rosario"
+        const barangay = addr.village || addr.suburb || addr.neighbourhood || addr.hamlet || addr.locality || '';
+        if (barangay) {
+          locationName = `${barangay}, Rosario`;
+        } else if (addr.road) {
+          // If no barangay but has road, use road name
+          locationName = `${addr.road}, Rosario`;
+        } else {
+          locationName = 'Rosario, Batangas';
+        }
+      } else {
+        // For other locations, use standard format
+        const parts: string[] = [];
+        
+        if (addr.road) parts.push(addr.road);
+        if (addr.village || addr.town || addr.city || addr.municipality) {
+          parts.push(addr.village || addr.town || addr.city || addr.municipality);
+        }
+        if (addr.province || addr.state) {
+          parts.push(addr.province || addr.state);
+        }
+        if (addr.country) {
+          parts.push(addr.country);
+        }
+        
+        if (parts.length > 0) {
+          locationName = parts.join(', ');
+        }
       }
     }
 
