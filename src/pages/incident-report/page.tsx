@@ -754,7 +754,13 @@ export default function IncidentReportPage() {
     
     // Check if within Rosario boundary
     if (!isWithinRosarioBoundary(lat, lng)) {
-      setBoundaryError('This location is outside Rosario, Batangas. Please select a location within the municipality.');
+      setBoundaryError(''); // Clear error message
+      showToast({
+        type: 'error',
+        title: 'Location Outside Boundary',
+        message: 'This location is outside Rosario, Batangas. Please select a location within the municipality.',
+        durationMs: 5000
+      });
       return;
     }
     
@@ -772,7 +778,13 @@ export default function IncidentReportPage() {
     if (latitude && longitude && locationMethod === 'auto') {
       // Check if within Rosario boundary
       if (!isWithinRosarioBoundary(latitude, longitude)) {
-        setBoundaryError('Your GPS location is outside Rosario, Batangas. Please use manual location selection.');
+        setBoundaryError(''); // Clear error message
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
+          durationMs: 5000
+        });
         setLocationMethod('manual');
         return;
       }
@@ -800,7 +812,7 @@ export default function IncidentReportPage() {
 
       getGeocodedLocation();
     }
-  }, [latitude, longitude, locationMethod, setValue, isWithinRosarioBoundary]);
+  }, [latitude, longitude, locationMethod, setValue, isWithinRosarioBoundary, showToast]);
 
   // Convert GPS coordinates in location field to location name
   useEffect(() => {
@@ -817,7 +829,13 @@ export default function IncidentReportPage() {
         if (!isNaN(lat) && !isNaN(lng)) {
           // Check if within Rosario boundary
           if (!isWithinRosarioBoundary(lat, lng)) {
-            setBoundaryError('GPS coordinates are outside Rosario, Batangas. Please select a location within the municipality.');
+            setBoundaryError(''); // Clear error message
+            showToast({
+              type: 'error',
+              title: 'Location Outside Boundary',
+              message: 'GPS coordinates are outside Rosario, Batangas. Please select a location within the municipality.',
+              durationMs: 5000
+            });
             return;
           }
 
@@ -842,7 +860,7 @@ export default function IncidentReportPage() {
         }
       }
     }
-  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue, isWithinRosarioBoundary]);
+  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue, isWithinRosarioBoundary, showToast]);
 
   // Handle auto-location
   const handleAutoLocation = async () => {
@@ -952,7 +970,13 @@ export default function IncidentReportPage() {
     // Validate location is within Rosario boundary
     const raw = getValues();
     if (!isWithinRosarioBoundary(raw.latitude, raw.longitude)) {
-      setBoundaryError('The selected location is outside Rosario, Batangas. Please select a location within the municipality.');
+      setBoundaryError(''); // Clear error message
+      showToast({
+        type: 'error',
+        title: 'Location Outside Boundary',
+        message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
+        durationMs: 5000
+      });
       return;
     }
 
@@ -1215,7 +1239,13 @@ export default function IncidentReportPage() {
                   if (selected) {
                     // Verify barangay is within boundary (should always be true, but check anyway)
                     if (!isWithinRosarioBoundary(selected.lat, selected.lng)) {
-                      setBoundaryError('Selected barangay is outside Rosario, Batangas boundary.');
+                      setBoundaryError(''); // Clear error message
+                      showToast({
+                        type: 'error',
+                        title: 'Location Outside Boundary',
+                        message: 'Selected barangay is outside Rosario, Batangas boundary.',
+                        durationMs: 5000
+                      });
                       return;
                     }
                     
