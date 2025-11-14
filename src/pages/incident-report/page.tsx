@@ -196,8 +196,25 @@ export default function IncidentReportPage() {
     }
   };
 
+  // Store image URLs for preview
+  const imageUrls = useMemo(() => {
+    return selectedFiles.map(file => URL.createObjectURL(file));
+  }, [selectedFiles]);
+
+  // Clean up object URLs when files change or component unmounts
+  useEffect(() => {
+    return () => {
+      imageUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imageUrls]);
+
   // Remove selected file
   const removeFile = (index: number) => {
+    // Clean up object URL before removing
+    if (imageUrls[index]) {
+      URL.revokeObjectURL(imageUrls[index]);
+    }
+    
     const newFiles = selectedFiles.filter((_, i) => i !== index);
     setSelectedFiles(newFiles);
     setValue('attachments', newFiles);
@@ -1555,29 +1572,40 @@ export default function IncidentReportPage() {
             </div>
           </div>
 
-          {/* Selected Files Preview */}
+          {/* Selected Files Preview with Image Preview */}
           {selectedFiles.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium text-gray-700">Captured photos:</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <p className="text-sm font-medium text-gray-700">Captured photos ({selectedFiles.length}/5):</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i className="ri-image-line text-green-600"></i>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
+                  <div key={index} className="relative group">
+                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100 shadow-sm">
+                      <img
+                        src={imageUrls[index]}
+                        alt={`Captured photo ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      <i className="ri-close-line text-lg"></i>
-                    </button>
+                    {/* Overlay with remove button on hover */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition-colors shadow-lg"
+                        title="Remove photo"
+                      >
+                        <i className="ri-delete-bin-line text-lg"></i>
+                      </button>
+                    </div>
+                    {/* File info badge on hover */}
+                    <div className="absolute bottom-1 left-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="truncate text-xs">{file.name}</p>
+                      <p className="text-xs opacity-80">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    {/* Photo number badge */}
+                    <div className="absolute top-1 left-1 bg-green-600 text-white text-xs font-semibold rounded-full w-6 h-6 flex items-center justify-center">
+                      {index + 1}
+                    </div>
                   </div>
                 ))}
               </div>
