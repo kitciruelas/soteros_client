@@ -629,6 +629,41 @@ export default function IncidentReportPage() {
     }
   }, [latitude, longitude, locationMethod, setValue, showToast]);
 
+  // Convert GPS coordinates in location field to location name
+  useEffect(() => {
+    const locationValue = fields.location.value;
+    
+    // Check if location starts with "GPS:" and contains coordinates
+    if (locationValue && locationValue.startsWith('GPS:')) {
+      const gpsMatch = locationValue.match(/GPS:\s*([\d.]+),\s*([\d.]+)/);
+      if (gpsMatch) {
+        const lat = parseFloat(gpsMatch[1]);
+        const lng = parseFloat(gpsMatch[2]);
+        
+        // Only convert if we have valid coordinates
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const convertToLocationName = async () => {
+            try {
+              const result = await reverseGeocode(lat, lng);
+              if (typeof result === 'object' && 'success' in result && result.success) {
+                setValue('location', result.locationName);
+                // Also update the latitude and longitude fields if they're not set
+                if (!fields.latitude.value || !fields.longitude.value) {
+                  setValue('latitude', lat);
+                  setValue('longitude', lng);
+                }
+              }
+            } catch (error) {
+              console.error('Failed to convert GPS coordinates to location name:', error);
+            }
+          };
+          
+          convertToLocationName();
+        }
+      }
+    }
+  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue]);
+
   // Handle auto-location
   const handleAutoLocation = async () => {
     setLocationMethod('auto');
