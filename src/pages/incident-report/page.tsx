@@ -1354,7 +1354,7 @@ export default function IncidentReportPage() {
               </p>
             )}
 
-            {/* Show Map Button */}
+            {/* Show Map Button 
             <div className="mt-4">
               <button
                 type="button"
@@ -1365,6 +1365,7 @@ export default function IncidentReportPage() {
                 {showMap ? 'Hide Map' : 'Show Map'}
               </button>
             </div>
+            */}
 
             {/* Map Component */}
             {showMap && (
