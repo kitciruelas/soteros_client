@@ -52,7 +52,6 @@ export default function IncidentReportPage() {
   const [isReverseGeocoding] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [boundaryError, setBoundaryError] = useState('');
-  const lastToastRef = useRef<{ lat: number | null; lng: number | null; time: number } | null>(null);
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -756,21 +755,12 @@ export default function IncidentReportPage() {
     // Check if within Rosario boundary
     if (!isWithinRosarioBoundary(lat, lng)) {
       setBoundaryError(''); // Clear error message
-      const now = Date.now();
-      const lastToast = lastToastRef.current;
-      // Only show toast if not already shown for these coordinates recently
-      if (!lastToast || 
-          lastToast.lat !== lat || 
-          lastToast.lng !== lng || 
-          (now - lastToast.time) >= 2000) { // More than 2 seconds ago
-        lastToastRef.current = { lat, lng, time: now };
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'This location is outside Rosario, Batangas. Please select a location within the municipality.',
-          durationMs: 5000
-        });
-      }
+      showToast({
+        type: 'error',
+        title: 'Location Outside Boundary',
+        message: 'This location is outside Rosario, Batangas. Please select a location within the municipality.',
+        durationMs: 5000
+      });
       return;
     }
     
@@ -789,21 +779,12 @@ export default function IncidentReportPage() {
       // Check if within Rosario boundary
       if (!isWithinRosarioBoundary(latitude, longitude)) {
         setBoundaryError(''); // Clear error message
-        const now = Date.now();
-        const lastToast = lastToastRef.current;
-        // Only show toast if not already shown for these coordinates recently
-        if (!lastToast || 
-            lastToast.lat !== latitude || 
-            lastToast.lng !== longitude || 
-            (now - lastToast.time) >= 2000) { // More than 2 seconds ago
-          lastToastRef.current = { lat: latitude, lng: longitude, time: now };
-          showToast({
-            type: 'error',
-            title: 'Location Outside Boundary',
-            message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
-            durationMs: 5000
-          });
-        }
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
+          durationMs: 5000
+        });
         setLocationMethod('manual');
         return;
       }
@@ -846,21 +827,9 @@ export default function IncidentReportPage() {
         
         // Only convert if we have valid coordinates
         if (!isNaN(lat) && !isNaN(lng)) {
-          // Skip validation if coordinates already validated (from auto-detect)
-          // This prevents duplicate toasts when auto-detect sets GPS: coordinates
-          const now = Date.now();
-          const lastToast = lastToastRef.current;
-          if (lastToast && 
-              lastToast.lat === lat && 
-              lastToast.lng === lng && 
-              (now - lastToast.time) < 2000) { // Within 2 seconds
-            return; // Skip validation to avoid duplicate toast
-          }
-          
           // Check if within Rosario boundary
           if (!isWithinRosarioBoundary(lat, lng)) {
             setBoundaryError(''); // Clear error message
-            lastToastRef.current = { lat, lng, time: Date.now() };
             showToast({
               type: 'error',
               title: 'Location Outside Boundary',
@@ -1002,21 +971,12 @@ export default function IncidentReportPage() {
     const raw = getValues();
     if (!isWithinRosarioBoundary(raw.latitude, raw.longitude)) {
       setBoundaryError(''); // Clear error message
-      const now = Date.now();
-      const lastToast = lastToastRef.current;
-      // Only show toast if not already shown for these coordinates recently
-      if (!lastToast || 
-          lastToast.lat !== raw.latitude || 
-          lastToast.lng !== raw.longitude || 
-          (now - lastToast.time) >= 2000) { // More than 2 seconds ago
-        lastToastRef.current = { lat: raw.latitude, lng: raw.longitude, time: now };
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
-          durationMs: 5000
-        });
-      }
+      showToast({
+        type: 'error',
+        title: 'Location Outside Boundary',
+        message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
+        durationMs: 5000
+      });
       return;
     }
 
@@ -1280,21 +1240,12 @@ export default function IncidentReportPage() {
                     // Verify barangay is within boundary (should always be true, but check anyway)
                     if (!isWithinRosarioBoundary(selected.lat, selected.lng)) {
                       setBoundaryError(''); // Clear error message
-                      const now = Date.now();
-                      const lastToast = lastToastRef.current;
-                      // Only show toast if not already shown for these coordinates recently
-                      if (!lastToast || 
-                          lastToast.lat !== selected.lat || 
-                          lastToast.lng !== selected.lng || 
-                          (now - lastToast.time) >= 2000) { // More than 2 seconds ago
-                        lastToastRef.current = { lat: selected.lat, lng: selected.lng, time: now };
-                        showToast({
-                          type: 'error',
-                          title: 'Location Outside Boundary',
-                          message: 'Selected barangay is outside Rosario, Batangas boundary.',
-                          durationMs: 5000
-                        });
-                      }
+                      showToast({
+                        type: 'error',
+                        title: 'Location Outside Boundary',
+                        message: 'Selected barangay is outside Rosario, Batangas boundary.',
+                        durationMs: 5000
+                      });
                       return;
                     }
                     
@@ -1572,25 +1523,26 @@ export default function IncidentReportPage() {
         <div className="border-b border-gray-200 pb-4">
           <h3 className="text-xl font-semibold text-gray-900 flex items-center">
             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-image-line text-green-600"></i>
+              <i className="ri-camera-line text-green-600"></i>
             </div>
-            Attachments
+            Photo Attachments
           </h3>
-          <p className="text-gray-600 mt-2">Upload photos related to the incident (optional)</p>
+          <p className="text-gray-600 mt-2">Take photos related to the incident (optional)</p>
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            <i className="ri-image-line mr-2 text-green-600"></i>
-            Upload Images
+            <i className="ri-camera-line mr-2 text-green-600"></i>
+            Take Photos
           </label>
 
-          {/* File Input */}
+          {/* File Input - Camera Only */}
           <div className="relative">
             <input
               type="file"
               multiple
               accept="image/*"
+              capture="environment"
               onChange={handleFileSelect}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
@@ -1598,15 +1550,15 @@ export default function IncidentReportPage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i className="ri-camera-line text-2xl text-green-600"></i>
               </div>
-              <p className="text-gray-600 font-medium">Click to upload images</p>
-              <p className="text-gray-400 text-sm mt-1">PNG, JPG, GIF, WebP up to 10MB each (max 5 files)</p>
+              <p className="text-gray-600 font-medium">Tap to take photos</p>
+              <p className="text-gray-400 text-sm mt-1">Camera will open to capture photos (max 5 photos, 10MB each)</p>
             </div>
           </div>
 
           {/* Selected Files Preview */}
           {selectedFiles.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium text-gray-700">Selected files:</p>
+              <p className="text-sm font-medium text-gray-700">Captured photos:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {selectedFiles.map((file, index) => (
                   <div key={index} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3">
@@ -1641,7 +1593,8 @@ export default function IncidentReportPage() {
           )}
 
           <p className="text-gray-500 text-sm mt-2">
-            Attachments help emergency responders better understand the situation. Only image files are accepted.
+            <i className="ri-information-line mr-1"></i>
+            Photos help emergency responders better understand the situation. Please use your camera to take photos directly.
           </p>
         </div>
       </div>
