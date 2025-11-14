@@ -351,7 +351,7 @@ export const apiRequest = async <T = any>(
     
     if (!response.ok) {
       // Special handling for login endpoints - return error data instead of throwing
-      if (endpoint.includes('/auth/login/') && response.status === 401) {
+      if (endpoint.includes('/auth/login/') && (response.status === 401 || response.status === 403)) {
         let errorData;
         try {
           errorData = await response.json();

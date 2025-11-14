@@ -94,26 +94,30 @@ export default function VerifyEmailPage() {
     setIsSubmitting(true)
 
     try {
-      // For resend, we would need a resend-verification endpoint
-      // For now, redirect back to signup with a message
-      showToast({
-        type: "info",
-        title: "Resend Code",
-        message: "Please sign up again to receive a new verification code.",
-        durationMs: 4000,
+      const data = await apiRequest("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+        }),
       })
 
-      setTimeout(() => {
-        navigate("/auth/signup", {
-          state: { email: email },
+      if (data && data.success) {
+        showToast({
+          type: "success",
+          title: "Code Resent",
+          message: data.message || "Verification code has been sent again to your email.",
+          durationMs: 3000,
         })
-      }, 2000)
+      } else {
+        throw new Error(data?.message || "Failed to resend code")
+      }
     } catch (error: any) {
       console.error("Resend code failed:", error)
+      const errorMessage = error?.message || "Failed to resend verification code. Please try again later."
       showToast({
         type: "error",
         title: "Failed to Resend Code",
-        message: error?.message || "Failed to resend verification code. Please try again later.",
+        message: errorMessage,
         durationMs: 5000,
       })
     } finally {

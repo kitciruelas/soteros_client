@@ -83,6 +83,30 @@ export default function LoginPage() {
         }),
       })
 
+      // Check if email verification is required
+      if (data && !data.success && data.requiresVerification) {
+        showToast({
+          type: "warning",
+          title: "Email Verification Required",
+          message: data.message || "Please verify your email address before logging in.",
+          durationMs: 5000,
+        })
+        
+        // Redirect to verify email page after a short delay
+        setTimeout(() => {
+          navigate("/auth/verify-email", {
+            state: { email: formData.email },
+          })
+        }, 2000)
+        
+        // Reset reCAPTCHA
+        if (recaptchaRef.current) {
+          recaptchaRef.current.reset()
+        }
+        setRecaptchaValue(null)
+        return
+      }
+
       // Check if general user login successful
       if (data && data.success) {
         console.log("General user login successful:", data)

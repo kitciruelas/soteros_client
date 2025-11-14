@@ -218,10 +218,14 @@ export default function SignupPage() {
         console.log("Registration successful:", data)
 
         // Show success toast with verification email info
+        const toastMessage = data.isResend 
+          ? "Account information updated! A new verification code has been sent to your email."
+          : "Verification email sent! Please check your inbox for the verification code to activate your account."
+        
         showToast({
           type: "success",
-          title: "Account Created Successfully!",
-          message: "Verification email sent! Please check your inbox for the verification code to activate your account.",
+          title: data.isResend ? "Verification Code Resent!" : "Account Created Successfully!",
+          message: toastMessage,
           durationMs: 5000
         })
 
@@ -236,7 +240,26 @@ export default function SignupPage() {
         const errorMsg = data?.message || "Registration failed. Please try again."
 
         // Handle specific error cases
-        if (errorMsg.toLowerCase().includes("email") && errorMsg.toLowerCase().includes("exist")) {
+        if (data?.accountExists) {
+          if (data?.isVerified) {
+            // Account is verified, redirect to login
+            showToast({
+              type: "info",
+              title: "Account Already Exists",
+              message: "This email is already registered and verified. Please log in instead.",
+              durationMs: 4000
+            })
+            setTimeout(() => {
+              navigate("/auth/login", {
+                state: { email: formData.email }
+              })
+            }, 2000)
+            return
+          } else {
+            // Account exists but unverified - this should be handled by backend now
+            setError("email", "This email is already registered but not verified")
+          }
+        } else if (errorMsg.toLowerCase().includes("email") && errorMsg.toLowerCase().includes("exist")) {
           setError("email", "This email is already registered")
         }
 
