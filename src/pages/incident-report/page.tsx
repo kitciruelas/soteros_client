@@ -41,6 +41,8 @@ export default function IncidentReportPage() {
   const [isReverseGeocoding] = useState(false);
   const [isWithinBoundary, setIsWithinBoundary] = useState<boolean | null>(null);
   const [boundaryError, setBoundaryError] = useState('');
+  const [rosarioPolygon, setRosarioPolygon] = useState<number[][] | null>(null);
+  const [isLoadingPolygon, setIsLoadingPolygon] = useState(false);
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -211,6 +213,45 @@ export default function IncidentReportPage() {
     };
 
     getLocationName();
+  }, []);
+
+  // Load Rosario boundary polygon from OpenStreetMap on component mount
+  useEffect(() => {
+    const loadPolygon = async () => {
+      // Check if polygon is already cached in localStorage
+      const cachedPolygon = localStorage.getItem('rosario_boundary_polygon');
+      if (cachedPolygon) {
+        try {
+          const polygon = JSON.parse(cachedPolygon);
+          if (Array.isArray(polygon) && polygon.length > 0) {
+            setRosarioPolygon(polygon);
+            console.log('Rosario boundary polygon loaded from cache');
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing cached polygon:', error);
+        }
+      }
+
+      // Fetch from OpenStreetMap
+      const polygon = await fetchRosarioPolygon();
+      if (polygon && polygon.length > 0) {
+        setRosarioPolygon(polygon);
+        // Cache the polygon for future use (valid for 30 days)
+        try {
+          const cacheData = {
+            polygon,
+            timestamp: Date.now(),
+            expiresIn: 30 * 24 * 60 * 60 * 1000 // 30 days
+          };
+          localStorage.setItem('rosario_boundary_polygon', JSON.stringify(polygon));
+        } catch (error) {
+          console.error('Error caching polygon:', error);
+        }
+      }
+    };
+
+    loadPolygon();
   }, []);
 
   // Philippine mobile number validation function
@@ -548,22 +589,126 @@ export default function IncidentReportPage() {
     { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
   ];
 
-  // Rosario, Batangas boundary coordinates (approximate bounding box)
-  const ROSARIO_BOUNDARY = {
-    minLat: 13.7000,  // Southern boundary
-    maxLat: 13.8700,  // Northern boundary
-    minLng: 121.1600, // Western boundary
-    maxLng: 121.3600  // Eastern boundary
+  // Rosario, Batangas boundary coordinates (fallback bounding box)
+  // Based on OpenStreetMap relation: https://www.openstreetmap.org/relation/11259957
+  const ROSARIO_BOUNDARY_BBOX = {
+    minLat: 13.7000,
+    maxLat: 13.8650,
+    minLng: 121.1650,
+    maxLng: 121.3500
+  };
+
+  // Point-in-polygon algorithm (Ray Casting Algorithm)
+  // Checks if a point (lat, lng) is inside a polygon
+  // Polygon format: [[lat, lng], [lat, lng], ...]
+  const pointInPolygon = (lat: number, lng: number, polygon: number[][]): boolean => {
+    if (!polygon || polygon.length < 3) return false;
+    
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1]; // xi = lat, yi = lng
+      const xj = polygon[j][0], yj = polygon[j][1]; // xj = lat, yj = lng
+      
+      // Check if ray crosses edge
+      const intersect = ((yi > lng) !== (yj > lng)) &&
+        (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  };
+
+  // Fetch Rosario, Batangas boundary polygon from OpenStreetMap Overpass API
+  const fetchRosarioPolygon = async (): Promise<number[][] | null> => {
+    try {
+      setIsLoadingPolygon(true);
+      // Query to get the relation with all its ways and their geometries
+      // This gets the relation and recursively gets all ways that are members
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          relation(11259957);
+        );
+        (._;>;);
+        out geom;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `data=${encodeURIComponent(overpassQuery)}`,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch boundary data');
+      }
+
+      const data = await response.json();
+      
+      if (data.elements && data.elements.length > 0) {
+        // Find the relation
+        const relation = data.elements.find((e: any) => e.type === 'relation');
+        if (relation && relation.members) {
+          // Get all outer ways and combine them
+          const outerWays = relation.members
+            .filter((m: any) => m.role === 'outer' && m.type === 'way')
+            .map((m: any) => {
+              // Find the way element in the response
+              const way = data.elements.find((e: any) => e.type === 'way' && e.id === m.ref);
+              return way;
+            })
+            .filter((way: any) => way && way.geometry);
+
+          if (outerWays.length > 0) {
+            // Use the first outer way (largest boundary)
+            // For multipolygons, you might need to combine multiple ways
+            const way = outerWays[0];
+            if (way.geometry && way.geometry.length > 0) {
+              // Extract coordinates: [lat, lng] format
+              const coordinates = way.geometry.map((point: any) => [point.lat, point.lon]);
+              // Close the polygon if not already closed
+              if (coordinates.length > 0) {
+                const first = coordinates[0];
+                const last = coordinates[coordinates.length - 1];
+                if (first[0] !== last[0] || first[1] !== last[1]) {
+                  coordinates.push([first[0], first[1]]);
+                }
+              }
+              console.log('Rosario boundary polygon loaded:', coordinates.length, 'points');
+              return coordinates;
+            }
+          }
+        }
+      }
+      
+      console.warn('Could not extract polygon from OpenStreetMap data');
+      return null;
+    } catch (error) {
+      console.error('Error fetching Rosario boundary polygon:', error);
+      return null;
+    } finally {
+      setIsLoadingPolygon(false);
+    }
   };
 
   // Check if coordinates are within Rosario, Batangas boundary
+  // Uses polygon check if available, falls back to bounding box
   const checkWithinBoundary = (lat: number, lng: number): boolean => {
-    return (
-      lat >= ROSARIO_BOUNDARY.minLat &&
-      lat <= ROSARIO_BOUNDARY.maxLat &&
-      lng >= ROSARIO_BOUNDARY.minLng &&
-      lng <= ROSARIO_BOUNDARY.maxLng
-    );
+    // Quick bounding box check first (faster - reject if outside bbox)
+    if (lat < ROSARIO_BOUNDARY_BBOX.minLat || lat > ROSARIO_BOUNDARY_BBOX.maxLat ||
+        lng < ROSARIO_BOUNDARY_BBOX.minLng || lng > ROSARIO_BOUNDARY_BBOX.maxLng) {
+      return false;
+    }
+
+    // If polygon is loaded, use accurate point-in-polygon check
+    if (rosarioPolygon && rosarioPolygon.length > 0) {
+      return pointInPolygon(lat, lng, rosarioPolygon);
+    }
+
+    // Fallback to bounding box if polygon not loaded yet
+    // This is less accurate but allows the check to work while polygon loads
+    return true;
   };
 
   // Completely local location search function
