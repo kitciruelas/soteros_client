@@ -640,16 +640,7 @@ export default function IncidentReportPage() {
     }
   };
 
-  // Debounced location search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (fields.location.value && locationMethod === 'manual' && !fields.location.value.includes('Barangay')) {
-        searchLocation(fields.location.value);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [fields.location.value, locationMethod]);
+  // Location search removed - only Rosario barangays and Auto-detect are available
 
   // Retry logic with exponential backoff
   const retryWithBackoff = async <T,>(
@@ -927,166 +918,127 @@ export default function IncidentReportPage() {
         </div>
 
         <div className="space-y-4">
-          {/* Location Method Toggle */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label className="block text-sm font-semibold text-gray-700">
-              Location Method:
-            </label>
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={() => setLocationMethod('manual')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  locationMethod === 'manual'
-                    ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <i className="ri-edit-line mr-2"></i>
-                Manual Entry
-              </button>
-              <button
-                type="button"
-                onClick={handleAutoLocation}
-                disabled={isLoadingLocation || locationLoading}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  locationMethod === 'auto'
-                    ? 'bg-green-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                } ${(isLoadingLocation || locationLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {isLoadingLocation || locationLoading ? (
-                  <>
-                    <i className="ri-loader-4-line animate-spin mr-2"></i>
-                    Getting Location...
-                  </>
-                ) : (
-                  <>
-                    <i className="ri-gps-line mr-2"></i>
-                    Auto-Detect
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Location Input with Search */}
-          <div className="relative">
-            {/* Rosario Barangays Dropdown */}
-            <div className="mt-2 mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                <i className="ri-map-pin-line mr-2 text-red-600"></i>
-                Select Barangay (Rosario, Batangas)
-              </label>
-              <select
-                className="w-full px-3 py-3 border border-red-200 rounded-lg text-sm text-red-800 font-medium bg-red-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all mb-1"
-                value={rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === fields.location.value) ? fields.location.value : ''}
-                onChange={e => {
-                  const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
-                  if (selected) {
-                    const locationText = `Barangay ${selected.name}, Rosario, Batangas`;
-                    setValue('location', locationText);
-                    setValue('latitude', selected.lat);
-                    setValue('longitude', selected.lng);
-                    setShowSuggestions(false);
-                    setLocationMethod('manual');
-                    console.log('Barangay selected:', locationText, 'Coordinates:', selected.lat, selected.lng);
-                  } else {
-                    setValue('location', '');
-                    setValue('latitude', null);
-                    setValue('longitude', null);
-                  }
-                }}
-              >
-                <option value="">-- Select Barangay --</option>
-                {rosarioBarangays.map(b => (
-                  <option key={b.name} value={`Barangay ${b.name}, Rosario, Batangas`}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-gray-400 text-xs mt-1">Choose a barangay to quickly fill location and coordinates.</p>
-            </div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+          {/* Rosario Barangays Dropdown */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               <i className="ri-map-pin-line mr-2 text-red-600"></i>
-              Location Description <span className="text-red-500">*</span>
+              Select Barangay (Rosario, Batangas) <span className="text-red-500">*</span>
             </label>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="ri-map-pin-line text-gray-400"></i>
-              </div>
-              <input
-                type="text"
-                name="location"
-                id="location"
-                value={fields.location.value}
-                onChange={(e) => {
-                  // Don't allow editing if a barangay is selected
-                  if (!fields.location.value.includes('Barangay')) {
-                    setValue('location', e.target.value);
-                    if (locationMethod === 'auto') {
-                      setLocationMethod('manual');
-                    }
-                  }
-                }}
-                className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all ${
-                  fields.location.value && fields.location.value.includes('Barangay') 
-                    ? 'border-green-300 bg-green-50 cursor-not-allowed' 
-                    : 'border-gray-300'
-                }`}
-                placeholder={
-                  fields.location.value && fields.location.value.includes('Barangay')
-                    ? 'Barangay selected - location is set'
-                    : locationMethod === 'auto' 
-                      ? 'Auto-detected location will appear here...' 
-                      : 'Enter location description or select a barangay above'
+            <select
+              className="w-full px-4 py-3 border border-red-200 rounded-xl text-sm text-red-800 font-medium bg-red-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+              value={rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === fields.location.value) ? fields.location.value : ''}
+              onChange={e => {
+                const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
+                if (selected) {
+                  const locationText = `Barangay ${selected.name}, Rosario, Batangas`;
+                  setValue('location', locationText);
+                  setValue('latitude', selected.lat);
+                  setValue('longitude', selected.lng);
+                  setShowSuggestions(false);
+                  setLocationMethod('manual');
+                  console.log('Barangay selected:', locationText, 'Coordinates:', selected.lat, selected.lng);
+                } else {
+                  setValue('location', '');
+                  setValue('latitude', null);
+                  setValue('longitude', null);
                 }
-                readOnly={fields.location.value && fields.location.value.includes('Barangay')}
-                required
-              />
+              }}
+              required
+            >
+              <option value="">-- Select Barangay --</option>
+              {rosarioBarangays.map(b => (
+                <option key={b.name} value={`Barangay ${b.name}, Rosario, Batangas`}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-gray-500 text-xs mt-2">Choose a barangay from Rosario, Batangas.</p>
+          </div>
 
-              {/* Loading indicator for search */}
-              {(isSearchingLocation || isReverseGeocoding) && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <i className="ri-loader-4-line animate-spin text-red-600"></i>
-                </div>
+          {/* Auto-Detect Button */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <i className="ri-gps-line mr-2 text-green-600"></i>
+              Or Use Auto-Detect Location
+            </label>
+            <button
+              type="button"
+              onClick={handleAutoLocation}
+              disabled={isLoadingLocation || locationLoading}
+              className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                locationMethod === 'auto' && (latitude && longitude)
+                  ? 'bg-green-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              } ${(isLoadingLocation || locationLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isLoadingLocation || locationLoading ? (
+                <>
+                  <i className="ri-loader-4-line animate-spin mr-2"></i>
+                  Getting Location...
+                </>
+              ) : (
+                <>
+                  <i className="ri-gps-line mr-2"></i>
+                  Auto-Detect My Location
+                </>
               )}
+            </button>
+          </div>
+
+          {/* Location Display (Read-only) */}
+          {fields.location.value && (
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <i className="ri-map-pin-line mr-2 text-red-600"></i>
+                Selected Location
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i className="ri-map-pin-line text-gray-400"></i>
+                </div>
+                <input
+                  type="text"
+                  name="location"
+                  id="location"
+                  value={fields.location.value}
+                  readOnly
+                  className="w-full pl-10 pr-4 py-3 border border-green-300 bg-green-50 rounded-xl text-gray-700 cursor-not-allowed"
+                />
+              </div>
             </div>
+          )}
 
+          {/* Error Messages */}
+          {fields.location.touched && fields.location.error && (
+            <p className="text-red-600 text-sm mt-2">
+              <i className="ri-error-warning-line mr-1"></i>
+              {fields.location.error}
+            </p>
+          )}
 
-            {/* Error Messages */}
-            {fields.location.touched && fields.location.error && (
-              <p className="text-red-600 text-sm mt-2">
-                <i className="ri-error-warning-line mr-1"></i>
-                {fields.location.error}
-              </p>
-            )}
+          {locationError && (
+            <p className="text-red-600 text-sm mt-2">
+              <i className="ri-error-warning-line mr-1"></i>
+              {locationError}
+            </p>
+          )}
 
-            {locationError && (
-              <p className="text-red-600 text-sm mt-2">
-                <i className="ri-error-warning-line mr-1"></i>
-                {locationError}
-              </p>
-            )}
-
-            {/* GPS Coordinates Display */}
-            {latitude && longitude && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                    <i className="ri-gps-line text-green-600 text-sm"></i>
-                  </div>
-                  <div>
-                    <p className="text-green-800 font-medium text-sm">GPS Location Detected</p>
-                    <p className="text-green-600 text-xs">
-                      Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-                    </p>
-                  </div>
+          {/* GPS Coordinates Display */}
+          {(latitude && longitude) && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                  <i className="ri-gps-line text-green-600 text-sm"></i>
+                </div>
+                <div>
+                  <p className="text-green-800 font-medium text-sm">GPS Location Detected</p>
+                  <p className="text-green-600 text-xs">
+                    Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                  </p>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
