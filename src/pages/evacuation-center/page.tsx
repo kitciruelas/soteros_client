@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import EvacuationCenterMap from '../../components/EvacuationCenterMap';
@@ -50,6 +50,7 @@ const EvacuationCenterPage: React.FC = () => {
   const [selectedCenterDetails, setSelectedCenterDetails] = useState<EvacuationCenter | null>(null);
   const [showAllCenters, setShowAllCenters] = useState(false);
   const [centersWithRoutes, setCentersWithRoutes] = useState<Array<EvacuationCenter & {distance: number, duration: number}>>([]);
+  const nearbyCentersRef = useRef<HTMLDivElement>(null);
 
   // Get user location
   const { latitude, longitude, error: locationError, loading: locationLoading, getCurrentLocation } = useGeolocation();
@@ -264,6 +265,15 @@ const EvacuationCenterPage: React.FC = () => {
     setSelectedCenter(center);
   };
 
+  // Scroll to nearby centers section
+  const scrollToNearbyCenters = () => {
+    if (nearbyCentersRef.current) {
+      nearbyCentersRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
 
   // Get resources for a specific center
   const getResourcesForCenter = (centerId: number): EvacuationResource[] => {
@@ -640,21 +650,28 @@ const EvacuationCenterPage: React.FC = () => {
                       </button>
                     </div>
                   ) : userLocation ? (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <button
+                      onClick={scrollToNearbyCenters}
+                      className="w-full flex items-center space-x-3 hover:bg-green-50 rounded-xl p-3 transition-all duration-200 cursor-pointer group"
+                      title="Click to scroll to nearby centers"
+                    >
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
                         <i className="ri-map-pin-line text-green-600 text-lg"></i>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-green-700 font-medium">Location Found</p>
-                        <p className="text-green-600 text-sm">
+                      <div className="flex-1 text-left">
+                        <p className="text-green-700 font-medium group-hover:text-green-800">Location Found</p>
+                        <p className="text-green-600 text-sm group-hover:text-green-700">
                           {nearbyCenters.length} closest centers found
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">{nearbyCenters.length}</div>
-                        <div className="text-xs text-green-500">closest</div>
+                        <div className="text-lg font-bold text-green-600 group-hover:text-green-700">{nearbyCenters.length}</div>
+                        <div className="text-xs text-green-500 group-hover:text-green-600">closest</div>
                       </div>
-                    </div>
+                      <div className="text-green-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i className="ri-arrow-down-line text-lg"></i>
+                      </div>
+                    </button>
                   ) : (
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -772,7 +789,10 @@ const EvacuationCenterPage: React.FC = () => {
 
               {/* Enhanced Nearby Centers List */}
               {nearbyCenters.length > 0 && (
-                <div className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/30 backdrop-blur-sm rounded-3xl shadow-2xl border border-blue-200/50 p-8 mb-8">
+                <div 
+                  ref={nearbyCentersRef}
+                  className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/30 backdrop-blur-sm rounded-3xl shadow-2xl border border-blue-200/50 p-8 mb-8"
+                >
                   {/* Header Section */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                     <div className="flex items-center space-x-4">
