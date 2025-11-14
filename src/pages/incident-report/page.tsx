@@ -574,6 +574,9 @@ export default function IncidentReportPage() {
   const additionalBoundaryPoints = [
     { lat: 13.701325, lng: 121.319271 },
     { lat: 13.7032933079099, lng: 121.32814414565625 },
+    { lat: 13.705690, lng: 121.339967 },
+    { lat: 13.695825942378994, lng: 121.30536321612809 },
+    { lat: 13.863121, lng: 121.166777 },
   ];
 
   // Combine boundary barangays, regular barangays, and additional boundary points for boundary calculation
