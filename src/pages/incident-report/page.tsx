@@ -567,6 +567,7 @@ export default function IncidentReportPage() {
     { name: 'Salao', lat: 13.8578, lng: 121.3455 },
     { name: 'Santa Cruz', lat: 13.8599, lng: 121.1853 },
     { name: 'Malaya', lat: 13.8535, lng: 121.1720 },
+    { name: 'Matamis', lat: 13.7216, lng: 121.3305 }, // Part of Rosario boundary area
   ];
 
   // Additional boundary reference points for more accurate boundary calculation
