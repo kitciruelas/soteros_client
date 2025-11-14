@@ -909,6 +909,16 @@ export default function IncidentReportPage() {
       const lat = typeof fields.latitude.value === 'number' ? fields.latitude.value : parseFloat(String(fields.latitude.value));
       const lng = typeof fields.longitude.value === 'number' ? fields.longitude.value : parseFloat(String(fields.longitude.value));
       
+      if (!checkWithinBoundary(lat, lng)) {
+        setBoundaryError('You are outside Rosario, Batangas. Auto-detect is only available within the municipality boundary. Please select a barangay manually.');
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'You must be within Rosario, Batangas to submit a report using auto-detect. Please select a barangay from the dropdown instead.',
+          durationMs: 6000
+        });
+        return;
+      }
     }
 
     // Validate all fields
@@ -1277,23 +1287,6 @@ export default function IncidentReportPage() {
                 <i className="ri-error-warning-line mr-1"></i>
                 {locationError}
               </p>
-            )}
-
-            {/* Boundary Error Message */}
-            {boundaryError && (
-              <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-start space-x-2">
-                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i className="ri-error-warning-line text-red-600 text-sm"></i>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-red-800 font-medium text-sm">Location Outside Boundary</p>
-                    <p className="text-red-600 text-xs mt-1">
-                      {boundaryError}
-                    </p>
-                  </div>
-                </div>
-              </div>
             )}
 
             {/* GPS Coordinates Display */}
