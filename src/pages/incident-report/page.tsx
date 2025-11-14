@@ -909,16 +909,6 @@ export default function IncidentReportPage() {
       const lat = typeof fields.latitude.value === 'number' ? fields.latitude.value : parseFloat(String(fields.latitude.value));
       const lng = typeof fields.longitude.value === 'number' ? fields.longitude.value : parseFloat(String(fields.longitude.value));
       
-      if (!checkWithinBoundary(lat, lng)) {
-        setBoundaryError('You are outside Rosario, Batangas. Auto-detect is only available within the municipality boundary. Please select a barangay manually.');
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'You must be within Rosario, Batangas to submit a report using auto-detect. Please select a barangay from the dropdown instead.',
-          durationMs: 6000
-        });
-        return;
-      }
     }
 
     // Validate all fields
