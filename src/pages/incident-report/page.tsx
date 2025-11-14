@@ -560,14 +560,24 @@ export default function IncidentReportPage() {
     { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
   ];
 
+  // Boundary barangays - these are explicitly on the municipal boundary
+  const boundaryBarangays = [
+    { name: 'Antipolo', lat: 13.7080, lng: 121.3096 },
+    { name: 'Palakpak', lat: 13.7079, lng: 121.3320 },
+    { name: 'Salao', lat: 13.8578, lng: 121.3455 },
+    { name: 'Santa Cruz', lat: 13.8599, lng: 121.1853 },
+    { name: 'Malaya', lat: 13.8535, lng: 121.1720 },
+  ];
+
   // Additional boundary reference points for more accurate boundary calculation
   const additionalBoundaryPoints = [
     { lat: 13.701325, lng: 121.319271 },
     { lat: 13.7032933079099, lng: 121.32814414565625 },
   ];
 
-  // Combine barangays and additional boundary points for boundary calculation
-  const allBoundaryPoints = [...rosarioBarangays, ...additionalBoundaryPoints];
+  // Combine boundary barangays, regular barangays, and additional boundary points for boundary calculation
+  // Boundary barangays are included twice to emphasize their importance in the boundary calculation
+  const allBoundaryPoints = [...rosarioBarangays, ...boundaryBarangays, ...additionalBoundaryPoints];
 
   // Calculate convex hull (boundary) from barangay coordinates using Graham scan algorithm
   const calculateRosarioBoundary = (): [number, number][] => {
