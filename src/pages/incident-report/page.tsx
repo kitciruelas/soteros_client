@@ -52,6 +52,8 @@ export default function IncidentReportPage() {
   const [isReverseGeocoding] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [boundaryError, setBoundaryError] = useState('');
+  const [osmBoundary, setOsmBoundary] = useState<[number, number][] | null>(null);
+  const [isLoadingOSMBoundary, setIsLoadingOSMBoundary] = useState(false);
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -570,7 +572,25 @@ export default function IncidentReportPage() {
     { name: 'Matamis', lat: 13.7216, lng: 121.3305 }, // Part of Rosario boundary area
   ];
 
+  // OSM Relation ID for Rosario, Batangas boundary (Relation 198514332)
+  // Contains multiple ways that form the complete municipal boundary
+  const ROSARIO_OSM_RELATION_ID = 198514332;
+  
+  // OSM Way IDs that form the Rosario boundary (from relation 198514332)
+  // These can be used to fetch exact boundary coordinates from OSM
+  const rosarioOSMWayIds = [
+    821670470, 821670363, 222632364, 821670466, 821670464, 821670467, 821670469,
+    821670554, 1380479096, 821235810, 821670372, 821235821, 821235813, 821235819,
+    821235816, 821235822, 983432851, 983432849, 821235815, 983512850, 777429503,
+    777429502, 821235857, 983432831, 983432830, 777429506, 777429501, 983432845,
+    983432846, 983432843, 978260899, 983432840, 983432839, 821235837, 821235850,
+    751431855, 821235868, 358516948, 821670506, 246700985, 757467260, 905259170,
+    905259168, 908589825, 742326407, 908589827, 742326411, 905259166, 1238256972
+  ];
+
+
   // Additional boundary reference points for more accurate boundary calculation
+  // Used as fallback if OSM data is unavailable
   const additionalBoundaryPoints = [
     { lat: 13.701325, lng: 121.319271 },
     { lat: 13.7032933079099, lng: 121.32814414565625 },
@@ -661,8 +681,91 @@ export default function IncidentReportPage() {
     ];
   };
 
-  // Get Rosario boundary polygon
-  const rosarioBoundary = useMemo(() => calculateRosarioBoundary(), []);
+  // Function to fetch OSM boundary coordinates from Overpass API
+  const fetchOSMBoundary = React.useCallback(async (): Promise<[number, number][]> => {
+    try {
+      // Use Overpass API to get relation data
+      const overpassQuery = `
+        [out:json][timeout:25];
+        relation(${ROSARIO_OSM_RELATION_ID});
+        out geom;
+      `;
+      
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: overpassQuery,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.elements || data.elements.length === 0) {
+        throw new Error('No boundary data found');
+      }
+
+      const relation = data.elements.find((el: any) => el.type === 'relation');
+      if (!relation || !relation.members) {
+        throw new Error('Invalid relation data');
+      }
+
+      // Collect all coordinates from outer ways
+      const allCoordinates: [number, number][] = [];
+      const outerWays = relation.members.filter((m: any) => m.role === 'outer' && m.type === 'way');
+      
+      for (const way of outerWays) {
+        if (way.geometry && Array.isArray(way.geometry)) {
+          const wayCoords = way.geometry.map((point: any) => [point.lon, point.lat] as [number, number]);
+          allCoordinates.push(...wayCoords);
+        }
+      }
+
+      // Remove duplicate coordinates
+      const uniqueCoords = Array.from(
+        new Map(allCoordinates.map(coord => [`${coord[0]},${coord[1]}`, coord])).values()
+      );
+
+      return uniqueCoords.length > 0 ? uniqueCoords : [];
+    } catch (error) {
+      console.error('Failed to fetch OSM boundary:', error);
+      return [];
+    }
+  }, []);
+
+  // Fetch OSM boundary on mount
+  useEffect(() => {
+    const loadOSMBoundary = async () => {
+      setIsLoadingOSMBoundary(true);
+      try {
+        const osmCoords = await fetchOSMBoundary();
+        if (osmCoords.length > 0) {
+          setOsmBoundary(osmCoords);
+          console.log('OSM boundary loaded successfully:', osmCoords.length, 'points');
+        } else {
+          console.warn('No OSM boundary data found, using calculated boundary');
+        }
+      } catch (error) {
+        console.error('Failed to load OSM boundary, using calculated boundary:', error);
+      } finally {
+        setIsLoadingOSMBoundary(false);
+      }
+    };
+
+    loadOSMBoundary();
+  }, [fetchOSMBoundary]);
+
+  // Get Rosario boundary polygon - use OSM boundary if available, otherwise calculate from points
+  const rosarioBoundary = useMemo(() => {
+    if (osmBoundary && osmBoundary.length > 0) {
+      return osmBoundary;
+    }
+    return calculateRosarioBoundary();
+  }, [osmBoundary]);
 
   // Calculate center of Rosario for map view
   const rosarioCenter: [number, number] = useMemo(() => {
