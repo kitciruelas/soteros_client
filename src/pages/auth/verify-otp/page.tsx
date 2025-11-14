@@ -1,233 +1,265 @@
-import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import Button from '../../../components/base/Button';
-import Input from '../../../components/base/Input';
-import useForm from '../../../hooks/useForm';
-import Navbar from '../../../components/Navbar';
-import { useToast } from '../../../components/base/Toast';
+"use client"
+
+import type React from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import Button from "../../../components/base/Button"
+import Input from "../../../components/base/Input"
+import useForm from "../../../hooks/useForm"
+import Navbar from "../../../components/Navbar"
+import { useToast } from "../../../components/base/Toast"
+import { apiRequest } from "../../../utils/api"
 
 interface VerifyOTPFormData {
-  otp: string;
+  otp: string
 }
 
 export default function VerifyOTPPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { showToast } = useToast();
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { showToast } = useToast()
 
   // Get email from location state or query params
-  const email = location.state?.email || new URLSearchParams(location.search).get('email') || '';
+  const email = location.state?.email || new URLSearchParams(location.search).get("email") || ""
 
   const { fields, setValue, validateAll, getValues, isSubmitting, setIsSubmitting } = useForm<VerifyOTPFormData>(
     {
-      otp: ''
+      otp: "",
     },
     {
       otp: {
         required: true,
-        pattern: /^\d{6}$/
-      }
-    }
-  );
+        pattern: /^\d{6}$/,
+        custom: (value: string) => {
+          if (!value) return "Verification code is required"
+          if (!/^\d{6}$/.test(value)) return "Please enter a valid 6-digit code"
+          return null
+        },
+      },
+    },
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!validateAll()) return;
+    if (!validateAll()) return
 
-    const formData = getValues();
+    const formData = getValues()
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       // Verify OTP with backend
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
-      const response = await fetch(`${apiUrl}/auth/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const data = await apiRequest("/auth/verify-otp", {
+        method: "POST",
         body: JSON.stringify({
           email: email.toLowerCase(),
-          otp: formData.otp
-        })
-      });
+          otp: formData.otp,
+        }),
+      })
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data && data.success) {
         // Show success toast
         showToast({
-          type: 'success',
-          title: 'Code Verified',
-          message: 'OTP verified successfully. Redirecting to reset password...',
-          durationMs: 2000
-        });
+          type: "success",
+          title: "Code Verified",
+          message: "OTP verified successfully. Redirecting to reset password...",
+          durationMs: 3000,
+        })
 
         // OTP verified successfully, redirect to reset password
         setTimeout(() => {
-          navigate('/auth/reset-password', {
+          navigate("/auth/reset-password", {
             state: {
               email: email,
-              otp: formData.otp
-            }
-          });
-        }, 1500);
+              otp: formData.otp,
+            },
+          })
+        }, 2000)
       } else {
-        throw new Error(data.message || 'Invalid verification code');
+        throw new Error(data?.message || "Invalid verification code")
       }
-
-    } catch (error) {
-      console.error('OTP verification failed:', error);
+    } catch (error: any) {
+      console.error("OTP verification failed:", error)
+      const errorMessage = error?.message || "Invalid verification code. Please try again."
       showToast({
-        type: 'error',
-        title: 'Verification Failed',
-        message: error instanceof Error ? error.message : 'Invalid verification code. Please try again.',
-        durationMs: 5000
-      });
+        type: "error",
+        title: "Verification Failed",
+        message: errorMessage,
+        durationMs: 5000,
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleResendOTP = async () => {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
-      const response = await fetch(`${apiUrl}/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const data = await apiRequest("/auth/forgot-password", {
+        method: "POST",
         body: JSON.stringify({
-          email: email
-        })
-      });
+          email: email.toLowerCase(),
+        }),
+      })
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data && data.success) {
         showToast({
-          type: 'success',
-          title: 'Code Resent',
-          message: 'Verification code has been sent again to your email.',
-          durationMs: 3000
-        });
+          type: "success",
+          title: "Code Resent",
+          message: "Verification code has been sent again to your email.",
+          durationMs: 3000,
+        })
       } else {
-        throw new Error(data.message || 'Failed to resend code');
+        throw new Error(data?.message || "Failed to resend code")
       }
-
-    } catch (error) {
-      console.error('Resend OTP failed:', error);
+    } catch (error: any) {
+      console.error("Resend OTP failed:", error)
+      const errorMessage = error?.message || "Failed to resend verification code. Please try again later."
       showToast({
-        type: 'error',
-        title: 'Failed to Resend Code',
-        message: error instanceof Error ? error.message : 'Failed to resend verification code. Please try again later.',
-        durationMs: 5000
-      });
+        type: "error",
+        title: "Failed to Resend Code",
+        message: errorMessage,
+        durationMs: 5000,
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // Redirect if no email
   if (!email) {
-    navigate('/auth/forgot-password');
-    return null;
+    navigate("/auth/forgot-password")
+    return null
   }
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-blue-600 rounded-2xl flex items-center justify-center">
-            <i className="ri-shield-check-line text-2xl text-white"></i>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify your email</h1>
-          <p className="text-gray-600">Enter the 6-digit code sent to your email</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8 relative overflow-hidden">
+        {/* Floating background illustrations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-indigo-300/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-indigo-200/20 to-blue-300/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Display */}
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Code sent to:</p>
-              <p className="font-medium text-gray-900">{email}</p>
+        <div className="w-full max-w-md relative z-10">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/25 transform hover:scale-105 transition-all duration-300 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-3xl blur opacity-50 animate-pulse"></div>
+              <i className="ri-shield-check-line text-3xl text-white relative z-10"></i>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Verify Your Email
+            </h1>
+            <p className="text-gray-600 text-lg">Enter the 6-digit code sent to your email</p>
+          </div>
+
+          {/* Verification Form */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100/50 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-100/50 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+              {/* Email Display */}
+              <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
+                <p className="text-sm text-gray-600 mb-1 flex items-center justify-center gap-2">
+                  <i className="ri-mail-line text-blue-600"></i>
+                  Code sent to:
+                </p>
+                <p className="font-semibold text-gray-900">{email}</p>
+              </div>
+
+              <div>
+                <Input
+                  label="Verification Code"
+                  type="text"
+                  name="otp"
+                  id="otp"
+                  value={fields.otp.value}
+                  onChange={(e) => {
+                    // Only allow digits and limit to 6 characters
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 6)
+                    setValue("otp", value)
+                  }}
+                  error={fields.otp.touched ? fields.otp.error : ""}
+                  placeholder="000000"
+                  required
+                  autoComplete="one-time-code"
+                  icon={<i className="ri-shield-check-line"></i>}
+                />
+                <style>{`
+                  #otp {
+                    text-align: center;
+                    font-size: 1.5rem;
+                    letter-spacing: 0.5em;
+                    font-family: 'Courier New', monospace;
+                  }
+                `}</style>
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                fullWidth
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                {isSubmitting ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin"></i>
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-check-line mr-2"></i>
+                    Verify Code
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Resend Code */}
+            <div className="text-center mt-6 relative z-10">
+              <p className="text-sm text-gray-500 mb-3">Didn't receive the code?</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResendOTP}
+                disabled={isSubmitting}
+                className="border-blue-300 text-blue-600 hover:bg-blue-50"
+              >
+                <i className="ri-refresh-line mr-2"></i>
+                Resend Code
+              </Button>
             </div>
 
-            <Input
-              label="Verification Code"
-              type="text"
-              name="otp"
-              id="otp"
-              value={fields.otp.value}
-              onChange={(e) => setValue('otp', e.target.value)}
-              error={fields.otp.touched ? fields.otp.error : ''}
-              placeholder="Enter 6-digit code"
-              required
-              icon={<i className="ri-lock-password-line"></i>}
-            />
+            {/* Back to Forgot Password */}
+            <div className="text-center mt-8 pt-6 border-t border-gray-100 relative z-10">
+              <Link
+                to="/auth/forgot-password"
+                className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-500 cursor-pointer font-medium transition-colors duration-200"
+              >
+                <i className="ri-arrow-left-line"></i>
+                Change email address
+              </Link>
+            </div>
+          </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              fullWidth
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <i className="ri-loader-4-line animate-spin"></i>
-                  Verifying...
-                </>
-              ) : (
-                'Verify code'
-              )}
-            </Button>
-          </form>
-
-          {/* Resend Code */}
+          {/* Help Text */}
           <div className="text-center mt-6">
-            <p className="text-sm text-gray-500 mb-3">
-              Didn't receive the code?
+            <p className="text-xs text-gray-500">
+              Having trouble? Check your spam folder or{" "}
+              <Link to="/auth/forgot-password" className="text-blue-600 hover:text-blue-500 cursor-pointer font-medium">
+                try again
+              </Link>
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResendOTP}
-              disabled={isSubmitting}
-            >
-              Resend code
-            </Button>
           </div>
-
-          {/* Back to Forgot Password */}
-          <div className="text-center mt-8 pt-6 border-t border-gray-100">
-            <Link
-              to="/auth/forgot-password"
-              className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-500 cursor-pointer font-medium"
-            >
-              <i className="ri-arrow-left-line"></i>
-              Change email address
-            </Link>
-          </div>
-        </div>
-
-        {/* Help Text */}
-        <div className="text-center mt-6">
-          <p className="text-xs text-gray-500">
-            Having trouble? Check your spam folder or contact{' '}
-            <a href="mailto:support@example.com" className="text-blue-600 hover:text-blue-500 cursor-pointer">
-              support
-            </a>
-          </p>
         </div>
       </div>
-    </div>
     </>
-  );
+  )
 }
