@@ -217,12 +217,12 @@ export default function SignupPage() {
       if (data && data.success) {
         console.log("Registration successful:", data)
 
-        // Show success toast
+        // Show success toast with verification email info
         showToast({
           type: "success",
-          title: "Account Created Successfully",
-          message: "Please check your email for a verification code to activate your account.",
-          durationMs: 4000
+          title: "Account Created Successfully!",
+          message: "Verification email sent! Please check your inbox for the verification code to activate your account.",
+          durationMs: 5000
         })
 
         // Redirect to email verification page
@@ -230,7 +230,7 @@ export default function SignupPage() {
           navigate("/auth/verify-email", {
             state: { email: formData.email }
           })
-        }, 1500)
+        }, 2000)
         return
       } else {
         const errorMsg = data?.message || "Registration failed. Please try again."
@@ -592,7 +592,7 @@ export default function SignupPage() {
               {isSubmitting ? (
                 <>
                   <i className="ri-loader-4-line animate-spin"></i>
-                  Creating account...
+                  Sending verification email...
                 </>
               ) : (
                 <>
