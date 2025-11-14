@@ -1188,7 +1188,7 @@ export default function IncidentReportPage() {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
             <i className="ri-file-text-line mr-2 text-purple-600"></i>
-            Detailed Description <span className="text-red-500">*</span>
+            Detailed Description <span className="text-gray-500 text-xs">(Optional)</span>
           </label>
           <textarea
             value={fields.description.value}
@@ -1201,7 +1201,6 @@ export default function IncidentReportPage() {
 • Who was involved?
 • Any injuries or damages?
 • Current situation status..."
-            required
           />
           {fields.description.touched && fields.description.error && (
             <p className="text-red-600 text-sm mt-2">{fields.description.error}</p>
