@@ -577,6 +577,7 @@ export default function IncidentReportPage() {
     { lat: 13.705690, lng: 121.339967 },
     { lat: 13.695825942378994, lng: 121.30536321612809 },
     { lat: 13.863121, lng: 121.166777 },
+    { lat: 13.691527, lng: 121.294116 },
   ];
 
   // Combine boundary barangays, regular barangays, and additional boundary points for boundary calculation
