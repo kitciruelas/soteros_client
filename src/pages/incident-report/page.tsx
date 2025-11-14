@@ -1322,7 +1322,6 @@ export default function IncidentReportPage() {
               Report an Incident
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-              Emergency Incident Reporting System
               <span className="block text-lg text-gray-500 mt-2">Submit incident reports as a guest or create an account for better tracking</span>
             </p>
 
