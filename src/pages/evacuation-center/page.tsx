@@ -40,7 +40,7 @@ const EvacuationCenterPage: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [maxNearbyCount] = useState(3); // Show only the 3 closest centers
+  const [maxNearbyCount] = useState(3);
   const [selectedCenter, setSelectedCenter] = useState<EvacuationCenter | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'full' | 'closed'>('all');
@@ -52,9 +52,7 @@ const EvacuationCenterPage: React.FC = () => {
   const [centersWithRoutes, setCentersWithRoutes] = useState<Array<EvacuationCenter & {distance: number, duration: number}>>([]);
   const nearbyCentersRef = useRef<HTMLDivElement>(null);
 
-  // Get user location
   const { latitude, longitude, error: locationError, loading: locationLoading, getCurrentLocation } = useGeolocation();
-
 
   // Load evacuation resources for a specific center
   const loadEvacuationResources = async (centerId: number) => {
@@ -164,9 +162,8 @@ const EvacuationCenterPage: React.FC = () => {
     window.location.href = '/';
   };
 
-  // Calculate straight-line distance between two points (fallback)
   const calculateStraightLineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Earth's radius in kilometers
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -177,39 +174,29 @@ const EvacuationCenterPage: React.FC = () => {
     return R * c;
   };
 
-  // Calculate route-based distance using Google Maps-like calculation
   const calculateRouteDistance = async (lat1: number, lon1: number, lat2: number, lon2: number): Promise<{distance: number, duration: number}> => {
     try {
-      // For real implementation, you would use Google Maps Directions API:
-      // const response = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${lat1},${lon1}&destination=${lat2},${lon2}&key=YOUR_API_KEY`);
-      
-      // For now, we'll use a more realistic approximation based on actual road networks
       const straightDistance = calculateStraightLineDistance(lat1, lon1, lat2, lon2);
       
-      // More realistic road distance calculation based on terrain and road network
       let routeDistance;
       if (straightDistance < 5) {
-        // Short distances: roads are usually more direct
         routeDistance = straightDistance * 1.2;
       } else if (straightDistance < 15) {
-        // Medium distances: more winding roads
         routeDistance = straightDistance * 1.4;
       } else {
-        // Longer distances: may need to use highways, more indirect routes
         routeDistance = straightDistance * 1.6;
       }
       
-      // More realistic travel time calculation
       let averageSpeed;
       if (routeDistance < 5) {
-        averageSpeed = 25; // Local roads, traffic lights
+        averageSpeed = 25;
       } else if (routeDistance < 15) {
-        averageSpeed = 35; // Mix of local and main roads
+        averageSpeed = 35;
       } else {
-        averageSpeed = 45; // Highways and main roads
+        averageSpeed = 45;
       }
       
-      const estimatedDuration = (routeDistance / averageSpeed) * 60; // Convert to minutes
+      const estimatedDuration = (routeDistance / averageSpeed) * 60;
       
       return {
         distance: routeDistance,
@@ -217,7 +204,6 @@ const EvacuationCenterPage: React.FC = () => {
       };
     } catch (error) {
       console.error('Error calculating route distance:', error);
-      // Fallback to straight-line distance
       const fallbackDistance = calculateStraightLineDistance(lat1, lon1, lat2, lon2);
       return {
         distance: fallbackDistance,
@@ -358,7 +344,7 @@ const EvacuationCenterPage: React.FC = () => {
           </div>
         )}
         <img
-          src={imageUrl}
+          src={imageUrl || "/placeholder.svg"}
           alt={resource.name}
           className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
           onClick={onClick}
@@ -1268,7 +1254,7 @@ const EvacuationCenterPage: React.FC = () => {
               ×
             </button>
             <img
-            src={selectedImage?.src}
+            src={selectedImage?.src || "/placeholder.svg"}
             alt={selectedImage?.alt}
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
             />
@@ -1338,7 +1324,7 @@ const EvacuationCenterPage: React.FC = () => {
                       <div className="relative inline-block">
                         {resource.picture ? (
                           <img
-                            src={getImageUrl(resource.picture)}
+                            src={getImageUrl(resource.picture) || "/placeholder.svg"}
                             alt={resource.name}
                             className="w-48 h-48 object-cover rounded-lg shadow-md cursor-pointer hover:scale-105 transition-transform"
                             onClick={() => setSelectedImage({ 
