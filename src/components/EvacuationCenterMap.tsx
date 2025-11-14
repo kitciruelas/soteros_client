@@ -300,84 +300,111 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
             .filter((way: any) => way && way.geometry);
 
           if (outerWays.length > 0) {
+            console.log(`Found ${outerWays.length} outer ways in Rosario boundary relation`);
+            
             // Combine all outer ways to form complete polygon
             // For multipolygons, we need to connect all ways in order
             const connectWays = (ways: any[]): [number, number][] => {
               if (ways.length === 0) return [];
+              if (ways.length === 1) {
+                // Single way, just return its coordinates
+                return ways[0].geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
+              }
               
-              const result: [number, number][] = [];
               const used = new Set<number>();
+              const allPaths: [number, number][][] = [];
               
-              // Start with the first way
-              let currentWay = ways[0];
-              used.add(0);
-              
-              // Extract coordinates from first way
-              let currentPath = currentWay.geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
-              
-              // Try to connect remaining ways
+              // Try to build connected paths
               while (used.size < ways.length) {
-                let found = false;
-                const lastPoint = currentPath[currentPath.length - 1];
-                
-                // Find a way that connects to the current path
+                // Find first unused way
+                let startIdx = -1;
                 for (let i = 0; i < ways.length; i++) {
-                  if (used.has(i)) continue;
-                  
-                  const way = ways[i];
-                  const wayCoords = way.geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
-                  const firstPoint = wayCoords[0];
-                  const lastWayPoint = wayCoords[wayCoords.length - 1];
-                  
-                  // Check if this way connects to the end of current path
-                  const tolerance = 0.0001; // Small tolerance for floating point comparison
-                  const connectsToEnd = 
-                    (Math.abs(firstPoint[0] - lastPoint[0]) < tolerance && 
-                     Math.abs(firstPoint[1] - lastPoint[1]) < tolerance);
-                  const connectsReversed = 
-                    (Math.abs(lastWayPoint[0] - lastPoint[0]) < tolerance && 
-                     Math.abs(lastWayPoint[1] - lastPoint[1]) < tolerance);
-                  
-                  if (connectsToEnd) {
-                    // Add way coordinates (skip first point as it's already in path)
-                    currentPath = [...currentPath, ...wayCoords.slice(1)];
-                    used.add(i);
-                    found = true;
-                    break;
-                  } else if (connectsReversed) {
-                    // Add way coordinates in reverse (skip last point)
-                    currentPath = [...currentPath, ...wayCoords.reverse().slice(1)];
-                    used.add(i);
-                    found = true;
+                  if (!used.has(i)) {
+                    startIdx = i;
                     break;
                   }
                 }
                 
-                if (!found) {
-                  // No more ways to connect, save current path and start new one
-                  result.push(...currentPath);
+                if (startIdx === -1) break;
+                
+                // Start building a path from this way
+                let currentPath: [number, number][] = ways[startIdx].geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
+                used.add(startIdx);
+                let pathStartWayId = ways[startIdx].id;
+                
+                // Try to extend this path by connecting other ways
+                let extended = true;
+                let iterations = 0;
+                const maxIterations = ways.length * 2; // Prevent infinite loops
+                
+                while (extended && used.size < ways.length && iterations < maxIterations) {
+                  iterations++;
+                  extended = false;
+                  const lastPoint = currentPath[currentPath.length - 1];
+                  const firstPoint = currentPath[0];
                   
-                  // Find next unused way
+                  // Try to find a way that connects to either end
                   for (let i = 0; i < ways.length; i++) {
-                    if (!used.has(i)) {
-                      currentWay = ways[i];
-                      currentPath = currentWay.geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
+                    if (used.has(i)) continue;
+                    
+                    const way = ways[i];
+                    if (!way.geometry || way.geometry.length === 0) continue;
+                    
+                    const wayCoords = way.geometry.map((point: any) => [point.lat, point.lon] as [number, number]);
+                    const wayFirst = wayCoords[0];
+                    const wayLast = wayCoords[wayCoords.length - 1];
+                    
+                    const tolerance = 0.0001; // ~11 meters
+                    
+                    // Check if connects to end of current path
+                    if (Math.abs(wayFirst[0] - lastPoint[0]) < tolerance && 
+                        Math.abs(wayFirst[1] - lastPoint[1]) < tolerance) {
+                      currentPath = [...currentPath, ...wayCoords.slice(1)];
                       used.add(i);
-                      found = true;
+                      extended = true;
+                      break;
+                    } else if (Math.abs(wayLast[0] - lastPoint[0]) < tolerance && 
+                               Math.abs(wayLast[1] - lastPoint[1]) < tolerance) {
+                      currentPath = [...currentPath, ...wayCoords.reverse().slice(1)];
+                      used.add(i);
+                      extended = true;
+                      break;
+                    }
+                    // Check if connects to start of current path (reverse order)
+                    else if (Math.abs(wayLast[0] - firstPoint[0]) < tolerance && 
+                             Math.abs(wayLast[1] - firstPoint[1]) < tolerance) {
+                      currentPath = [...wayCoords.slice(0, -1).reverse(), ...currentPath];
+                      used.add(i);
+                      extended = true;
+                      break;
+                    } else if (Math.abs(wayFirst[0] - firstPoint[0]) < tolerance && 
+                               Math.abs(wayFirst[1] - firstPoint[1]) < tolerance) {
+                      currentPath = [...wayCoords.slice(0, -1), ...currentPath];
+                      used.add(i);
+                      extended = true;
                       break;
                     }
                   }
-                  
-                  if (!found) break;
                 }
+                
+                allPaths.push(currentPath);
+                console.log(`Connected path ${allPaths.length}: ${currentPath.length} points, started from way ${pathStartWayId}, used ${used.size}/${ways.length} ways`);
               }
               
-              // Add remaining path
-              if (currentPath.length > 0) {
-                result.push(...currentPath);
+              // Return the longest path (main boundary) or combine all if needed
+              if (allPaths.length === 0) {
+                console.warn('No paths could be built from ways');
+                return [];
               }
               
-              return result;
+              // Find the longest path (likely the main boundary)
+              const mainPath = allPaths.reduce((longest, path) => 
+                path.length > longest.length ? path : longest
+              );
+              
+              console.log(`Selected main boundary path with ${mainPath.length} points from ${allPaths.length} path(s)`);
+              
+              return mainPath;
             };
             
             const combinedCoordinates = connectWays(outerWays);
@@ -386,8 +413,15 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
               // Close the polygon if not already closed
               const first = combinedCoordinates[0];
               const last = combinedCoordinates[combinedCoordinates.length - 1];
-              if (first[0] !== last[0] || first[1] !== last[1]) {
+              const distance = Math.sqrt(
+                Math.pow(first[0] - last[0], 2) + Math.pow(first[1] - last[1], 2)
+              );
+              
+              if (distance > 0.0001) {
                 combinedCoordinates.push([first[0], first[1]]);
+                console.log('Polygon closed (endpoints were', distance.toFixed(6), 'degrees apart)');
+              } else {
+                console.log('Polygon already closed');
               }
               
               // Cache the polygon
@@ -397,9 +431,13 @@ const EvacuationCenterMap: React.FC<EvacuationCenterMapProps> = ({
                 console.error('Error caching polygon:', error);
               }
               
-              console.log('Rosario boundary polygon loaded:', combinedCoordinates.length, 'points from', outerWays.length, 'ways');
+              console.log('✅ Rosario boundary polygon loaded:', combinedCoordinates.length, 'points from', outerWays.length, 'ways');
               return combinedCoordinates;
+            } else {
+              console.error('Failed to combine ways into polygon');
             }
+          } else {
+            console.warn('No outer ways found in relation');
           }
         }
       }

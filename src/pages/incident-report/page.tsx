@@ -13,7 +13,17 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import PrivacyPolicyModal from '../../components/PrivacyPolicyModal';
 import TermsOfServiceModal from '../../components/TermsOfServiceModal';
+import { MapContainer, TileLayer, Polygon, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface IncidentReportFormData {
   incidentType: string;
@@ -43,6 +53,7 @@ export default function IncidentReportPage() {
   const [boundaryError, setBoundaryError] = useState('');
   const [rosarioPolygon, setRosarioPolygon] = useState<number[][] | null>(null);
   const [isLoadingPolygon, setIsLoadingPolygon] = useState(false);
+  const [showMap, setShowMap] = useState(true);
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -661,87 +672,113 @@ export default function IncidentReportPage() {
             .filter((way: any) => way && way.geometry);
 
           if (outerWays.length > 0) {
+            console.log(`Found ${outerWays.length} outer ways in Rosario boundary relation`);
+            
             // Combine all outer ways to form complete polygon
             // For multipolygons, we need to connect all ways in order
-            const allCoordinates: number[][] = [];
             
             // Function to connect ways by matching endpoints
             const connectWays = (ways: any[]): number[][] => {
               if (ways.length === 0) return [];
+              if (ways.length === 1) {
+                // Single way, just return its coordinates
+                return ways[0].geometry.map((point: any) => [point.lat, point.lon]);
+              }
               
-              const result: number[][] = [];
               const used = new Set<number>();
+              const allPaths: number[][][] = [];
               
-              // Start with the first way
-              let currentWay = ways[0];
-              used.add(0);
-              
-              // Extract coordinates from first way
-              let currentPath = currentWay.geometry.map((point: any) => [point.lat, point.lon]);
-              
-              // Try to connect remaining ways
+              // Try to build connected paths
               while (used.size < ways.length) {
-                let found = false;
-                const lastPoint = currentPath[currentPath.length - 1];
-                
-                // Find a way that connects to the current path
+                // Find first unused way
+                let startIdx = -1;
                 for (let i = 0; i < ways.length; i++) {
-                  if (used.has(i)) continue;
-                  
-                  const way = ways[i];
-                  const wayCoords = way.geometry.map((point: any) => [point.lat, point.lon]);
-                  const firstPoint = wayCoords[0];
-                  const lastWayPoint = wayCoords[wayCoords.length - 1];
-                  
-                  // Check if this way connects to the end of current path
-                  const tolerance = 0.0001; // Small tolerance for floating point comparison
-                  const connectsToEnd = 
-                    (Math.abs(firstPoint[0] - lastPoint[0]) < tolerance && 
-                     Math.abs(firstPoint[1] - lastPoint[1]) < tolerance);
-                  const connectsReversed = 
-                    (Math.abs(lastWayPoint[0] - lastPoint[0]) < tolerance && 
-                     Math.abs(lastWayPoint[1] - lastPoint[1]) < tolerance);
-                  
-                  if (connectsToEnd) {
-                    // Add way coordinates (skip first point as it's already in path)
-                    currentPath = [...currentPath, ...wayCoords.slice(1)];
-                    used.add(i);
-                    found = true;
-                    break;
-                  } else if (connectsReversed) {
-                    // Add way coordinates in reverse (skip last point)
-                    currentPath = [...currentPath, ...wayCoords.reverse().slice(1)];
-                    used.add(i);
-                    found = true;
+                  if (!used.has(i)) {
+                    startIdx = i;
                     break;
                   }
                 }
                 
-                if (!found) {
-                  // No more ways to connect, save current path and start new one
-                  result.push(...currentPath);
+                if (startIdx === -1) break;
+                
+                // Start building a path from this way
+                let currentPath: number[][] = ways[startIdx].geometry.map((point: any) => [point.lat, point.lon]);
+                used.add(startIdx);
+                let pathStartWayId = ways[startIdx].id;
+                
+                // Try to extend this path by connecting other ways
+                let extended = true;
+                let iterations = 0;
+                const maxIterations = ways.length * 2; // Prevent infinite loops
+                
+                while (extended && used.size < ways.length && iterations < maxIterations) {
+                  iterations++;
+                  extended = false;
+                  const lastPoint = currentPath[currentPath.length - 1];
+                  const firstPoint = currentPath[0];
                   
-                  // Find next unused way
+                  // Try to find a way that connects to either end
                   for (let i = 0; i < ways.length; i++) {
-                    if (!used.has(i)) {
-                      currentWay = ways[i];
-                      currentPath = currentWay.geometry.map((point: any) => [point.lat, point.lon]);
+                    if (used.has(i)) continue;
+                    
+                    const way = ways[i];
+                    if (!way.geometry || way.geometry.length === 0) continue;
+                    
+                    const wayCoords = way.geometry.map((point: any) => [point.lat, point.lon]);
+                    const wayFirst = wayCoords[0];
+                    const wayLast = wayCoords[wayCoords.length - 1];
+                    
+                    const tolerance = 0.0001; // ~11 meters
+                    
+                    // Check if connects to end of current path
+                    if (Math.abs(wayFirst[0] - lastPoint[0]) < tolerance && 
+                        Math.abs(wayFirst[1] - lastPoint[1]) < tolerance) {
+                      currentPath = [...currentPath, ...wayCoords.slice(1)];
                       used.add(i);
-                      found = true;
+                      extended = true;
+                      break;
+                    } else if (Math.abs(wayLast[0] - lastPoint[0]) < tolerance && 
+                               Math.abs(wayLast[1] - lastPoint[1]) < tolerance) {
+                      currentPath = [...currentPath, ...wayCoords.reverse().slice(1)];
+                      used.add(i);
+                      extended = true;
+                      break;
+                    }
+                    // Check if connects to start of current path (reverse order)
+                    else if (Math.abs(wayLast[0] - firstPoint[0]) < tolerance && 
+                             Math.abs(wayLast[1] - firstPoint[1]) < tolerance) {
+                      currentPath = [...wayCoords.slice(0, -1).reverse(), ...currentPath];
+                      used.add(i);
+                      extended = true;
+                      break;
+                    } else if (Math.abs(wayFirst[0] - firstPoint[0]) < tolerance && 
+                               Math.abs(wayFirst[1] - firstPoint[1]) < tolerance) {
+                      currentPath = [...wayCoords.slice(0, -1), ...currentPath];
+                      used.add(i);
+                      extended = true;
                       break;
                     }
                   }
-                  
-                  if (!found) break;
                 }
+                
+                allPaths.push(currentPath);
+                console.log(`Connected path ${allPaths.length}: ${currentPath.length} points, started from way ${pathStartWayId}, used ${used.size}/${ways.length} ways`);
               }
               
-              // Add remaining path
-              if (currentPath.length > 0) {
-                result.push(...currentPath);
+              // Return the longest path (main boundary) or combine all if needed
+              if (allPaths.length === 0) {
+                console.warn('No paths could be built from ways');
+                return [];
               }
               
-              return result;
+              // Find the longest path (likely the main boundary)
+              const mainPath = allPaths.reduce((longest, path) => 
+                path.length > longest.length ? path : longest
+              );
+              
+              console.log(`Selected main boundary path with ${mainPath.length} points from ${allPaths.length} path(s)`);
+              
+              return mainPath;
             };
             
             const combinedCoordinates = connectWays(outerWays);
@@ -750,13 +787,24 @@ export default function IncidentReportPage() {
               // Close the polygon if not already closed
               const first = combinedCoordinates[0];
               const last = combinedCoordinates[combinedCoordinates.length - 1];
-              if (first[0] !== last[0] || first[1] !== last[1]) {
+              const distance = Math.sqrt(
+                Math.pow(first[0] - last[0], 2) + Math.pow(first[1] - last[1], 2)
+              );
+              
+              if (distance > 0.0001) {
                 combinedCoordinates.push([first[0], first[1]]);
+                console.log('Polygon closed (endpoints were', distance.toFixed(6), 'degrees apart)');
+              } else {
+                console.log('Polygon already closed');
               }
               
-              console.log('Rosario boundary polygon loaded:', combinedCoordinates.length, 'points from', outerWays.length, 'ways');
+              console.log('✅ Rosario boundary polygon loaded:', combinedCoordinates.length, 'points from', outerWays.length, 'ways');
               return combinedCoordinates;
+            } else {
+              console.error('Failed to combine ways into polygon');
             }
+          } else {
+            console.warn('No outer ways found in relation');
           }
         }
       }
@@ -1420,6 +1468,106 @@ export default function IncidentReportPage() {
                 </div>
               </div>
             )}
+
+            {/* Rosario Boundary Map */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-semibold text-gray-700">
+                  <i className="ri-map-2-line mr-2 text-red-600"></i>
+                  Rosario, Batangas Boundary Map
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowMap(!showMap)}
+                  className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1"
+                >
+                  <i className={`ri-${showMap ? 'eye-off' : 'eye'}-line`}></i>
+                  <span>{showMap ? 'Hide' : 'Show'} Map</span>
+                </button>
+              </div>
+              
+              {showMap && (
+                <div className="w-full rounded-xl overflow-hidden shadow-lg border border-gray-200" style={{ height: '400px' }}>
+                  {rosarioPolygon && rosarioPolygon.length > 0 ? (
+                    <MapContainer
+                      center={[13.8043, 121.2855]} // Center of Rosario, Batangas
+                      zoom={12}
+                      style={{ height: '100%', width: '100%' }}
+                      scrollWheelZoom={true}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      
+                      {/* Rosario Boundary Polygon */}
+                      <Polygon
+                        positions={rosarioPolygon.map(coord => [coord[0], coord[1]] as [number, number])}
+                        pathOptions={{
+                          color: '#dc2626',
+                          fillColor: '#fef2f2',
+                          fillOpacity: 0.2,
+                          weight: 2,
+                          opacity: 0.8
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-center">
+                            <strong className="text-red-600">Rosario, Batangas</strong>
+                            <br />
+                            <small className="text-gray-600">Municipality Boundary</small>
+                          </div>
+                        </Popup>
+                      </Polygon>
+
+                      {/* User Location Marker (if available) */}
+                      {latitude && longitude && (
+                        <Marker position={[latitude, longitude]}>
+                          <Popup>
+                            <div className="text-center">
+                              <strong>Your Location</strong>
+                              <br />
+                              <small className="text-gray-600">
+                                {isWithinBoundary === true 
+                                  ? '✅ Within Boundary' 
+                                  : isWithinBoundary === false
+                                  ? '❌ Outside Boundary'
+                                  : '📍 Detected'}
+                              </small>
+                              <br />
+                              <small className="text-gray-500">
+                                {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                              </small>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      )}
+
+                      {/* Selected Barangay Marker (if manual selection) */}
+                      {fields.location.value && fields.location.value.includes('Barangay') && 
+                       fields.latitude.value && fields.longitude.value && (
+                        <Marker position={[fields.latitude.value as number, fields.longitude.value as number]}>
+                          <Popup>
+                            <div className="text-center">
+                              <strong>{fields.location.value}</strong>
+                              <br />
+                              <small className="text-gray-600">Selected Location</small>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      )}
+                    </MapContainer>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <div className="text-center">
+                        <i className="ri-loader-4-line animate-spin text-4xl text-gray-400 mb-4"></i>
+                        <p className="text-gray-600">Loading boundary map...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
