@@ -217,20 +217,19 @@ export default function SignupPage() {
       if (data && data.success) {
         console.log("Registration successful:", data)
 
-        // Store email for login page
-        sessionStorage.setItem("lastRegisteredEmail", formData.email)
-
         // Show success toast
         showToast({
           type: "success",
           title: "Account Created Successfully",
-          message: "Redirecting to login page... You can now login with your credentials.",
-          durationMs: 3000
+          message: "Please check your email for a verification code to activate your account.",
+          durationMs: 4000
         })
 
-        // Redirect to login page
+        // Redirect to email verification page
         setTimeout(() => {
-          navigate("/auth/login")
+          navigate("/auth/verify-email", {
+            state: { email: formData.email }
+          })
         }, 1500)
         return
       } else {

@@ -319,7 +319,7 @@ const AboutPage: React.FC = () => {
               },
               {
                 name: "Clark Alisuag",
-                role: "UI/UX Designer",
+                role: "Quality Assurance Tester",
 
                 image: "/images/dev/clark.jpg",
               

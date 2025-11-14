@@ -6,6 +6,7 @@ import LoginPage from "../pages/auth/login/page";
 import SignupPage from "../pages/auth/signup/page";
 import ForgotPasswordPage from "../pages/auth/forgot-password/page";
 import VerifyOTPPage from "../pages/auth/verify-otp/page";
+import VerifyEmailPage from "../pages/auth/verify-email/page";
 import ResetPasswordPage from "../pages/auth/reset-password/page";
 import IncidentReportPage from "../pages/incident-report/page";
 import ProfilePage from "../pages/profile/page";
@@ -71,6 +72,10 @@ const routes: RouteObject[] = [
   {
     path: "/auth/verify-otp",
     element: <VerifyOTPPage />,
+  },
+  {
+    path: "/auth/verify-email",
+    element: <VerifyEmailPage />,
   },
   {
     path: "/auth/reset-password",
