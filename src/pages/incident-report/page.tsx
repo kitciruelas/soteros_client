@@ -755,12 +755,6 @@ export default function IncidentReportPage() {
     // Check if within Rosario boundary
     if (!isWithinRosarioBoundary(lat, lng)) {
       setBoundaryError('This location is outside Rosario, Batangas. Please select a location within the municipality.');
-      showToast({
-        type: 'error',
-        title: 'Location Outside Boundary',
-        message: 'Please select a location within Rosario, Batangas.',
-        durationMs: 5000
-      });
       return;
     }
     
@@ -778,13 +772,7 @@ export default function IncidentReportPage() {
     if (latitude && longitude && locationMethod === 'auto') {
       // Check if within Rosario boundary
       if (!isWithinRosarioBoundary(latitude, longitude)) {
-        setBoundaryError('Your current location is outside Rosario, Batangas. Please select a location within the municipality or use manual entry.');
-        showToast({
-          type: 'error',
-          title: 'Location Outside Boundary',
-          message: 'Your GPS location is outside Rosario, Batangas. Please use manual location selection.',
-          durationMs: 5000
-        });
+        setBoundaryError('Your GPS location is outside Rosario, Batangas. Please use manual location selection.');
         setLocationMethod('manual');
         return;
       }
@@ -812,7 +800,7 @@ export default function IncidentReportPage() {
 
       getGeocodedLocation();
     }
-  }, [latitude, longitude, locationMethod, setValue, showToast, isWithinRosarioBoundary]);
+  }, [latitude, longitude, locationMethod, setValue, isWithinRosarioBoundary]);
 
   // Convert GPS coordinates in location field to location name
   useEffect(() => {
@@ -830,12 +818,6 @@ export default function IncidentReportPage() {
           // Check if within Rosario boundary
           if (!isWithinRosarioBoundary(lat, lng)) {
             setBoundaryError('GPS coordinates are outside Rosario, Batangas. Please select a location within the municipality.');
-            showToast({
-              type: 'error',
-              title: 'Location Outside Boundary',
-              message: 'GPS coordinates are outside Rosario, Batangas. Please select a location within the municipality.',
-              durationMs: 5000
-            });
             return;
           }
 
@@ -860,7 +842,7 @@ export default function IncidentReportPage() {
         }
       }
     }
-  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue, isWithinRosarioBoundary, showToast]);
+  }, [fields.location.value, fields.latitude.value, fields.longitude.value, setValue, isWithinRosarioBoundary]);
 
   // Handle auto-location
   const handleAutoLocation = async () => {
@@ -971,12 +953,6 @@ export default function IncidentReportPage() {
     const raw = getValues();
     if (!isWithinRosarioBoundary(raw.latitude, raw.longitude)) {
       setBoundaryError('The selected location is outside Rosario, Batangas. Please select a location within the municipality.');
-      showToast({
-        type: 'error',
-        title: 'Location Outside Boundary',
-        message: 'The selected location is outside Rosario, Batangas. Please select a location within the municipality.',
-        durationMs: 5000
-      });
       return;
     }
 
@@ -1354,7 +1330,7 @@ export default function IncidentReportPage() {
               </p>
             )}
 
-            {/* Show Map Button 
+            {/* Show Map Button      */}
             <div className="mt-4">
               <button
                 type="button"
@@ -1365,7 +1341,7 @@ export default function IncidentReportPage() {
                 {showMap ? 'Hide Map' : 'Show Map'}
               </button>
             </div>
-            */}
+       
 
             {/* Map Component */}
             {showMap && (
