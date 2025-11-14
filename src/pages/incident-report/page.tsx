@@ -39,6 +39,8 @@ export default function IncidentReportPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [isReverseGeocoding] = useState(false);
+  const [isWithinBoundary, setIsWithinBoundary] = useState<boolean | null>(null);
+  const [boundaryError, setBoundaryError] = useState('');
 
   // New state for reCAPTCHA and terms checkbox
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -546,6 +548,24 @@ export default function IncidentReportPage() {
     { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
   ];
 
+  // Rosario, Batangas boundary coordinates (approximate bounding box)
+  const ROSARIO_BOUNDARY = {
+    minLat: 13.7000,  // Southern boundary
+    maxLat: 13.8700,  // Northern boundary
+    minLng: 121.1600, // Western boundary
+    maxLng: 121.3600  // Eastern boundary
+  };
+
+  // Check if coordinates are within Rosario, Batangas boundary
+  const checkWithinBoundary = (lat: number, lng: number): boolean => {
+    return (
+      lat >= ROSARIO_BOUNDARY.minLat &&
+      lat <= ROSARIO_BOUNDARY.maxLat &&
+      lng >= ROSARIO_BOUNDARY.minLng &&
+      lng <= ROSARIO_BOUNDARY.maxLng
+    );
+  };
+
   // Completely local location search function
   const searchLocation = async (query: string) => {
     if (query.length < 2) {
@@ -603,6 +623,26 @@ export default function IncidentReportPage() {
   // Auto-fill location when geolocation is available
   useEffect(() => {
     if (latitude && longitude && locationMethod === 'auto') {
+      // Check if location is within Rosario, Batangas boundary
+      const withinBoundary = checkWithinBoundary(latitude, longitude);
+      setIsWithinBoundary(withinBoundary);
+
+      if (!withinBoundary) {
+        setBoundaryError('You are outside Rosario, Batangas. Auto-detect is only available within the municipality boundary. Please select a barangay manually.');
+        setValue('location', '');
+        setValue('latitude', null);
+        setValue('longitude', null);
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'You must be within Rosario, Batangas to use auto-detect. Please select a barangay from the dropdown instead.',
+          durationMs: 6000
+        });
+        return;
+      }
+
+      // Clear boundary error if within boundary
+      setBoundaryError('');
       setValue('latitude', latitude);
       setValue('longitude', longitude);
 
@@ -624,23 +664,39 @@ export default function IncidentReportPage() {
       };
 
       getGeocodedLocation();
+    } else if (locationMethod === 'manual') {
+      // Reset boundary check when using manual selection
+      setIsWithinBoundary(null);
+      setBoundaryError('');
     }
-  }, [latitude, longitude, locationMethod, setValue]);
+  }, [latitude, longitude, locationMethod, setValue, showToast]);
 
   // Handle auto-location
   const handleAutoLocation = async () => {
     setLocationMethod('auto');
     setIsLoadingLocation(true);
+    setBoundaryError('');
+    setIsWithinBoundary(null);
     try {
       await getCurrentLocation();
     } catch (error) {
       console.error('Failed to get location:', error);
+      setBoundaryError('Failed to get your location. Please try again or select a barangay manually.');
     } finally {
       setIsLoadingLocation(false);
     }
   };
 
-  // Location search removed - only Rosario barangays and Auto-detect are available
+  // Debounced location search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (fields.location.value && locationMethod === 'manual' && !fields.location.value.includes('Barangay')) {
+        searchLocation(fields.location.value);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [fields.location.value, locationMethod]);
 
   // Retry logic with exponential backoff
   const retryWithBackoff = async <T,>(
@@ -702,6 +758,23 @@ export default function IncidentReportPage() {
     console.log('Form submission started...');
     console.log('Current form values:', getValues());
     console.log('Authentication status:', isAuthenticated);
+
+    // Check boundary if using auto-detect
+    if (locationMethod === 'auto' && fields.latitude.value && fields.longitude.value) {
+      const lat = typeof fields.latitude.value === 'number' ? fields.latitude.value : parseFloat(String(fields.latitude.value));
+      const lng = typeof fields.longitude.value === 'number' ? fields.longitude.value : parseFloat(String(fields.longitude.value));
+      
+      if (!checkWithinBoundary(lat, lng)) {
+        setBoundaryError('You are outside Rosario, Batangas. Auto-detect is only available within the municipality boundary. Please select a barangay manually.');
+        showToast({
+          type: 'error',
+          title: 'Location Outside Boundary',
+          message: 'You must be within Rosario, Batangas to submit a report using auto-detect. Please select a barangay from the dropdown instead.',
+          durationMs: 6000
+        });
+        return;
+      }
+    }
 
     // Validate all fields
     const isValid = validateAll();
@@ -918,127 +991,229 @@ export default function IncidentReportPage() {
         </div>
 
         <div className="space-y-4">
-          {/* Rosario Barangays Dropdown */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              <i className="ri-map-pin-line mr-2 text-red-600"></i>
-              Select Barangay (Rosario, Batangas) <span className="text-red-500">*</span>
+          {/* Location Method Toggle */}
+          <div className="flex items-center space-x-4 mb-4">
+            <label className="block text-sm font-semibold text-gray-700">
+              Location Method:
             </label>
-            <select
-              className="w-full px-4 py-3 border border-red-200 rounded-xl text-sm text-red-800 font-medium bg-red-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-              value={rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === fields.location.value) ? fields.location.value : ''}
-              onChange={e => {
-                const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
-                if (selected) {
-                  const locationText = `Barangay ${selected.name}, Rosario, Batangas`;
-                  setValue('location', locationText);
-                  setValue('latitude', selected.lat);
-                  setValue('longitude', selected.lng);
-                  setShowSuggestions(false);
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => {
                   setLocationMethod('manual');
-                  console.log('Barangay selected:', locationText, 'Coordinates:', selected.lat, selected.lng);
-                } else {
-                  setValue('location', '');
-                  setValue('latitude', null);
-                  setValue('longitude', null);
-                }
-              }}
-              required
-            >
-              <option value="">-- Select Barangay --</option>
-              {rosarioBarangays.map(b => (
-                <option key={b.name} value={`Barangay ${b.name}, Rosario, Batangas`}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-gray-500 text-xs mt-2">Choose a barangay from Rosario, Batangas.</p>
+                  setIsWithinBoundary(null);
+                  setBoundaryError('');
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  locationMethod === 'manual'
+                    ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <i className="ri-edit-line mr-2"></i>
+                Manual Entry
+              </button>
+              <button
+                type="button"
+                onClick={handleAutoLocation}
+                disabled={isLoadingLocation || locationLoading}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  locationMethod === 'auto'
+                    ? 'bg-green-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } ${(isLoadingLocation || locationLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isLoadingLocation || locationLoading ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin mr-2"></i>
+                    Getting Location...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-gps-line mr-2"></i>
+                    Auto-Detect
+                  </>
+                )}
+              </button>
+            </div>
           </div>
+          <p className="text-gray-500 text-xs mt-2">
+            <i className="ri-information-line mr-1"></i>
+            Auto-detect is only available when you are within Rosario, Batangas boundary.
+          </p>
 
-          {/* Auto-Detect Button */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              <i className="ri-gps-line mr-2 text-green-600"></i>
-              Or Use Auto-Detect Location
-            </label>
-            <button
-              type="button"
-              onClick={handleAutoLocation}
-              disabled={isLoadingLocation || locationLoading}
-              className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                locationMethod === 'auto' && (latitude && longitude)
-                  ? 'bg-green-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${(isLoadingLocation || locationLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isLoadingLocation || locationLoading ? (
-                <>
-                  <i className="ri-loader-4-line animate-spin mr-2"></i>
-                  Getting Location...
-                </>
-              ) : (
-                <>
-                  <i className="ri-gps-line mr-2"></i>
-                  Auto-Detect My Location
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Location Display (Read-only) */}
-          {fields.location.value && (
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+          {/* Location Input with Search */}
+          <div className="relative">
+            {/* Rosario Barangays Dropdown */}
+            <div className="mt-2 mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 <i className="ri-map-pin-line mr-2 text-red-600"></i>
-                Selected Location
+                Select Barangay (Rosario, Batangas)
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i className="ri-map-pin-line text-gray-400"></i>
-                </div>
-                <input
-                  type="text"
-                  name="location"
-                  id="location"
-                  value={fields.location.value}
-                  readOnly
-                  className="w-full pl-10 pr-4 py-3 border border-green-300 bg-green-50 rounded-xl text-gray-700 cursor-not-allowed"
-                />
-              </div>
+              <select
+                className="w-full px-3 py-3 border border-red-200 rounded-lg text-sm text-red-800 font-medium bg-red-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all mb-1"
+                value={rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === fields.location.value) ? fields.location.value : ''}
+                onChange={e => {
+                  const selected = rosarioBarangays.find(b => `Barangay ${b.name}, Rosario, Batangas` === e.target.value);
+                  if (selected) {
+                    const locationText = `Barangay ${selected.name}, Rosario, Batangas`;
+                    setValue('location', locationText);
+                    setValue('latitude', selected.lat);
+                    setValue('longitude', selected.lng);
+                    setShowSuggestions(false);
+                    setLocationMethod('manual');
+                    setIsWithinBoundary(null);
+                    setBoundaryError('');
+                    console.log('Barangay selected:', locationText, 'Coordinates:', selected.lat, selected.lng);
+                  } else {
+                    setValue('location', '');
+                    setValue('latitude', null);
+                    setValue('longitude', null);
+                  }
+                }}
+              >
+                <option value="">-- Select Barangay --</option>
+                {rosarioBarangays.map(b => (
+                  <option key={b.name} value={`Barangay ${b.name}, Rosario, Batangas`}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-gray-400 text-xs mt-1">Choose a barangay to quickly fill location and coordinates.</p>
             </div>
-          )}
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <i className="ri-map-pin-line mr-2 text-red-600"></i>
+              Location Description <span className="text-red-500">*</span>
+            </label>
 
-          {/* Error Messages */}
-          {fields.location.touched && fields.location.error && (
-            <p className="text-red-600 text-sm mt-2">
-              <i className="ri-error-warning-line mr-1"></i>
-              {fields.location.error}
-            </p>
-          )}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i className="ri-map-pin-line text-gray-400"></i>
+              </div>
+              <input
+                type="text"
+                name="location"
+                id="location"
+                value={fields.location.value}
+                onChange={(e) => {
+                  // Don't allow editing if a barangay is selected
+                  if (!fields.location.value.includes('Barangay')) {
+                    setValue('location', e.target.value);
+                    if (locationMethod === 'auto') {
+                      setLocationMethod('manual');
+                    }
+                  }
+                }}
+                className={`w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all ${
+                  fields.location.value && fields.location.value.includes('Barangay') 
+                    ? 'border-green-300 bg-green-50 cursor-not-allowed' 
+                    : 'border-gray-300'
+                }`}
+                placeholder={
+                  fields.location.value && fields.location.value.includes('Barangay')
+                    ? 'Barangay selected - location is set'
+                    : locationMethod === 'auto' 
+                      ? 'Auto-detected location will appear here...' 
+                      : 'Enter location description or select a barangay above'
+                }
+                readOnly={fields.location.value && fields.location.value.includes('Barangay')}
+                required
+              />
 
-          {locationError && (
-            <p className="text-red-600 text-sm mt-2">
-              <i className="ri-error-warning-line mr-1"></i>
-              {locationError}
-            </p>
-          )}
-
-          {/* GPS Coordinates Display */}
-          {(latitude && longitude) && (
-            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                  <i className="ri-gps-line text-green-600 text-sm"></i>
+              {/* Loading indicator for search */}
+              {(isSearchingLocation || isReverseGeocoding) && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <i className="ri-loader-4-line animate-spin text-red-600"></i>
                 </div>
-                <div>
-                  <p className="text-green-800 font-medium text-sm">GPS Location Detected</p>
-                  <p className="text-green-600 text-xs">
-                    Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-                  </p>
+              )}
+            </div>
+
+
+            {/* Error Messages */}
+            {fields.location.touched && fields.location.error && (
+              <p className="text-red-600 text-sm mt-2">
+                <i className="ri-error-warning-line mr-1"></i>
+                {fields.location.error}
+              </p>
+            )}
+
+            {locationError && (
+              <p className="text-red-600 text-sm mt-2">
+                <i className="ri-error-warning-line mr-1"></i>
+                {locationError}
+              </p>
+            )}
+
+            {/* Boundary Error Message */}
+            {boundaryError && (
+              <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i className="ri-error-warning-line text-red-600 text-sm"></i>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-red-800 font-medium text-sm">Location Outside Boundary</p>
+                    <p className="text-red-600 text-xs mt-1">
+                      {boundaryError}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* GPS Coordinates Display */}
+            {latitude && longitude && locationMethod === 'auto' && (
+              <div className={`mt-3 p-3 border rounded-lg ${
+                isWithinBoundary === true 
+                  ? 'bg-green-50 border-green-200' 
+                  : isWithinBoundary === false
+                  ? 'bg-red-50 border-red-200'
+                  : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    isWithinBoundary === true 
+                      ? 'bg-green-100' 
+                      : isWithinBoundary === false
+                      ? 'bg-red-100'
+                      : 'bg-gray-100'
+                  }`}>
+                    <i className={`ri-gps-line text-sm ${
+                      isWithinBoundary === true 
+                        ? 'text-green-600' 
+                        : isWithinBoundary === false
+                        ? 'text-red-600'
+                        : 'text-gray-600'
+                    }`}></i>
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${
+                      isWithinBoundary === true 
+                        ? 'text-green-800' 
+                        : isWithinBoundary === false
+                        ? 'text-red-800'
+                        : 'text-gray-800'
+                    }`}>
+                      {isWithinBoundary === true 
+                        ? 'GPS Location Detected - Within Rosario, Batangas' 
+                        : isWithinBoundary === false
+                        ? 'GPS Location Detected - Outside Rosario, Batangas'
+                        : 'GPS Location Detected'}
+                    </p>
+                    <p className={`text-xs mt-1 ${
+                      isWithinBoundary === true 
+                        ? 'text-green-600' 
+                        : isWithinBoundary === false
+                        ? 'text-red-600'
+                        : 'text-gray-600'
+                    }`}>
+                      Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
