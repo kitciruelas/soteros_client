@@ -131,7 +131,11 @@ const UserManagement: React.FC = () => {
       if (statusFilter === 'active') {
         filtered = filtered.filter(user => user.status === 1);
       } else if (statusFilter === 'inactive') {
+        filtered = filtered.filter(user => user.status === 2);
+      } else if (statusFilter === 'unverified') {
         filtered = filtered.filter(user => user.status === 0);
+      } else if (statusFilter === 'suspended') {
+        filtered = filtered.filter(user => user.status === -1);
       }
     }
 
@@ -311,14 +315,16 @@ const UserManagement: React.FC = () => {
 
   const getStatusColor = (status: number) => {
     if (status === 1) return 'bg-green-100 text-green-800';
-    if (status === 0) return 'bg-gray-100 text-gray-800';
+    if (status === 0) return 'bg-yellow-100 text-yellow-800';
+    if (status === 2) return 'bg-gray-100 text-gray-800';
     if (status === -1) return 'bg-red-100 text-red-800';
     return 'bg-gray-100 text-gray-800';
   };
 
   const getStatusText = (status: number) => {
     if (status === 1) return 'Active';
-    if (status === 0) return 'Inactive';
+    if (status === 0) return 'Unverified';
+    if (status === 2) return 'Inactive';
     if (status === -1) return 'Suspended';
     return 'Unknown';
   };
@@ -393,16 +399,57 @@ const UserManagement: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-user-unfollow-line text-gray-600"></i>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                <i className="ri-user-follow-line text-green-600"></i>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Active Users</p>
+                <p className="text-xl font-bold text-green-900">
+                  {users.filter(u => u.status === 1).length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Inactive Users</p>
-              <p className="text-xl font-bold text-gray-900">
-                {users.filter(u => u.status === 0).length}
-              </p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                <i className="ri-mail-unread-line text-yellow-600"></i>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Unverified</p>
+                <p className="text-xl font-bold text-yellow-900">
+                  {users.filter(u => u.status === 0).length}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                <i className="ri-user-unfollow-line text-gray-600"></i>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Inactive</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {users.filter(u => u.status === 2).length}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                <i className="ri-user-forbid-line text-red-600"></i>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Suspended</p>
+                <p className="text-xl font-bold text-red-900">
+                  {users.filter(u => u.status === -1).length}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -429,7 +476,9 @@ const UserManagement: React.FC = () => {
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
+              <option value="unverified">Unverified</option>
               <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
             </select>
           </div>
           <div className="text-sm text-gray-600">
@@ -544,15 +593,31 @@ const UserManagement: React.FC = () => {
                         <i className="ri-eye-line"></i>
                       </button>
                       <select
-                        value={user.status}
-                        onChange={(e) => handleStatusChange(user.user_id, parseInt(e.target.value))}
-                        disabled={updatingStatus === user.user_id}
+                        value={user.status === 0 ? user.status : user.status}
+                        onChange={(e) => {
+                          const newStatus = parseInt(e.target.value);
+                          // Only allow changing status if user is verified (not status 0)
+                          if (user.status === 0 && newStatus !== 0) {
+                            // User needs to verify first - show message
+                            return;
+                          }
+                          handleStatusChange(user.user_id, newStatus);
+                        }}
+                        disabled={updatingStatus === user.user_id || user.status === 0}
                         className={`text-xs border border-gray-300 rounded px-2 py-1 ${
-                          updatingStatus === user.user_id ? 'opacity-50 cursor-not-allowed' : ''
+                          updatingStatus === user.user_id || user.status === 0 ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
+                        title={user.status === 0 ? 'User must verify email first' : ''}
                       >
-                        <option value={1}>Active</option>
-                        <option value={0}>Inactive</option>
+                        {user.status === 0 ? (
+                          <option value={0}>Unverified (Cannot Change)</option>
+                        ) : (
+                          <>
+                            <option value={1}>Active</option>
+                            <option value={2}>Inactive</option>
+                            <option value={-1}>Suspended</option>
+                          </>
+                        )}
                       </select>
                       {updatingStatus === user.user_id && (
                         <div className="inline-block ml-1">
