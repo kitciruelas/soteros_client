@@ -13,6 +13,9 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import PrivacyPolicyModal from '../../components/PrivacyPolicyModal';
 import TermsOfServiceModal from '../../components/TermsOfServiceModal';
+import { MapContainer, TileLayer, Marker, Circle, Popup, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 
 interface IncidentReportFormData {
@@ -66,6 +69,17 @@ export default function IncidentReportPage() {
   const SUBMISSION_SUCCESS_KEY = 'incident_report_submission_success';
   const MAX_RETRIES = 3;
   const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff in ms
+  const [showMap, setShowMap] = useState(false);
+
+  // Fix for default markers in react-leaflet
+  useEffect(() => {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
+  }, []);
 
   // Get user location
   const { latitude, longitude, error: locationError, loading: locationLoading, getCurrentLocation } = useGeolocation();
@@ -494,6 +508,57 @@ export default function IncidentReportPage() {
   }, [restoreFormData]);
 
 
+
+  // Rosario, Batangas center coordinates and radius
+  const ROSARIO_CENTER: [number, number] = [13.8043, 121.2855]; // Rosario, Batangas center
+  const ROSARIO_RADIUS = 8000; // 8km radius in meters
+
+  // Custom marker icon for incident location
+  const incidentMarkerIcon = L.divIcon({
+    html: `
+      <div style="
+        background-color: #ef4444;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <i class="ri-error-warning-line" style="color: white; font-size: 14px;"></i>
+      </div>
+    `,
+    className: 'incident-location-marker',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+
+  // Map click handler component
+  const MapClickHandler: React.FC<{ 
+    onCoordinateChange: (lat: number, lng: number) => void;
+    disabled?: boolean;
+  }> = ({ onCoordinateChange, disabled = false }) => {
+    useMapEvents({
+      click: (e) => {
+        if (!disabled) {
+          const { lat, lng } = e.latlng;
+          onCoordinateChange(lat, lng);
+        }
+      },
+    });
+    return null;
+  };
+
+  // Map controller to update center when coordinates change
+  const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(center, zoom);
+    }, [map, center, zoom]);
+    return null;
+  };
 
   // Rosario, Batangas barangays with lat/lng
   const rosarioBarangays = [
@@ -1119,6 +1184,172 @@ export default function IncidentReportPage() {
                     <p className="text-xs mt-1 text-gray-600">
                       Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
                     </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Map Toggle Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowMap(!showMap)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                <i className={`ri-${showMap ? 'eye-off' : 'map'}-line`}></i>
+                {showMap ? 'Hide Map' : 'Show Map with Boundary'}
+              </button>
+            </div>
+
+            {/* Interactive Map with Radius Boundary */}
+            {showMap && (
+              <div className="mt-4">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold text-gray-700 mb-1">
+                    <i className="ri-map-pin-line mr-2 text-blue-600"></i>
+                    Interactive Map - Rosario, Batangas Boundary
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Click on the map to set incident location. The red circle shows the Rosario, Batangas boundary (8km radius).
+                  </p>
+                </div>
+                <div 
+                  className="w-full rounded-lg overflow-hidden border-2 border-blue-300 shadow-lg"
+                  style={{ height: '400px' }}
+                >
+                  <MapContainer
+                    center={(() => {
+                      const lat = fields.latitude.value ? parseFloat(String(fields.latitude.value)) : ROSARIO_CENTER[0];
+                      const lng = fields.longitude.value ? parseFloat(String(fields.longitude.value)) : ROSARIO_CENTER[1];
+                      return [lat, lng] as [number, number];
+                    })()}
+                    zoom={12}
+                    style={{ height: '100%', width: '100%' }}
+                    className="z-0"
+                    zoomControl={true}
+                  >
+                    <MapController 
+                      center={(() => {
+                        const lat = fields.latitude.value ? parseFloat(String(fields.latitude.value)) : ROSARIO_CENTER[0];
+                        const lng = fields.longitude.value ? parseFloat(String(fields.longitude.value)) : ROSARIO_CENTER[1];
+                        return [lat, lng] as [number, number];
+                      })()}
+                      zoom={12}
+                    />
+                    
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      maxZoom={19}
+                    />
+
+                    {/* Rosario, Batangas Boundary Circle */}
+                    <Circle
+                      center={ROSARIO_CENTER}
+                      radius={ROSARIO_RADIUS}
+                      pathOptions={{
+                        color: '#ef4444',
+                        fillColor: '#fef2f2',
+                        fillOpacity: 0.2,
+                        weight: 2,
+                        dashArray: '10, 5'
+                      }}
+                    >
+                      <Popup>
+                        <div className="p-2">
+                          <h4 className="font-bold text-red-600 mb-1">Rosario, Batangas Boundary</h4>
+                          <p className="text-sm text-gray-700">8km radius from center</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Center: {ROSARIO_CENTER[0].toFixed(4)}, {ROSARIO_CENTER[1].toFixed(4)}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Circle>
+
+                    {/* Center marker for Rosario */}
+                    <Marker
+                      position={ROSARIO_CENTER}
+                      icon={L.divIcon({
+                        html: `
+                          <div style="
+                            background-color: #3b82f6;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                          "></div>
+                        `,
+                        className: 'rosario-center-marker',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10],
+                      })}
+                    >
+                      <Popup>
+                        <div className="p-2">
+                          <h4 className="font-bold text-blue-600">Rosario, Batangas Center</h4>
+                          <p className="text-sm text-gray-700">Municipality Center</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+
+                    {/* Map click handler */}
+                    <MapClickHandler
+                      onCoordinateChange={(lat, lng) => {
+                        setValue('latitude', lat);
+                        setValue('longitude', lng);
+                        setLocationMethod('manual');
+                        // Try to reverse geocode
+                        reverseGeocode(lat, lng).then(result => {
+                          if (result.success) {
+                            setValue('location', result.locationName);
+                          } else {
+                            setValue('location', `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                          }
+                        }).catch(() => {
+                          setValue('location', `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                        });
+                      }}
+                    />
+
+                    {/* Selected incident location marker */}
+                    {fields.latitude.value && fields.longitude.value && (() => {
+                      const lat = parseFloat(String(fields.latitude.value));
+                      const lng = parseFloat(String(fields.longitude.value));
+                      if (!isNaN(lat) && !isNaN(lng)) {
+                        return (
+                          <Marker
+                            position={[lat, lng]}
+                            icon={incidentMarkerIcon}
+                          >
+                            <Popup>
+                              <div className="p-2">
+                                <h4 className="font-bold text-red-600 mb-1">Incident Location</h4>
+                                <p className="text-sm text-gray-700">{fields.location.value || 'Location not specified'}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {lat.toFixed(6)}, {lng.toFixed(6)}
+                                </p>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </MapContainer>
+                </div>
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <i className="ri-information-line text-blue-600 mt-0.5"></i>
+                    <div className="text-xs text-blue-800">
+                      <p className="font-semibold mb-1">Map Instructions:</p>
+                      <ul className="list-disc list-inside space-y-1 text-blue-700">
+                        <li>Click anywhere on the map to set the incident location</li>
+                        <li>The red dashed circle shows the Rosario, Batangas boundary (8km radius)</li>
+                        <li>The blue marker indicates the municipality center</li>
+                        <li>The red marker shows your selected incident location</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
