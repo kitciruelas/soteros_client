@@ -793,7 +793,9 @@ export default function IncidentReportPage() {
 
       // Add text fields
       formData.append('incidentType', (raw.incidentType || '').trim());
-      formData.append('description', (raw.description || '').trim());
+      // Send description - use empty string or default if backend requires non-empty
+      const descriptionValue = (raw.description || '').trim();
+      formData.append('description', descriptionValue || 'No description provided');
       formData.append('location', (raw.location || '').trim());
       formData.append('latitude', String(typeof raw.latitude === 'number' ? raw.latitude : (raw.latitude ? parseFloat(String(raw.latitude)) : null)));
       formData.append('longitude', String(typeof raw.longitude === 'number' ? raw.longitude : (raw.longitude ? parseFloat(String(raw.longitude)) : null)));
