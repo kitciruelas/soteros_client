@@ -346,20 +346,56 @@ export default function IncidentReportPage() {
     return hasValues;
   }, [fields, selectedFiles]);
 
-  // Save form data to localStorage
-  const saveFormDataToStorage = (formData: any, files?: File[]) => {
+  // Convert File to base64 data URL
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Convert base64 data URL to File
+  const base64ToFile = (dataUrl: string, fileName: string, mimeType: string): File => {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || mimeType;
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], fileName, { type: mime });
+  };
+
+  // Save form data to localStorage including photos as base64
+  const saveFormDataToStorage = async (formData: any, files?: File[]) => {
     try {
+      // Convert files to base64
+      const fileData: Array<{ dataUrl: string; name: string; type: string; size: number }> = [];
+      if (files && files.length > 0) {
+        for (const file of files) {
+          try {
+            const dataUrl = await fileToBase64(file);
+            fileData.push({
+              dataUrl,
+              name: file.name,
+              type: file.type,
+              size: file.size
+            });
+          } catch (error) {
+            console.error('Failed to convert file to base64:', error);
+          }
+        }
+      }
+
       const dataToSave = {
         ...formData,
         timestamp: Date.now(),
-        // Note: Files cannot be stored in localStorage, so we just store metadata
-        fileMetadata: files?.map(file => ({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified
-        })) || []
+        fileData // Store base64 data for restoration
       };
+      
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
       setSavedFormData(dataToSave);
     } catch (error) {
@@ -400,13 +436,31 @@ export default function IncidentReportPage() {
           if (data.guestName) setValue('guestName', data.guestName);
           if (data.guestContact) setValue('guestContact', data.guestContact);
           
+          // Restore photos from base64 data
+          if (data.fileData && Array.isArray(data.fileData) && data.fileData.length > 0) {
+            try {
+              const restoredFiles: File[] = data.fileData.map((fileInfo: any) => {
+                return base64ToFile(fileInfo.dataUrl, fileInfo.name, fileInfo.type);
+              });
+              setSelectedFiles(restoredFiles);
+              setValue('attachments', restoredFiles);
+            } catch (error) {
+              console.error('Failed to restore photos:', error);
+            }
+          }
+          
           // Show restore notification only once
           if (!restoreMessageShownRef.current) {
+            const photoCount = data.fileData && Array.isArray(data.fileData) ? data.fileData.length : 0;
+            const message = photoCount > 0 
+              ? `Your previously saved form data and ${photoCount} photo(s) have been restored.`
+              : 'Your previously saved form data has been restored.';
+            
             showToast({
               type: 'info',
               title: 'Form Data Restored',
-              message: 'Your previously saved form data has been restored.',
-              durationMs: 3000
+              message: message,
+              durationMs: 4000
             });
             restoreMessageShownRef.current = true;
           }
@@ -447,11 +501,11 @@ export default function IncidentReportPage() {
     }
 
     // Set new timeout to save after 2 seconds of inactivity
-    autoSaveTimeoutRef.current = setTimeout(() => {
+    autoSaveTimeoutRef.current = setTimeout(async () => {
       const currentValues = getValues();
       // Only save if form has meaningful data
-      if (currentValues.incidentType || currentValues.description || currentValues.location) {
-        saveFormDataToStorage(currentValues, selectedFiles);
+      if (currentValues.incidentType || currentValues.description || currentValues.location || selectedFiles.length > 0) {
+        await saveFormDataToStorage(currentValues, selectedFiles);
       }
     }, 2000);
 
@@ -1000,11 +1054,11 @@ export default function IncidentReportPage() {
     // Check if offline and save data for later
     if (!navigator.onLine) {
       const rawData = getValues();
-      saveFormDataToStorage(rawData, selectedFiles);
+      await saveFormDataToStorage(rawData, selectedFiles);
       showToast({
         type: 'warning',
         title: 'Offline Mode',
-        message: 'You are currently offline. Your form data has been saved locally. Please submit again when your connection is restored.',
+        message: 'You are currently offline. Your form data and photos have been saved locally. Please submit again when your connection is restored.',
         durationMs: 6000
       });
       return;
@@ -1089,7 +1143,7 @@ export default function IncidentReportPage() {
       
       // Save form data for recovery
       const rawData = getValues();
-      saveFormDataToStorage(rawData, selectedFiles);
+      await saveFormDataToStorage(rawData, selectedFiles);
       
       // Handle different types of errors
       let errorMessage = 'Network error. Your form data has been saved locally. Please check your connection and try again.';
