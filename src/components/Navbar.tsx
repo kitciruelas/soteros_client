@@ -414,15 +414,15 @@ const Navbar: React.FC<NavbarProps> = () => {
     processNotificationQueueRef.current = processNotificationQueue;
   }, [processNotificationQueue]);
 
-  // Get unread notifications count (like AdminLayout) - exclude welfare notifications
-  const unreadCount = notifications.filter(notif => 
-    !readNotifications.has(notif.id) && notif.type !== 'welfare'
-  ).length;
-
-  // Get unread welfare notifications count
-  const welfareCount = notifications.filter(notif => 
-    !readNotifications.has(notif.id) && notif.type === 'welfare'
-  ).length;
+  // Get unread notifications count - exclude welfare notifications
+  const unreadCount = notifications.filter(notif => {
+    // Exclude welfare notifications
+    if (notif.type === 'welfare') {
+      return false;
+    }
+    // Only count unread notifications
+    return !readNotifications.has(notif.id) && !notif.is_read;
+  }).length;
 
 
   const toggleNotificationDropdown = () => {
@@ -717,13 +717,8 @@ const Navbar: React.FC<NavbarProps> = () => {
                     >
                       <i className="ri-notification-line text-xl"></i>
                       {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10">
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                           {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
-                      {welfareCount > 0 && (
-                        <span className="absolute top-3 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10 border-2 border-white">
-                          {welfareCount > 9 ? '9+' : welfareCount}
                         </span>
                       )}
                     </button>
@@ -996,13 +991,8 @@ const Navbar: React.FC<NavbarProps> = () => {
                   >
                     <i className="ri-notification-line text-xl"></i>
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10">
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                         {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    )}
-                    {welfareCount > 0 && (
-                      <span className="absolute top-3 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10 border-2 border-white">
-                        {welfareCount > 9 ? '9+' : welfareCount}
                       </span>
                     )}
                   </button>
