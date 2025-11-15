@@ -31,6 +31,7 @@ interface WelfareReport {
   first_name?: string;
   last_name?: string;
   email?: string;
+  phone?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -50,6 +51,11 @@ const exportReportColumns: ExportColumn[] = [
     key: 'email', 
     label: 'Email',
     format: (value: string, row: any) => value || row.user_email || 'N/A'
+  },
+  { 
+    key: 'phone', 
+    label: 'Phone',
+    format: (value: string, row: any) => value || 'N/A'
   },
   { 
     key: 'address', 
@@ -97,6 +103,7 @@ export default function WelfareReportsPage() {
   const [showReportsExportPreview, setShowReportsExportPreview] = useState(false)
   const [selectedSettingId, setSelectedSettingId] = useState<string>('')
   const [selectedStatus, setSelectedStatus] = useState<string>('')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchAllSettings = useCallback(async () => {
     try {
@@ -213,6 +220,26 @@ export default function WelfareReportsPage() {
     return status === 'safe' ? 'Safe' : 'Needs Help';
   }
 
+  const filteredReports = reports.filter(report => {
+    const fullName = `${report.first_name || ''} ${report.last_name || ''}`.trim().toLowerCase();
+    const email = (report.email || '').toLowerCase();
+    const phone = (report.phone || '').toLowerCase();
+    const address = [report.address, report.city, report.state, report.zip_code]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    
+    const searchLower = searchTerm.toLowerCase();
+    return fullName.includes(searchLower) || 
+           email.includes(searchLower) || 
+           phone.includes(searchLower) ||
+           address.includes(searchLower);
+  });
+
+  const safeCount = reports.filter(r => r.status === 'safe' && r.report_id).length;
+  const needsHelpCount = reports.filter(r => r.status === 'needs_help' && r.report_id).length;
+  const noReportCount = reports.filter(r => !r.report_id).length;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -231,25 +258,87 @@ export default function WelfareReportsPage() {
           </button>
           <button
             onClick={() => setShowReportsExportPreview(true)}
-            disabled={reports.length === 0}
+            disabled={filteredReports.length === 0}
             className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
-              reports.length === 0
+              filteredReports.length === 0
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700'
             }`}
-            title={reports.length === 0 ? 'No data to export' : 'Export reports'}
+            title={filteredReports.length === 0 ? 'No data to export' : 'Export reports'}
           >
             <i className="ri-download-line mr-2"></i>
-            Export ({reports.length}{selectedStatus && ` - ${selectedStatus === 'safe' ? 'Safe' : 'Needs Help'}`})
+            Export Report ({filteredReports.length})
           </button>
         </div>
       </div>
 
-      {/* Filter Section */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-user-line text-blue-600"></i>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Users</p>
+              <p className="text-xl font-bold text-gray-900">{reports.length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-check-circle-line text-green-600"></i>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Safe Reports</p>
+              <p className="text-xl font-bold text-gray-900">{safeCount}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border-2 border-red-300 p-4 relative">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-error-warning-line text-red-600"></i>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Needs Help</p>
+              <p className="text-xl font-bold text-red-600">{needsHelpCount}</p>
+            </div>
+          </div>
+          {needsHelpCount > 0 && (
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+              <span className="text-white text-xs font-bold">{needsHelpCount}</span>
+            </div>
+          )}
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-time-line text-gray-600"></i>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">No Report</p>
+              <p className="text-xl font-bold text-gray-900">{noReportCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters and Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Filter by Setting:</label>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
             <select
               value={selectedSettingId}
               onChange={(e) => {
@@ -266,7 +355,7 @@ export default function WelfareReportsPage() {
                 navigate(url, { replace: true })
                 fetchReports(parsedId, selectedStatus || undefined)
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">All Settings</option>
               {allSettings.map((setting) => (
@@ -275,10 +364,6 @@ export default function WelfareReportsPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
             <select
               value={selectedStatus}
               onChange={(e) => {
@@ -296,21 +381,16 @@ export default function WelfareReportsPage() {
                 const parsedSettingId = selectedSettingId ? parseInt(selectedSettingId) : undefined
                 fetchReports(parsedSettingId, status || undefined)
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">All Status</option>
               <option value="safe">Safe</option>
               <option value="needs_help">Needs Help</option>
             </select>
           </div>
-
-          {selectedSettingForReports && (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">
-                Currently viewing: <span className="font-medium">{selectedSettingForReports.title}</span>
-              </span>
-            </div>
-          )}
+          <div className="text-sm text-gray-600">
+            Showing {filteredReports.length} of {reports.length} users
+          </div>
         </div>
       </div>
 
@@ -320,21 +400,50 @@ export default function WelfareReportsPage() {
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : reports.length === 0 ? (
-          <div className="text-center py-12">
-            <i className="ri-file-list-line text-4xl text-gray-300"></i>
-            <p className="text-gray-500 mt-2">No users found</p>
+        ) : filteredReports.length === 0 ? (
+          <div className="text-center py-16 px-4">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-2xl flex items-center justify-center">
+              <i className="ri-inbox-line text-4xl text-gray-400"></i>
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-2">No users found</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              {searchTerm || selectedStatus !== '' || selectedSettingId !== ''
+                ? "No users match your current search and filter criteria. Try adjusting your search or filters."
+                : "No users have been registered yet."}
+            </p>
+            {(searchTerm || selectedStatus !== '' || selectedSettingId !== '') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedStatus('');
+                  setSelectedSettingId('');
+                  const url = '/admin/welfare/reports';
+                  navigate(url, { replace: true });
+                  fetchReports(undefined, undefined);
+                }}
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
+              >
+                <i className="ri-refresh-line mr-2"></i>
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {reports.map((report, index) => {
+            {filteredReports.map((report, index) => {
               const hasReport = !!report.report_id;
+              const isNeedsHelp = report.status === 'needs_help' && hasReport;
               return (
-                <div key={report.user_id || report.report_id || index} className="p-6 hover:bg-gray-50">
+                <div 
+                  key={report.user_id || report.report_id || index} 
+                  className={`p-6 hover:bg-gray-50 transition-colors ${
+                    isNeedsHelp ? 'bg-red-50 border-l-4 border-red-500' : 'bg-white'
+                  }`}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="text-lg font-medium text-gray-900">
+                        <h4 className={`text-lg font-medium ${isNeedsHelp ? 'text-red-900 font-semibold' : 'text-gray-900'}`}>
                           {report.first_name || ''} {report.last_name || ''}
                         </h4>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getReportStatusColor(report.status, hasReport)}`}>
@@ -342,11 +451,29 @@ export default function WelfareReportsPage() {
                           {getReportStatusText(report.status, hasReport)}
                         </span>
                       </div>
-                      <p className="text-gray-600 mb-2">{report.email || 'N/A'}</p>
+                      <div className="flex items-center text-sm text-gray-500 space-x-4 mb-3">
+                        <span>
+                          <i className="ri-mail-line mr-1"></i>
+                          {report.email || 'N/A'}
+                        </span>
+                        {report.phone && (
+                          <span>
+                            <i className="ri-phone-line mr-1"></i>
+                            {report.phone}
+                          </span>
+                        )}
+                        {hasReport && report.submitted_at && (
+                          <span>
+                            <i className="ri-time-line mr-1"></i>
+                            {formatDate(report.submitted_at)}
+                          </span>
+                        )}
+                      </div>
                       {(report.address || report.city || report.state || report.zip_code) && (
-                        <div className="mb-2">
+                        <div className="mb-3">
                           <p className="text-sm font-medium text-gray-700 mb-1">Address:</p>
                           <p className="text-sm text-gray-600">
+                            <i className="ri-map-pin-line mr-1"></i>
                             {[report.address, report.city, report.state, report.zip_code]
                               .filter(Boolean)
                               .join(', ') || 'N/A'}
@@ -354,15 +481,9 @@ export default function WelfareReportsPage() {
                         </div>
                       )}
                       {hasReport && report.additional_info && (
-                        <div className="mt-2">
+                        <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                           <p className="text-sm font-medium text-gray-700 mb-1">Additional Info:</p>
                           <p className="text-sm text-gray-600">{report.additional_info}</p>
-                        </div>
-                      )}
-                      {hasReport && report.submitted_at && (
-                        <div className="flex items-center text-sm text-gray-500 mt-2">
-                          <i className="ri-time-line mr-1"></i>
-                          Submitted: {formatDate(report.submitted_at)}
                         </div>
                       )}
                       {!hasReport && (
@@ -429,9 +550,9 @@ export default function WelfareReportsPage() {
             showToast({ type: "error", message: "Failed to export welfare reports to Excel" });
           }
         }}
-        data={reports}
+        data={filteredReports}
         columns={exportReportColumns.map((col) => ({ key: col.key, label: col.label }))}
-        title={`Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''} (${reports.length})`}
+        title={`Welfare Reports${selectedSettingForReports ? ` - ${selectedSettingForReports.title}` : ''} (${filteredReports.length})`}
       />
     </div>
   )
