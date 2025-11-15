@@ -475,11 +475,41 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
+    // Helper function to format column labels properly
+    const formatColumnLabel = (key: string): string => {
+      const labelMap: { [key: string]: string } = {
+        'medical': 'Medical',
+        'fire': 'Fire',
+        'accident': 'Accident',
+        'security': 'Security',
+        'other': 'Other',
+        'name': 'Barangay'
+      };
+      
+      if (labelMap[key.toLowerCase()]) {
+        return labelMap[key.toLowerCase()];
+      }
+      
+      // Default: capitalize first letter and replace underscores with spaces
+      return key
+        .replace(/_/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    };
+
+    // Get all keys from location incidents and format them properly
+    const allKeys = new Set<string>();
+    locationIncidents.forEach(item => {
+      Object.keys(item).forEach(key => allKeys.add(key));
+    });
+
     const columns: ExportColumn[] = [
       { key: 'name', label: 'Barangay' },
-      ...Object.keys(locationIncidents[0] || {})
+      ...Array.from(allKeys)
         .filter(key => key !== 'name')
-        .map(key => ({ key, label: key.charAt(0).toUpperCase() + key.slice(1) }))
+        .sort() // Sort columns for consistent order
+        .map(key => ({ key, label: formatColumnLabel(key) }))
     ];
 
     // Capture the location chart
@@ -489,7 +519,7 @@ const AdminDashboard: React.FC = () => {
 
     setExportData(locationIncidents);
     setExportColumns(columns);
-    setExportTitle('Barangay-based Risk Analysis');
+    setExportTitle('Risky Areas by Barangay');
     setExportChartImages(chartImages);
     setShowExportModal(true);
   };
@@ -622,17 +652,6 @@ const AdminDashboard: React.FC = () => {
             details: 'Barangay-based incident data'
           });
         }
-      });
-    });
-
-
-    // Add recent activity
-    recentActivity.forEach(item => {
-      allData.push({
-        section: 'Recent Activity',
-        metric: item.action,
-        value: 1,
-        details: `${item.details} - ${item.user_type}`
       });
     });
 
@@ -957,13 +976,6 @@ const AdminDashboard: React.FC = () => {
                   >
                     <i className="ri-map-pin-line mr-3 text-purple-500"></i>
                     Location Data
-                  </button>
-                  <button
-                    onClick={exportRecentActivity}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-history-line mr-3 text-gray-500"></i>
-                    Recent Activity
                   </button>
                 </div>
               </div>
