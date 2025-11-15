@@ -382,11 +382,25 @@ export class ExportUtils {
         const finalChartHeight = finalChartWidth * aspectRatio
         
         // Check if we need a new page (title + chart + spacing)
-        const titleHeight = 5
+        // Calculate actual title height (may be multiple lines)
+        doc.setFontSize(11)
+        doc.setFont("helvetica", "bold")
+        const titleText = chartImage.title
+        const maxTitleWidth = maxChartWidth - 10
+        const titleWidth = doc.getTextWidth(titleText)
+        let titleHeight = 5
+        if (titleWidth > maxTitleWidth) {
+          const titleLines = doc.splitTextToSize(titleText, maxTitleWidth)
+          titleHeight = (Array.isArray(titleLines) ? titleLines.length : 1) * 5
+        }
+        
         const spacing = 10
         const totalChartHeight = titleHeight + finalChartHeight + spacing
+        const remainingSpace = chartAvailableHeight - currentY
         
-        if (currentY + totalChartHeight > chartAvailableHeight) {
+        // Only break if chart definitely won't fit (with small tolerance)
+        // This maximizes space usage and prevents unnecessary page breaks
+        if (currentY + totalChartHeight > chartAvailableHeight && remainingSpace < 5) {
           await drawPageFooter(pageNumber)
           doc.addPage(orientationParam as 'p' | 'l')
           pageNumber++
@@ -395,11 +409,7 @@ export class ExportUtils {
         }
 
         // Add chart title
-        doc.setFontSize(11)
-        doc.setFont("helvetica", "bold")
         doc.setTextColor(17, 24, 39)
-        const titleText = chartImage.title
-        const titleWidth = doc.getTextWidth(titleText)
         if (titleWidth > maxChartWidth - 10) {
           // Wrap title if too long
           const titleLines = doc.splitTextToSize(titleText, maxChartWidth - 10)
@@ -554,7 +564,7 @@ export class ExportUtils {
     currentY = drawTableHeader(currentY, pageNumber)
 
     // Calculate available space on current page
-    const footerSpace = 20 // Space needed for footer (increased for safety)
+    const footerSpace = 20 // Space needed for footer
     const availablePageHeight = pageHeight - margin - footerSpace
 
     doc.setFont("helvetica", "normal")
@@ -581,6 +591,32 @@ export class ExportUtils {
 
     const tableWidth = Math.min(colWidths.reduce((a, b) => a + b, 0), availableWidth)
     
+    // Smart pagination: calculate how many rows can fit on each page
+    const getRowsForPage = (startIndex: number, startY: number): number => {
+      let rowsThatFit = 0
+      let currentY = startY
+      const minSafetyMargin = 3 // Minimum margin to prevent overflow
+      
+      for (let i = startIndex; i < rows.length; i++) {
+        const rowHeight = rowHeights[i]
+        // Check if this row fits with minimum safety margin
+        if (currentY + rowHeight + minSafetyMargin <= availablePageHeight) {
+          rowsThatFit++
+          currentY += rowHeight
+        } else {
+          // If there's still significant space left (more than half a row), try to fit it
+          const remainingSpace = availablePageHeight - currentY
+          if (remainingSpace > rowHeight * 0.5 && i === startIndex) {
+            // If it's the first row and we have more than half space, try to fit it
+            // This prevents unnecessary page breaks for rows that are just slightly too tall
+            rowsThatFit++
+          }
+          break
+        }
+      }
+      return rowsThatFit
+    }
+    
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex]
       const maxCellHeight = rowHeights[rowIndex]
@@ -595,20 +631,33 @@ export class ExportUtils {
         cellLines.push(Array.isArray(lines) ? lines : [lines])
       })
 
-      // Smart page break: check if row fits with safety margin
-      const safetyMargin = 5 // Extra margin to prevent overflow
-      const willCurrentRowFit = currentY + maxCellHeight + safetyMargin <= availablePageHeight
+      // Smart page break: check if row fits, but be more lenient to maximize space usage
+      const remainingSpace = availablePageHeight - currentY
+      const minSafetyMargin = 3 // Reduced margin to maximize space usage
       
-      if (!willCurrentRowFit) {
-        // Current row doesn't fit - break to new page
-        await drawPageFooter(pageNumber)
-        doc.addPage(orientationParam as 'p' | 'l')
-        pageNumber++
-        await drawPageHeader()
-        currentY = headerHeight + 15
-        currentY = drawTableHeader(currentY, pageNumber)
-        doc.setFont("helvetica", "normal")
-        doc.setFontSize(7)
+      // Only break if row definitely won't fit (with some tolerance for very tall rows)
+      const willCurrentRowFit = currentY + maxCellHeight + minSafetyMargin <= availablePageHeight
+      
+      // Additional check: if remaining space is very small (less than 10mm), break early
+      // This prevents having just a tiny bit of content at the bottom
+      const shouldBreakEarly = remainingSpace < 10 && maxCellHeight > remainingSpace
+      
+      if (!willCurrentRowFit || shouldBreakEarly) {
+        // Check if we can fit at least one more row on this page
+        const rowsThatFit = getRowsForPage(rowIndex, currentY)
+        
+        // Only break if we can't fit this row or any subsequent rows
+        if (rowsThatFit === 0) {
+          // Current row doesn't fit - break to new page
+          await drawPageFooter(pageNumber)
+          doc.addPage(orientationParam as 'p' | 'l')
+          pageNumber++
+          await drawPageHeader()
+          currentY = headerHeight + 15
+          currentY = drawTableHeader(currentY, pageNumber)
+          doc.setFont("helvetica", "normal")
+          doc.setFontSize(7)
+        }
       }
 
       // Alternate row background
@@ -681,15 +730,31 @@ export class ExportUtils {
     if (!hideTotalRecords) {
       // Check if total records section fits on current page
       const totalRecordsHeight = 15
-      if (currentY + totalRecordsHeight + footerSpace > pageHeight - margin) {
-        // Need new page for total records
+      const spacingBeforeTotal = 10
+      const totalNeededHeight = spacingBeforeTotal + totalRecordsHeight
+      
+      // Only break to new page if absolutely necessary (less than 5mm space left)
+      const remainingSpace = availablePageHeight - currentY
+      if (remainingSpace < totalNeededHeight && remainingSpace < 5) {
+        // Need new page for total records only if very little space left
         await drawPageFooter(pageNumber)
         doc.addPage(orientationParam as 'p' | 'l')
         pageNumber++
         await drawPageHeader()
         currentY = headerHeight + 15
       } else {
-        currentY += 10
+        // Add spacing, but reduce if space is tight
+        const actualSpacing = Math.min(spacingBeforeTotal, remainingSpace - totalRecordsHeight - 2)
+        currentY += Math.max(actualSpacing, 5)
+      }
+      
+      // Ensure we don't exceed page bounds
+      if (currentY + totalRecordsHeight > availablePageHeight) {
+        await drawPageFooter(pageNumber)
+        doc.addPage(orientationParam as 'p' | 'l')
+        pageNumber++
+        await drawPageHeader()
+        currentY = headerHeight + 15
       }
       
       doc.setFillColor(239, 246, 255) // Light blue background
