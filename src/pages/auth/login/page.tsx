@@ -328,11 +328,18 @@ export default function LoginPage() {
             {/* reCAPTCHA widget */}
             <div className="flex flex-col items-center w-full">
               <div className="transform scale-90 origin-center">
-                <ReCAPTCHA
-                  sitekey="6LfVgHUqAAAAAJtQJXShsLo2QbyGby2jquueTZYV"
-                  onChange={onRecaptchaChange}
-                  ref={recaptchaRef}
-                />
+                {import.meta.env.VITE_RECAPTCHA_SITE_KEY ? (
+                  <ReCAPTCHA
+                    sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                    onChange={onRecaptchaChange}
+                    ref={recaptchaRef}
+                  />
+                ) : (
+                  <div className="text-red-600 text-sm p-4 border border-red-300 rounded">
+                    <i className="ri-error-warning-line mr-2"></i>
+                    reCAPTCHA is not configured. Please set VITE_RECAPTCHA_SITE_KEY in your .env file.
+                  </div>
+                )}
               </div>
               {recaptchaError && (
                 <p className="text-red-600 text-sm mt-2 flex items-center gap-1">

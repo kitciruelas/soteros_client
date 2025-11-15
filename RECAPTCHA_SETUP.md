@@ -8,8 +8,8 @@ The reCAPTCHA site key is now configurable through environment variables. The ap
 
 ## Setup Steps
 
-### 1. Create a .env file in the frontend directory
-Create a `.env` file in the `frontend/` directory with the following content:
+### 1. Create a .env file in the client directory
+Create a `.env` file in the `client/` directory with the following content:
 
 ```env
 # API Configuration
@@ -39,8 +39,10 @@ npm run dev
 ```
 
 ## Important Notes
-- The `.env` file should be in the `frontend/` directory, not the root directory
-- Make sure to add your domain to the reCAPTCHA site settings
+- The `.env` file should be in the `client/` directory, not the root directory
+- Make sure to add your domain to the reCAPTCHA site settings in Google's reCAPTCHA Admin Console
+- The 401 (Unauthorized) error means your domain is not authorized for the site key
+- Add all domains where your app will run (localhost, 127.0.0.1 for dev, and your production domain)
 - The site key is public and safe to use in frontend code
 - Never commit your `.env` file to version control
 
@@ -50,6 +52,20 @@ npm run dev
 3. The reCAPTCHA should now work without domain errors
 
 ## Troubleshooting
+
+### 401 Unauthorized Error
+If you see a `401 (Unauthorized)` error from Google reCAPTCHA:
+1. Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin)
+2. Find your site key and click on it
+3. Under "Domains", add all domains where your app runs:
+   - For local development: `localhost`, `127.0.0.1`
+   - For production: your actual domain (e.g., `soterosph.vercel.app`, `yourdomain.com`)
+4. Save the changes
+5. Wait a few minutes for changes to propagate
+6. Refresh your application
+
+### Other Issues
 - If you still get domain errors, make sure your domain is added to the reCAPTCHA site settings
-- Check that the `VITE_RECAPTCHA_SITE_KEY` environment variable is set correctly
+- Check that the `VITE_RECAPTCHA_SITE_KEY` environment variable is set correctly in your `.env` file
 - Restart the development server after making changes to the `.env` file
+- Make sure you're using the correct site key (not the secret key)
