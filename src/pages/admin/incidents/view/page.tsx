@@ -53,80 +53,19 @@ interface Staff {
   team_name?: string;
 }
 
-// Helper function to extract clean description (removes location and GPS info)
-const extractCleanDescription = (text: string): string => {
-  if (!text) return 'No description provided';
-  
-  // Remove location and GPS coordinate lines
-  let cleanText = text
-    .replace(/Location:\s*[^\n]+/gi, '')
-    .replace(/GPS Coordinates:\s*[^\n]+/gi, '')
-    .replace(/Coordinates:\s*[^\n]+/gi, '')
-    .trim();
-  
-  // Remove "No description provided" if it's the only content
-  if (cleanText.toLowerCase() === 'no description provided' || cleanText === '') {
-    return 'No description provided';
-  }
-  
-  return cleanText || 'No description provided';
-};
-
-// Helper function to format location with GPS in one column
-const formatLocationWithGPS = (row: any): string => {
-  let location = row.location || '';
-  
-  // Extract from description if location field is empty
-  if (!location && row.description) {
-    const match = /Location:\s*([^\n]+)/i.exec(row.description);
-    location = match ? match[1].trim() : '';
-  }
-  
-  // Get GPS coordinates
-  let gps = '';
-  if (row.latitude && row.longitude) {
-    gps = `${row.latitude}, ${row.longitude}`;
-  } else if (row.description) {
-    const gpsMatch = /GPS Coordinates:\s*([^\n]+)/i.exec(row.description);
-    if (gpsMatch) {
-      gps = gpsMatch[1].trim();
-    } else {
-      const coordMatch = /Coordinates:\s*([^\n]+)/i.exec(row.description);
-      if (coordMatch) {
-        gps = coordMatch[1].trim();
-      }
-    }
-  }
-  
-  // Combine location and GPS
-  if (location && gps) {
-    return `${location} (${gps})`;
-  } else if (location) {
-    return location;
-  } else if (gps) {
-    return `GPS: ${gps}`;
-  }
-  
-  return 'N/A';
-};
-
-// Export columns configuration for incidents - compact and formal format
+// Export columns configuration for incidents - essential information only
 const incidentExportColumns: ExportColumn[] = [
   {
     key: 'id',
     label: 'ID',
-    format: (value: number) => value ? `#${value}` : 'N/A'
+    format: (value: number) => value ? `#${value}` : ''
   },
   {
     key: 'dateReported',
     label: 'Date Reported',
-    format: (value: string) => value ? ExportUtils.formatDateTime(value) : 'N/A'
+    format: (value: string) => value ? ExportUtils.formatDateTime(value) : ''
   },
-  { 
-    key: 'type', 
-    label: 'Type', 
-    format: (value: string) => value ? value.toUpperCase() : 'N/A'
-  },
+  { key: 'type', label: 'Type', format: (value: string) => value.toUpperCase() },
   {
     key: 'validationStatus',
     label: 'Validation',
@@ -138,20 +77,12 @@ const incidentExportColumns: ExportColumn[] = [
   {
     key: 'status',
     label: 'Status',
-    format: (value: string) => {
-      if (!value) return 'N/A';
-      return value.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
+    format: (value: string) => value?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || ''
   },
   {
     key: 'description',
     label: 'Description',
-    format: (value: string) => extractCleanDescription(value || '')
-  },
-  {
-    key: 'location',
-    label: 'Location & GPS',
-    format: (value: string, row: any) => formatLocationWithGPS(row)
+    format: (value: string) => value || ''
   },
   {
     key: 'reportedBy',
@@ -167,18 +98,13 @@ const incidentExportColumns: ExportColumn[] = [
     format: (value: string, row: any) => {
       if (value) return value;
       if (row.assignedTeamName) return row.assignedTeamName;
-      if (row.assignedStaffName) return `Staff: ${row.assignedStaffName}`;
       return 'Unassigned';
     }
   },
   {
     key: 'remarks',
     label: 'Remarks',
-    format: (value: string) => {
-      if (!value || value.trim() === '') return 'None';
-      // Remove excessive whitespace and format nicely
-      return value.trim().replace(/\s+/g, ' ');
-    }
+    format: (value: string) => value || 'No'
   }
 ];
 
