@@ -420,16 +420,24 @@ export class ExportUtils {
     const availableWidth = pageWidth - 2 * margin
     const minColWidth = 20 // Increased minimum width for better readability
     const maxColWidth = orientation === 'landscape' ? 120 : 50 // Larger max width for landscape orientation
-
+    
+    // Text-heavy columns that need more space in landscape mode
+    const textHeavyColumns = ['description', 'remarks', 'notes', 'comments', 'details']
+    
     const colWidths: number[] = []
     headers.forEach((header, index) => {
+      const columnKey = columns[index]?.key || ''
+      const isTextHeavy = textHeavyColumns.includes(columnKey.toLowerCase())
+      // Give text-heavy columns more space in landscape mode
+      const columnMaxWidth = orientation === 'landscape' && isTextHeavy ? 200 : maxColWidth
+      
       const headerWidth = doc.getTextWidth(header) + 8 // More padding
       const sampleRows = rows.length > 30 ? rows.slice(0, 30) : rows
       const maxDataWidth = Math.max(
         ...sampleRows.map((row) => {
           const cellText = String(row[index] || "")
           if (!cellText || cellText === "undefined" || cellText === "null") return 0
-          const lines = doc.splitTextToSize(cellText, maxColWidth - 8)
+          const lines = doc.splitTextToSize(cellText, columnMaxWidth - 8)
           if (Array.isArray(lines)) {
             return Math.max(...lines.map((line: string) => doc.getTextWidth(line))) + 8
           } else {
@@ -438,7 +446,7 @@ export class ExportUtils {
         }),
       )
       const optimalWidth = Math.max(headerWidth, maxDataWidth, minColWidth)
-      colWidths.push(Math.min(optimalWidth, maxColWidth))
+      colWidths.push(Math.min(optimalWidth, columnMaxWidth))
     })
 
     const totalWidth = colWidths.reduce((sum, width) => sum + width, 0)
