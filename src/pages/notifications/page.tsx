@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { notificationsApi, type Notification } from "../../types/notifications"
+import NotificationModal from "../../components/NotificationModal"
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -12,6 +13,8 @@ export default function NotificationsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [expandedNotifications, setExpandedNotifications] = useState<Set<number>>(new Set())
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
 
   const itemsPerPage = 20
   const maxMessageLength = 150 // Character limit before showing "See more"
@@ -272,7 +275,14 @@ export default function NotificationsPage() {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => markAsRead(notification.id)}
+                  onClick={() => {
+                    markAsRead(notification.id)
+                    // Show modal for welcome messages
+                    if (notification.type === 'system' && notification.title?.includes('Welcome')) {
+                      setSelectedNotification(notification)
+                      setShowNotificationModal(true)
+                    }
+                  }}
                   className={`p-6 hover:bg-gray-50 cursor-pointer transition-colors ${
                     !notification.is_read ? 'bg-blue-50' : ''
                   }`}
@@ -366,6 +376,13 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+
+      {/* Notification Modal (for welcome/system notifications) */}
+      <NotificationModal
+        isOpen={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        notification={selectedNotification}
+      />
     </div>
   )
 }

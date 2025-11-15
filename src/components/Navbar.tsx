@@ -7,6 +7,7 @@ import { userAuthApi } from "../utils/api"
 import { notificationsApi } from "../types/notifications"
 import LogoutModal from "./LogoutModal"
 import AlertModal from "./AlertModal"
+import NotificationModal from "./NotificationModal"
 import Avatar from "./base/Avatar"
 
 interface NavbarProps {
@@ -26,6 +27,8 @@ const Navbar: React.FC<NavbarProps> = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [showAlertModal, setShowAlertModal] = useState(false)
   const [selectedAlert, setSelectedAlert] = useState<any>(null)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<any>(null)
   const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false)
   const isPathActive = (path: string) => typeof window !== 'undefined' && window.location.pathname === path
   const [isScrolled, setIsScrolled] = useState(false)
@@ -776,7 +779,13 @@ const Navbar: React.FC<NavbarProps> = () => {
                                       handleNavigation("/welfare-check");
                                     } else if (notification.type === 'system') {
                                       closeNotificationDropdown();
-                                      handleNavigation("/history-report");
+                                      // Check if it's a welcome message - show modal, otherwise navigate
+                                      if (notification.title?.includes('Welcome')) {
+                                        setSelectedNotification(notification);
+                                        setShowNotificationModal(true);
+                                      } else {
+                                        handleNavigation("/history-report");
+                                      }
                                     }
                                   }}
                                   className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
@@ -1050,7 +1059,13 @@ const Navbar: React.FC<NavbarProps> = () => {
                                       handleNavigation("/welfare-check");
                                     } else if (notification.type === 'system') {
                                       closeNotificationDropdown();
-                                      handleNavigation("/history-report");
+                                      // Check if it's a welcome message - show modal, otherwise navigate
+                                      if (notification.title?.includes('Welcome')) {
+                                        setSelectedNotification(notification);
+                                        setShowNotificationModal(true);
+                                      } else {
+                                        handleNavigation("/history-report");
+                                      }
                                     }
                                   }}
                                   className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
@@ -1352,6 +1367,13 @@ const Navbar: React.FC<NavbarProps> = () => {
         alert={selectedAlert}
       />
 
+      {/* Notification Modal (for welcome/system notifications) */}
+      <NotificationModal
+        isOpen={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        notification={selectedNotification}
+      />
+
       {/* Floating Notifications */}
       <div className="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
         {floatingNotifications.map((notification, index) => {
@@ -1432,7 +1454,13 @@ const Navbar: React.FC<NavbarProps> = () => {
                 handleNavigation("/welfare-check");
                 break;
               case 'system':
-                handleNavigation("/history-report");
+                // Check if it's a welcome message - show modal, otherwise navigate
+                if (notification.title?.includes('Welcome')) {
+                  setSelectedNotification(notification);
+                  setShowNotificationModal(true);
+                } else {
+                  handleNavigation("/history-report");
+                }
                 break;
               default:
                 handleNavigation("/notifications");
