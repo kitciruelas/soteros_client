@@ -414,13 +414,9 @@ const Navbar: React.FC<NavbarProps> = () => {
     processNotificationQueueRef.current = processNotificationQueue;
   }, [processNotificationQueue]);
 
-  // Get unread notifications count - exclude welfare notifications
+  // Get unread notifications count - include all notification types
   const unreadCount = notifications.filter(notif => {
-    // Exclude welfare notifications
-    if (notif.type === 'welfare') {
-      return false;
-    }
-    // Only count unread notifications
+    // Only count unread notifications (including welfare)
     return !readNotifications.has(notif.id) && !notif.is_read;
   }).length;
 
