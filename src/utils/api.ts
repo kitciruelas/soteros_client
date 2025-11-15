@@ -16,13 +16,13 @@ const getApiBaseUrl = () => {
 
 const FINAL_API_BASE_URL = getApiBaseUrl();
 
-// Debug: Log the API URL being used
-console.log('🔧 API Configuration:', {
-  mode: import.meta.env.MODE,
-  dev: import.meta.env.DEV,
-  viteApiUrl: import.meta.env.VITE_API_URL,
-  finalApiBaseUrl: FINAL_API_BASE_URL
-});
+// Debug: Log the API URL being used (suppressed)
+// console.log('🔧 API Configuration:', {
+//   mode: import.meta.env.MODE,
+//   dev: import.meta.env.DEV,
+//   viteApiUrl: import.meta.env.VITE_API_URL,
+//   finalApiBaseUrl: FINAL_API_BASE_URL
+// });
 
 // Types for API responses
 export interface ApiResponse<T = any> {
