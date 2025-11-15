@@ -4,13 +4,11 @@
   "outputDirectory": "dist",
   "env": {
     "VITE_API_URL": "https://soteros-backend-q2yihjhchq-et.a.run.app/api",
-    "NODE_ENV": "production",
-    "VITE_RECAPTCHA_SITE_KEY": "6LfVgHUqAAAAAJtQJXShsLo2QbyGby2jquueTZYV"
+    "NODE_ENV": "production"
   },
   "build": {
     "env": {
-      "VITE_API_URL": "https://soteros-backend-q2yihjhchq-et.a.run.app/api",
-      "VITE_RECAPTCHA_SITE_KEY": "6LfVgHUqAAAAAJtQJXShsLo2QbyGby2jquueTZYV"
+      "VITE_API_URL": "https://soteros-backend-q2yihjhchq-et.a.run.app/api"
     }
   },
   "rewrites": [
