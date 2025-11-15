@@ -419,6 +419,11 @@ const Navbar: React.FC<NavbarProps> = () => {
     !readNotifications.has(notif.id) && notif.type !== 'welfare'
   ).length;
 
+  // Get unread welfare notifications count
+  const welfareCount = notifications.filter(notif => 
+    !readNotifications.has(notif.id) && notif.type === 'welfare'
+  ).length;
+
 
   const toggleNotificationDropdown = () => {
     toggleNotifDropdown()
@@ -712,8 +717,13 @@ const Navbar: React.FC<NavbarProps> = () => {
                     >
                       <i className="ri-notification-line text-xl"></i>
                       {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10">
                           {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                      {welfareCount > 0 && (
+                        <span className="absolute top-3 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10 border-2 border-white">
+                          {welfareCount > 9 ? '9+' : welfareCount}
                         </span>
                       )}
                     </button>
@@ -986,8 +996,13 @@ const Navbar: React.FC<NavbarProps> = () => {
                   >
                     <i className="ri-notification-line text-xl"></i>
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10">
                         {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                    {welfareCount > 0 && (
+                      <span className="absolute top-3 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-10 border-2 border-white">
+                        {welfareCount > 9 ? '9+' : welfareCount}
                       </span>
                     )}
                   </button>
