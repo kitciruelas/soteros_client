@@ -466,7 +466,8 @@ export class ExportUtils {
       })
       
       // Minimum width for text-heavy columns in landscape (enough for proper wrapping)
-      const textHeavyMinWidth = orientation === 'landscape' ? 100 : 50
+      // Increased to 120 to ensure long text wraps properly without overflow
+      const textHeavyMinWidth = orientation === 'landscape' ? 120 : 50
       
       // Calculate how much we can reduce from non-text-heavy columns
       const nonTextHeavyTotal = nonTextHeavyIndices.reduce((sum, idx) => sum + colWidths[idx], 0)
@@ -504,15 +505,42 @@ export class ExportUtils {
           })
         }
         
-        // Final proportional scaling if still needed
+        // Final scaling if still needed - reduce non-text-heavy columns first
         const finalTotal = colWidths.reduce((sum, width) => sum + width, 0)
         if (finalTotal > availableWidth) {
-          const finalScaleFactor = availableWidth / finalTotal
-          colWidths.forEach((width, index) => {
-            const isTextHeavy = textHeavyIndices.includes(index)
-            const minWidth = isTextHeavy && orientation === 'landscape' ? textHeavyMinWidth : minColWidth
-            colWidths[index] = Math.max(width * finalScaleFactor, minWidth)
-          })
+          const finalExcess = finalTotal - availableWidth
+          // Try to reduce only non-text-heavy columns first
+          const nonTextHeavyCurrentTotal = nonTextHeavyIndices.reduce((sum, idx) => sum + colWidths[idx], 0)
+          const nonTextHeavyMinTotal = nonTextHeavyIndices.length * minColWidth
+          const nonTextHeavyReducible = Math.max(0, nonTextHeavyCurrentTotal - nonTextHeavyMinTotal)
+          
+          if (nonTextHeavyReducible >= finalExcess) {
+            // Can fix by only reducing non-text-heavy columns
+            const reductionRatio = finalExcess / nonTextHeavyReducible
+            nonTextHeavyIndices.forEach(index => {
+              const reduction = (colWidths[index] - minColWidth) * reductionRatio
+              colWidths[index] = Math.max(colWidths[index] - reduction, minColWidth)
+            })
+          } else {
+            // Must reduce non-text-heavy to minimum, then scale text-heavy
+            nonTextHeavyIndices.forEach(index => {
+              colWidths[index] = minColWidth
+            })
+            // Recalculate total after reducing non-text-heavy columns
+            const newTotal = colWidths.reduce((sum, width) => sum + width, 0)
+            const remainingExcess = Math.max(0, newTotal - availableWidth)
+            const textHeavyCurrentTotal = textHeavyIndices.reduce((sum, idx) => sum + colWidths[idx], 0)
+            const textHeavyMinTotal = textHeavyIndices.length * textHeavyMinWidth
+            const textHeavyReducible = Math.max(0, textHeavyCurrentTotal - textHeavyMinTotal)
+            
+            if (textHeavyReducible > 0 && remainingExcess > 0) {
+              const textHeavyReductionRatio = Math.min(1, remainingExcess / textHeavyReducible)
+              textHeavyIndices.forEach(index => {
+                const reduction = (colWidths[index] - textHeavyMinWidth) * textHeavyReductionRatio
+                colWidths[index] = Math.max(colWidths[index] - reduction, textHeavyMinWidth)
+              })
+            }
+          }
         }
       }
     }
