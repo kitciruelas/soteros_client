@@ -369,11 +369,24 @@ export class ExportUtils {
 
     // Add chart images if provided
     if (chartImages && chartImages.length > 0) {
+      const chartFooterSpace = 20 // Space needed for footer
+      const chartAvailableHeight = pageHeight - margin - chartFooterSpace
+      
       currentY += 10
       for (const chartImage of chartImages) {
-        // Check if we need a new page
-        const chartHeight = chartImage.height ? (chartImage.height * 0.264583) : 80 // Convert px to mm (1px = 0.264583mm)
-        if (currentY + chartHeight + 20 > pageHeight - margin - 15) {
+        // Calculate chart dimensions to fit within page width
+        const maxChartWidth = pageWidth - 2 * margin
+        const chartWidth = chartImage.width ? (chartImage.width * 0.264583) : maxChartWidth
+        const finalChartWidth = Math.min(chartWidth, maxChartWidth)
+        const aspectRatio = chartImage.height && chartImage.width ? chartImage.height / chartImage.width : 0.75
+        const finalChartHeight = finalChartWidth * aspectRatio
+        
+        // Check if we need a new page (title + chart + spacing)
+        const titleHeight = 5
+        const spacing = 10
+        const totalChartHeight = titleHeight + finalChartHeight + spacing
+        
+        if (currentY + totalChartHeight > chartAvailableHeight) {
           await drawPageFooter(pageNumber)
           doc.addPage(orientationParam as 'p' | 'l')
           pageNumber++
@@ -385,22 +398,37 @@ export class ExportUtils {
         doc.setFontSize(11)
         doc.setFont("helvetica", "bold")
         doc.setTextColor(17, 24, 39)
-        doc.text(chartImage.title, pageWidth / 2, currentY, { align: "center" })
-        currentY += 5
-
-        // Calculate chart dimensions to fit within page width
-        const maxChartWidth = pageWidth - 2 * margin
-        const chartWidth = chartImage.width ? (chartImage.width * 0.264583) : maxChartWidth
-        const chartHeightMm = chartImage.height ? (chartImage.height * 0.264583) : 80
-        const finalChartWidth = Math.min(chartWidth, maxChartWidth)
-        const aspectRatio = chartImage.height && chartImage.width ? chartImage.height / chartImage.width : 0.75
-        const finalChartHeight = finalChartWidth * aspectRatio
+        const titleText = chartImage.title
+        const titleWidth = doc.getTextWidth(titleText)
+        if (titleWidth > maxChartWidth - 10) {
+          // Wrap title if too long
+          const titleLines = doc.splitTextToSize(titleText, maxChartWidth - 10)
+          if (Array.isArray(titleLines)) {
+            titleLines.forEach((line, idx) => {
+              doc.text(line, pageWidth / 2, currentY + idx * 5, { align: "center" })
+            })
+            currentY += titleLines.length * 5
+          } else {
+            doc.text(titleText, pageWidth / 2, currentY, { align: "center", maxWidth: maxChartWidth - 10 })
+            currentY += 5
+          }
+        } else {
+          doc.text(titleText, pageWidth / 2, currentY, { align: "center" })
+          currentY += 5
+        }
 
         // Add chart image
         try {
           const imgX = (pageWidth - finalChartWidth) / 2
-          doc.addImage(chartImage.imageData, "PNG", imgX, currentY, finalChartWidth, finalChartHeight)
-          currentY += finalChartHeight + 10
+          // Ensure chart doesn't exceed page bounds
+          const chartY = Math.min(currentY, chartAvailableHeight - finalChartHeight - 5)
+          doc.addImage(chartImage.imageData, "PNG", imgX, chartY, finalChartWidth, finalChartHeight)
+          currentY = chartY + finalChartHeight + 10
+          
+          // Safety check
+          if (currentY > chartAvailableHeight) {
+            currentY = chartAvailableHeight
+          }
         } catch (error) {
           console.error('Error adding chart image to PDF:', error)
           currentY += 10
@@ -418,22 +446,25 @@ export class ExportUtils {
     )
 
     const availableWidth = pageWidth - 2 * margin
-    const minColWidth = 20 // Increased minimum width for better readability
-    const maxColWidth = orientation === 'landscape' ? 120 : 50 // Larger max width for landscape orientation
+    const minColWidth = 15 // Minimum width for readability
+    const maxColWidth = orientation === 'landscape' ? 100 : 45 // Max width per column
 
+    // Calculate column widths with better distribution
     const colWidths: number[] = []
     headers.forEach((header, index) => {
-      const headerWidth = doc.getTextWidth(header) + 8 // More padding
+      const headerWidth = doc.getTextWidth(header) + 10 // Padding for header
       const sampleRows = rows.length > 30 ? rows.slice(0, 30) : rows
       const maxDataWidth = Math.max(
         ...sampleRows.map((row) => {
           const cellText = String(row[index] || "")
           if (!cellText || cellText === "undefined" || cellText === "null") return 0
-          const lines = doc.splitTextToSize(cellText, maxColWidth - 8)
+          // Use available width minus padding for text wrapping calculation
+          const textWidth = Math.min(maxColWidth - 10, availableWidth / headers.length - 10)
+          const lines = doc.splitTextToSize(cellText, textWidth)
           if (Array.isArray(lines)) {
-            return Math.max(...lines.map((line: string) => doc.getTextWidth(line))) + 8
+            return Math.max(...lines.map((line: string) => doc.getTextWidth(line))) + 10
           } else {
-            return doc.getTextWidth(lines) + 8
+            return doc.getTextWidth(lines) + 10
           }
         }),
       )
@@ -441,22 +472,35 @@ export class ExportUtils {
       colWidths.push(Math.min(optimalWidth, maxColWidth))
     })
 
-    const totalWidth = colWidths.reduce((sum, width) => sum + width, 0)
+    // Ensure total width never exceeds available width
+    let totalWidth = colWidths.reduce((sum, width) => sum + width, 0)
     if (totalWidth > availableWidth) {
       const scaleFactor = availableWidth / totalWidth
       colWidths.forEach((width, index) => {
         colWidths[index] = Math.max(width * scaleFactor, minColWidth)
       })
+      // Recalculate total after scaling
+      totalWidth = colWidths.reduce((sum, width) => sum + width, 0)
+    }
+    
+    // Final safety check: ensure total width is exactly within bounds
+    if (totalWidth > availableWidth) {
+      const finalScaleFactor = (availableWidth - 1) / totalWidth // -1 for safety margin
+      colWidths.forEach((width, index) => {
+        colWidths[index] = Math.max(width * finalScaleFactor, minColWidth)
+      })
     }
 
     const drawTableHeader = (yPos: number, pageNumber: number) => {
-      const headerHeight = 10 // Increased height
+      const headerHeight = 10 // Header height
+      const tableWidth = Math.min(colWidths.reduce((a, b) => a + b, 0), availableWidth)
+      
       // Gradient-like header background
       doc.setFillColor(59, 130, 246) // Professional blue
       doc.rect(
         margin,
         yPos - 5,
-        colWidths.reduce((a, b) => a + b, 0),
+        tableWidth,
         headerHeight,
         "F",
       )
@@ -467,7 +511,7 @@ export class ExportUtils {
       doc.rect(
         margin,
         yPos - 5,
-        colWidths.reduce((a, b) => a + b, 0),
+        tableWidth,
         headerHeight,
       )
 
@@ -484,19 +528,22 @@ export class ExportUtils {
       // Header text
       doc.setTextColor(255, 255, 255) // White text on blue background
       doc.setFont("helvetica", pageNumber === 1 ? "bold" : "normal")
-      doc.setFontSize(8) // Slightly larger
+      doc.setFontSize(8)
       let xPos = margin
       headers.forEach((header, index) => {
         const colWidth = colWidths[index]
         const headerText = String(header)
-        const maxTextWidth = colWidth - 4
+        const maxTextWidth = Math.max(colWidth - 6, 10) // Ensure minimum width
         const lines = doc.splitTextToSize(headerText, maxTextWidth)
         if (Array.isArray(lines)) {
           lines.forEach((line, lineIndex) => {
-            doc.text(line, xPos + 2, yPos + lineIndex * 4)
+            const textY = yPos + lineIndex * 4
+            if (textY <= yPos - 5 + headerHeight - 2) { // Ensure text doesn't overflow
+              doc.text(line, xPos + 3, textY, { maxWidth: maxTextWidth })
+            }
           })
         } else {
-          doc.text(headerText || "", xPos + 2, yPos)
+          doc.text(headerText || "", xPos + 3, yPos, { maxWidth: maxTextWidth })
         }
         xPos += colWidth
       })
@@ -506,12 +553,12 @@ export class ExportUtils {
     currentY += 15 // More space before table
     currentY = drawTableHeader(currentY, pageNumber)
 
-    // Calculate available space on current page - use more of the page if possible
-    const footerSpace = 15 // Space needed for footer (reduced to fit more content)
+    // Calculate available space on current page
+    const footerSpace = 20 // Space needed for footer (increased for safety)
     const availablePageHeight = pageHeight - margin - footerSpace
 
     doc.setFont("helvetica", "normal")
-    doc.setFontSize(7) // Slightly larger for better readability
+    doc.setFontSize(7)
     
     // Pre-calculate row heights for better pagination decisions
     const rowHeights: number[] = []
@@ -522,57 +569,55 @@ export class ExportUtils {
       row.forEach((_, index) => {
         const colWidth = colWidths[index]
         const cellText = String(row[index] || "")
-        const lines = doc.splitTextToSize(cellText, colWidth - 6)
+        // Ensure text width calculation uses safe width
+        const safeTextWidth = Math.max(colWidth - 8, 10)
+        const lines = doc.splitTextToSize(cellText, safeTextWidth)
         const cellHeight = (Array.isArray(lines) ? lines.length : 1) * 4 + 4
         maxCellHeight = Math.max(maxCellHeight, cellHeight)
       })
       
       rowHeights.push(maxCellHeight)
     }
-    
-    // Calculate total height needed for remaining rows
-    const calculateRemainingHeight = (startIndex: number): number => {
-      let total = 0
-      for (let i = startIndex; i < rowHeights.length; i++) {
-        total += rowHeights[i]
-      }
-      return total
-    }
 
+    const tableWidth = Math.min(colWidths.reduce((a, b) => a + b, 0), availableWidth)
+    
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex]
-      let xPos = margin
       const maxCellHeight = rowHeights[rowIndex]
       const cellLines: string[][] = []
 
+      // Prepare cell lines with proper text wrapping
       row.forEach((_, index) => {
         const colWidth = colWidths[index]
         const cellText = String(row[index] || "")
-        const lines = doc.splitTextToSize(cellText, colWidth - 6)
+        const safeTextWidth = Math.max(colWidth - 8, 10)
+        const lines = doc.splitTextToSize(cellText, safeTextWidth)
         cellLines.push(Array.isArray(lines) ? lines : [lines])
       })
 
-      // Smart page break: optimize to fit content on single page when possible
-      const willCurrentRowFit = currentY + maxCellHeight <= availablePageHeight
+      // Smart page break: check if row fits with safety margin
+      const safetyMargin = 5 // Extra margin to prevent overflow
+      const willCurrentRowFit = currentY + maxCellHeight + safetyMargin <= availablePageHeight
       
       if (!willCurrentRowFit) {
         // Current row doesn't fit - break to new page
-        // The pre-calculation of row heights helps ensure we maximize content on each page
-        await drawPageFooter(pageNumber, Math.ceil(data.length / 25))
+        await drawPageFooter(pageNumber)
         doc.addPage(orientationParam as 'p' | 'l')
         pageNumber++
         await drawPageHeader()
         currentY = headerHeight + 15
         currentY = drawTableHeader(currentY, pageNumber)
+        doc.setFont("helvetica", "normal")
         doc.setFontSize(7)
       }
 
+      // Alternate row background
       if (rowIndex % 2 === 1) {
         doc.setFillColor(249, 250, 251) // Lighter gray
         doc.rect(
           margin,
           currentY - 3,
-          colWidths.reduce((a, b) => a + b, 0),
+          tableWidth,
           maxCellHeight,
           "F",
         )
@@ -584,7 +629,7 @@ export class ExportUtils {
       doc.rect(
         margin,
         currentY - 3,
-        colWidths.reduce((a, b) => a + b, 0),
+        tableWidth,
         maxCellHeight,
       )
 
@@ -592,44 +637,76 @@ export class ExportUtils {
       let cellX = margin
       for (let i = 0; i < colWidths.length; i++) {
         if (i > 0) {
+          doc.setDrawColor(229, 231, 235)
           doc.line(cellX, currentY - 3, cellX, currentY - 3 + maxCellHeight)
         }
         cellX += colWidths[i]
       }
 
-      // Cell content
-      doc.setTextColor(55, 65, 81) // Better text color
-      xPos = margin
+      // Cell content with proper text wrapping
+      doc.setTextColor(55, 65, 81)
+      let xPos = margin
       cellLines.forEach((lines, index) => {
         const colWidth = colWidths[index]
         const totalTextHeight = lines.length * 4
         const startY = currentY + (maxCellHeight - totalTextHeight) / 2 + 1
+        
+        // Ensure text doesn't go beyond cell boundaries
         lines.forEach((line, lineIndex) => {
-          let clippedLine = line
-          if (doc.getTextWidth(line) > colWidth - 6) {
-            const split = doc.splitTextToSize(line, colWidth - 6)
-            clippedLine = Array.isArray(split) ? split[0] : split
+          const textY = startY + lineIndex * 4
+          // Ensure text Y position is within cell bounds
+          if (textY >= currentY - 3 && textY <= currentY - 3 + maxCellHeight - 2) {
+            const safeTextWidth = Math.max(colWidth - 8, 10)
+            // Final check and wrap if needed
+            let finalLine = line
+            if (doc.getTextWidth(line) > safeTextWidth) {
+              const split = doc.splitTextToSize(line, safeTextWidth)
+              finalLine = Array.isArray(split) ? split[0] : split
+            }
+            doc.text(finalLine, xPos + 4, textY, {
+              maxWidth: safeTextWidth,
+            })
           }
-          doc.text(clippedLine, xPos + 3, startY + lineIndex * 4, {
-            maxWidth: colWidth - 6,
-          })
         })
         xPos += colWidth
       })
       currentY += maxCellHeight
+      
+      // Safety check: ensure currentY never exceeds page bounds
+      if (currentY > availablePageHeight) {
+        currentY = availablePageHeight
+      }
     }
 
     if (!hideTotalRecords) {
-      currentY += 15
+      // Check if total records section fits on current page
+      const totalRecordsHeight = 15
+      if (currentY + totalRecordsHeight + footerSpace > pageHeight - margin) {
+        // Need new page for total records
+        await drawPageFooter(pageNumber)
+        doc.addPage(orientationParam as 'p' | 'l')
+        pageNumber++
+        await drawPageHeader()
+        currentY = headerHeight + 15
+      } else {
+        currentY += 10
+      }
+      
       doc.setFillColor(239, 246, 255) // Light blue background
-      doc.rect(margin, currentY, availableWidth, 15, "F")
+      doc.rect(margin, currentY, availableWidth, totalRecordsHeight, "F")
       doc.setDrawColor(59, 130, 246)
       doc.setLineWidth(0.3)
-      doc.rect(margin, currentY, availableWidth, 15)
+      doc.rect(margin, currentY, availableWidth, totalRecordsHeight)
       doc.setFont("helvetica", "bold")
-      doc.setFontSize(12)
+      doc.setFontSize(10) // Reduced font size to ensure it fits
       doc.setTextColor(30, 64, 175)
-      doc.text(`Total Records: ${data.length}`, pageWidth / 2, currentY + 10, { align: "center" })
+      const totalText = `Total Records: ${data.length}`
+      // Ensure text fits within available width
+      const textWidth = doc.getTextWidth(totalText)
+      if (textWidth > availableWidth - 10) {
+        doc.setFontSize(8)
+      }
+      doc.text(totalText, pageWidth / 2, currentY + 10, { align: "center", maxWidth: availableWidth - 10 })
     }
 
     // Draw footer with logo on last page
