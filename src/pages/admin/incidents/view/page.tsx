@@ -138,7 +138,6 @@ const ViewIncidents: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [newIncidentIds, setNewIncidentIds] = useState<Set<number>>(new Set());
   const wsHandlersSetup = useRef(false);
-  const [exportOrientation, setExportOrientation] = useState<'portrait' | 'landscape'>('landscape');
 
 
   // Helper function to check if assignment button should be disabled
@@ -985,7 +984,7 @@ const ViewIncidents: React.FC = () => {
   };
 
   // Handle export with preview
-  const handleExport = async (orientation: 'portrait' | 'landscape' = exportOrientation) => {
+  const handleExport = async () => {
     if (filteredIncidents.length === 0) return;
 
     setIsExporting(true);
@@ -1010,7 +1009,7 @@ const ViewIncidents: React.FC = () => {
         filename: 'incidents_report',
         title,
         includeTimestamp: true,
-        orientation: orientation
+        orientation: 'landscape' as const
       };
 
       await ExportUtils.exportToPDF(filteredIncidents, incidentExportColumns, options);
@@ -2521,8 +2520,6 @@ const ViewIncidents: React.FC = () => {
         data={filteredIncidents}
         columns={incidentExportColumns.map(col => ({ key: col.key, label: col.label }))}
         title={`Incidents Report (${filteredIncidents.length})`}
-        orientation={exportOrientation}
-        onOrientationChange={setExportOrientation}
       />
 
       {/* Incident Map Modal */}
