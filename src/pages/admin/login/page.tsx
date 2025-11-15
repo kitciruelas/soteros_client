@@ -238,10 +238,7 @@ const AdminLogin: React.FC = () => {
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-8 text-center relative z-10">
-            <p className="text-sm text-gray-600">Need help? Contact your system administrator</p>
-          </div>
+       
         </div>
 
        
