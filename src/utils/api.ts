@@ -232,7 +232,7 @@ export const apiFormRequest = async <T = any>(
   
   const config: RequestInit = { method: 'POST', body: formData, headers, ...options };
   
-  console.log(`API Form Request: POST ${url}`);
+  // console.log(`API Form Request: POST ${url}`);
   
   try {
     const response = await fetch(url, config);
@@ -278,7 +278,7 @@ export const apiFormRequest = async <T = any>(
     }
     
     const responseData = await response.json();
-    console.log(`API Form Success for ${endpoint}:`, responseData.success !== undefined ? responseData.success : 'No success field');
+    // console.log(`API Form Success for ${endpoint}:`, responseData.success !== undefined ? responseData.success : 'No success field');
     return responseData;
   } catch (error) {
     console.error(`API form request failed for ${endpoint}:`, error);
@@ -307,12 +307,12 @@ export const apiRequest = async <T = any>(
     ...options,
   };
   
-  // Suppress API request log for login endpoints to avoid cluttering console
-  if (!endpoint.includes('/auth/login/')) {
-    console.log(`API Request: ${config.method || 'GET'} ${url}`);
-    console.log('Environment:', import.meta.env.MODE);
-    console.log('API Base URL:', FINAL_API_BASE_URL);
-  }
+  // Suppress API request logs to avoid cluttering console
+  // if (!endpoint.includes('/auth/login/')) {
+  //   console.log(`API Request: ${config.method || 'GET'} ${url}`);
+  //   console.log('Environment:', import.meta.env.MODE);
+  //   console.log('API Base URL:', FINAL_API_BASE_URL);
+  // }
   
   try {
     const response = await fetch(url, config);
@@ -394,10 +394,10 @@ export const apiRequest = async <T = any>(
     }
     
     const responseData = await response.json();
-    // Suppress API success log for login endpoints to avoid cluttering console
-    if (!endpoint.includes('/auth/login/')) {
-      console.log(`API Success for ${endpoint}:`, responseData.success !== undefined ? responseData.success : 'No success field');
-    }
+    // Suppress API success logs to avoid cluttering console
+    // if (!endpoint.includes('/auth/login/')) {
+    //   console.log(`API Success for ${endpoint}:`, responseData.success !== undefined ? responseData.success : 'No success field');
+    // }
     return responseData;
   } catch (error) {
     // Suppress API error log for login endpoints to avoid cluttering console
