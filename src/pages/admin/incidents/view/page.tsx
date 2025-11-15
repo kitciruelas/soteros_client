@@ -105,26 +105,6 @@ const incidentExportColumns: ExportColumn[] = [
     key: 'remarks',
     label: 'Remarks',
     format: (value: string) => value || 'No'
-  },
-  {
-    key: 'attachment',
-    label: 'Attachment',
-    format: (value: string) => {
-      if (!value) return 'No';
-      // Parse attachments - handle both JSON array and comma-separated formats
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.join(', ');
-        }
-      } catch {
-        // Not JSON, check if comma-separated
-        if (value.includes(',')) {
-          return value;
-        }
-      }
-      return value ? value : 'No';
-    }
   }
 ];
 
@@ -158,7 +138,7 @@ const ViewIncidents: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [newIncidentIds, setNewIncidentIds] = useState<Set<number>>(new Set());
   const wsHandlersSetup = useRef(false);
-  const [exportOrientation, setExportOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [exportOrientation, setExportOrientation] = useState<'portrait' | 'landscape'>('landscape');
 
 
   // Helper function to check if assignment button should be disabled
