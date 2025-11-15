@@ -373,7 +373,11 @@ export class ExportUtils {
       const chartAvailableHeight = pageHeight - margin - chartFooterSpace
       
       currentY += 10
-      for (const chartImage of chartImages) {
+      const spacingBetweenCharts = 15 // Spacing between charts
+      
+      for (let i = 0; i < chartImages.length; i++) {
+        const chartImage = chartImages[i]
+        
         // Calculate chart dimensions to fit within page width
         const maxChartWidth = pageWidth - 2 * margin
         const chartWidth = chartImage.width ? (chartImage.width * 0.264583) : maxChartWidth
@@ -381,7 +385,6 @@ export class ExportUtils {
         const aspectRatio = chartImage.height && chartImage.width ? chartImage.height / chartImage.width : 0.75
         const finalChartHeight = finalChartWidth * aspectRatio
         
-        // Check if we need a new page (title + chart + spacing)
         // Calculate actual title height (may be multiple lines)
         doc.setFontSize(11)
         doc.setFont("helvetica", "bold")
@@ -394,21 +397,26 @@ export class ExportUtils {
           titleHeight = (Array.isArray(titleLines) ? titleLines.length : 1) * 5
         }
         
-        const spacing = 10
-        const totalChartHeight = titleHeight + finalChartHeight + spacing
-        const remainingSpace = chartAvailableHeight - currentY
+        // Calculate total space needed for this chart (title + chart + spacing)
+        const spacingBeforeChart = i > 0 ? spacingBetweenCharts : 0
+        const totalChartHeight = spacingBeforeChart + titleHeight + finalChartHeight
         
-        // Only break if chart definitely won't fit (with small tolerance)
-        // This maximizes space usage and prevents unnecessary page breaks
-        if (currentY + totalChartHeight > chartAvailableHeight && remainingSpace < 5) {
+        // Check if we need a new page before adding this chart
+        if (currentY + totalChartHeight > chartAvailableHeight) {
+          // Not enough space on current page - move to next page
           await drawPageFooter(pageNumber)
           doc.addPage(orientationParam as 'p' | 'l')
           pageNumber++
           await drawPageHeader()
           currentY = headerHeight + 15
+        } else if (i > 0) {
+          // Add spacing between charts (after confirming we have space)
+          currentY += spacingBetweenCharts
         }
 
         // Add chart title
+        doc.setFontSize(11)
+        doc.setFont("helvetica", "bold")
         doc.setTextColor(17, 24, 39)
         if (titleWidth > maxChartWidth - 10) {
           // Wrap title if too long
@@ -427,15 +435,14 @@ export class ExportUtils {
           currentY += 5
         }
 
-        // Add chart image
+        // Add chart image - use currentY directly (positioned right after title)
         try {
           const imgX = (pageWidth - finalChartWidth) / 2
-          // Ensure chart doesn't exceed page bounds
-          const chartY = Math.min(currentY, chartAvailableHeight - finalChartHeight - 5)
-          doc.addImage(chartImage.imageData, "PNG", imgX, chartY, finalChartWidth, finalChartHeight)
-          currentY = chartY + finalChartHeight + 10
+          doc.addImage(chartImage.imageData, "PNG", imgX, currentY, finalChartWidth, finalChartHeight)
+          // Update currentY to position after this chart with spacing
+          currentY += finalChartHeight + 5
           
-          // Safety check
+          // Safety check: ensure currentY doesn't exceed available space
           if (currentY > chartAvailableHeight) {
             currentY = chartAvailableHeight
           }
