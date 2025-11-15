@@ -195,9 +195,6 @@ const IncidentMapModal: React.FC<IncidentMapModalProps> = ({ isOpen, onClose, in
                   <div className="p-2 min-w-[200px]">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-bold text-gray-900">#{incident.id}</h4>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(incident.priorityLevel)}`}>
-                        {incident.priorityLevel.toUpperCase()}
-                      </span>
                     </div>
                     <p className="text-sm text-gray-700 mb-2">{incident.type.toUpperCase()}</p>
                     <p className="text-xs text-gray-600 mb-2">{incident.description}</p>
@@ -232,12 +229,6 @@ const IncidentMapModal: React.FC<IncidentMapModalProps> = ({ isOpen, onClose, in
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Type:</span>
                     <span className="text-sm font-medium text-gray-900">{incident.type.toUpperCase()}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Priority:</span>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(incident.priorityLevel)}`}>
-                      {incident.priorityLevel.toUpperCase()}
-                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Status:</span>
