@@ -13,6 +13,7 @@ const AdminLogin: React.FC = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   // Load remembered email on component mount
@@ -153,8 +154,8 @@ const AdminLogin: React.FC = () => {
                 Email Address
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i className="ri-mail-line text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                  <i className="ri-mail-line text-gray-500 text-lg group-focus-within:text-blue-600 transition-colors duration-200"></i>
                 </div>
                 <input
                   type="email"
@@ -175,19 +176,27 @@ const AdminLogin: React.FC = () => {
                 Password
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i className="ri-lock-line text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                  <i className="ri-lock-line text-gray-500 text-lg group-focus-within:text-blue-600 transition-colors duration-200"></i>
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white/70"
+                  className="block w-full pl-12 pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white/70"
                   placeholder="Enter your password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center z-10 text-gray-500 hover:text-blue-600 transition-colors duration-200 focus:outline-none"
+                  tabIndex={-1}
+                >
+                  <i className={showPassword ? "ri-eye-off-line text-lg" : "ri-eye-line text-lg"}></i>
+                </button>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-focus-within:from-blue-500/10 group-focus-within:via-transparent group-focus-within:to-indigo-500/10 transition-all duration-300 pointer-events-none"></div>
               </div>
             </div>
