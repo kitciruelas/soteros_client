@@ -104,7 +104,12 @@ const incidentExportColumns: ExportColumn[] = [
   {
     key: 'remarks',
     label: 'Remarks',
-    format: (value: string) => value || 'No'
+    format: (value: string) => {
+      if (!value) return 'No';
+      // Truncate long remarks to prevent overflow (max 100 characters)
+      const maxLength = 100;
+      return value.length > maxLength ? value.substring(0, maxLength) + '...' : value;
+    }
   }
 ];
 
