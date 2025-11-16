@@ -256,7 +256,9 @@ const EvacuationCenterPage: React.FC = () => {
   }, [latitude, longitude, evacuationCenters]);
 
   // Get nearby centers (closest centers only) - now using route-based distances
+  // Exclude centers with status "full" from closest centers suggestions
   const nearbyCenters = centersWithRoutes
+    .filter(center => center.status !== 'full')
     .sort((a, b) => a.distance - b.distance)
     .slice(0, maxNearbyCount);
 
@@ -764,7 +766,7 @@ const EvacuationCenterPage: React.FC = () => {
                           </label>
                         </div>
                         <div className="text-sm text-gray-600">
-                          {maxNearbyCount} nearest by route
+                          {maxNearbyCount} nearest available by route
                         </div>
                         {userLocation && (
                           <button
@@ -807,7 +809,7 @@ const EvacuationCenterPage: React.FC = () => {
                           Closest Centers
                         </h3>
                         <p className="text-gray-600 text-sm mt-1">
-                          {maxNearbyCount} nearest evacuation centers by driving route
+                          {maxNearbyCount} nearest available evacuation centers by driving route
                         </p>
                       </div>
                     </div>
