@@ -1338,8 +1338,8 @@ const AdminDashboard: React.FC = () => {
                   <div ref={responseTimeChartRef}>
                     <BarChart
                       data={responseActivities.avgResponseTimeByPriority.map(item => ({
-                        label: item.priority_level.charAt(0).toUpperCase() + item.priority_level.slice(1),
-                        value: Math.round(item.avg_response_time_minutes || 0)
+                        name: item.priority_level.charAt(0).toUpperCase() + item.priority_level.slice(1),
+                        count: Math.round(item.avg_response_time_minutes || 0)
                       }))}
                       title="Average Response Time (minutes)"
                       color="#3b82f6"
@@ -1392,8 +1392,8 @@ const AdminDashboard: React.FC = () => {
                     <div ref={teamPerformanceChartRef}>
                       <BarChart
                         data={responseActivities.teamPerformance.map(item => ({
-                          label: item.team_name,
-                          value: item.total_incidents_handled || 0
+                          name: item.team_name,
+                          count: item.total_incidents_handled || 0
                         }))}
                         title="Total Incidents Handled by Team"
                         color="#8b5cf6"
@@ -1443,8 +1443,8 @@ const AdminDashboard: React.FC = () => {
                   <div>
                     <BarChart
                       data={responseActivities.responseTimeDistribution.map(item => ({
-                        label: item.time_category,
-                        value: item.count || 0
+                        name: item.time_category,
+                        count: item.count || 0
                       }))}
                       title="Incidents by Response Time Category"
                       color="#f59e0b"
