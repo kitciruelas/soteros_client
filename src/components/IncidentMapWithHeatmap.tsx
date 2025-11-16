@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
@@ -127,6 +127,158 @@ const LEGEND_FILTERS = {
   IN_PROGRESS: "in_progress",
   RESOLVED: "resolved",
 } as const
+
+// Rosario, Batangas barangays with lat/lng
+const rosarioBarangays = [
+  { name: 'Alupay', lat: 13.8404, lng: 121.2922 },
+  { name: 'Antipolo', lat: 13.7080, lng: 121.3096 },
+  { name: 'Bagong Pook', lat: 13.8402, lng: 121.2216 },
+  { name: 'Balibago', lat: 13.8512, lng: 121.2855 },
+  { name: 'Barangay A', lat: 13.8457, lng: 121.2104 },
+  { name: 'Barangay B', lat: 13.8461, lng: 121.2065 },
+  { name: 'Barangay C', lat: 13.8467, lng: 121.2032 },
+  { name: 'Barangay D', lat: 13.8440, lng: 121.2035 },
+  { name: 'Barangay E', lat: 13.8415, lng: 121.2047 },
+  { name: 'Bayawang', lat: 13.7944, lng: 121.2798 },
+  { name: 'Baybayin', lat: 13.8277, lng: 121.2589 },
+  { name: 'Bulihan', lat: 13.7967, lng: 121.2351 },
+  { name: 'Cahigam', lat: 13.8021, lng: 121.2501 },
+  { name: 'Calantas', lat: 13.7340, lng: 121.3129 },
+  { name: 'Colongan', lat: 13.8114, lng: 121.1762 },
+  { name: 'Itlugan', lat: 13.8190, lng: 121.2036 },
+  { name: 'Leviste', lat: 13.7694, lng: 121.2868 },
+  { name: 'Lumbangan', lat: 13.8122, lng: 121.2649 },
+  { name: 'Maalas-as', lat: 13.8112, lng: 121.2122 },
+  { name: 'Mabato', lat: 13.8144, lng: 121.2913 },
+  { name: 'Mabunga', lat: 13.7810, lng: 121.2924 },
+  { name: 'Macalamcam A', lat: 13.8551, lng: 121.3046 },
+  { name: 'Macalamcam B', lat: 13.8606, lng: 121.3265 },
+  { name: 'Malaya', lat: 13.8535, lng: 121.1720 },
+  { name: 'Maligaya', lat: 13.8182, lng: 121.2742 },
+  { name: 'Marilag', lat: 13.8562, lng: 121.1764 },
+  { name: 'Masaya', lat: 13.8383, lng: 121.1852 },
+  { name: 'Matamis', lat: 13.7216, lng: 121.3305 },
+  { name: 'Mavalor', lat: 13.8177, lng: 121.2315 },
+  { name: 'Mayuro', lat: 13.7944, lng: 121.2623 },
+  { name: 'Namuco', lat: 13.8382, lng: 121.2036 },
+  { name: 'Namunga', lat: 13.8431, lng: 121.1978 },
+  { name: 'Nasi', lat: 13.7699, lng: 121.3127 },
+  { name: 'Natu', lat: 13.8420, lng: 121.2683 },
+  { name: 'Palakpak', lat: 13.7079, lng: 121.3320 },
+  { name: 'Pinagsibaan', lat: 13.8438, lng: 121.3141 },
+  { name: 'Putingkahoy', lat: 13.8349, lng: 121.3227 },
+  { name: 'Quilib', lat: 13.8603, lng: 121.2002 },
+  { name: 'Salao', lat: 13.8578, lng: 121.3455 },
+  { name: 'San Carlos', lat: 13.8478, lng: 121.2475 },
+  { name: 'San Ignacio', lat: 13.8335, lng: 121.1764 },
+  { name: 'San Isidro', lat: 13.8074, lng: 121.3152 },
+  { name: 'San Jose', lat: 13.8419, lng: 121.2329 },
+  { name: 'San Roque', lat: 13.8518, lng: 121.2039 },
+  { name: 'Santa Cruz', lat: 13.8599, lng: 121.1853 },
+  { name: 'Timbugan', lat: 13.8095, lng: 121.1869 },
+  { name: 'Tiquiwan', lat: 13.8284, lng: 121.2399 },
+  { name: 'Tulos', lat: 13.7231, lng: 121.2971 },
+]
+
+// Boundary barangays - these are explicitly on the municipal boundary
+const boundaryBarangays = [
+  { name: 'Antipolo', lat: 13.7080, lng: 121.3096 },
+  { name: 'Palakpak', lat: 13.7079, lng: 121.3320 },
+  { name: 'Salao', lat: 13.8578, lng: 121.3455 },
+  { name: 'Santa Cruz', lat: 13.8599, lng: 121.1853 },
+  { name: 'Malaya', lat: 13.8535, lng: 121.1720 },
+  { name: 'Matamis', lat: 13.7216, lng: 121.3305 },
+]
+
+// Additional boundary reference points for more accurate boundary calculation
+const additionalBoundaryPoints = [
+  { lat: 13.701325, lng: 121.319271 },
+  { lat: 13.7032933079099, lng: 121.32814414565625 },
+  { lat: 13.705690, lng: 121.339967 },
+  { lat: 13.695825942378994, lng: 121.30536321612809 },
+  { lat: 13.863121, lng: 121.166777 },
+  { lat: 13.691527, lng: 121.294116 },
+]
+
+// Combine boundary barangays, regular barangays, and additional boundary points for boundary calculation
+const allBoundaryPoints = [...rosarioBarangays, ...boundaryBarangays, ...additionalBoundaryPoints]
+
+// Calculate convex hull (boundary) from barangay coordinates using Graham scan algorithm
+const calculateRosarioBoundary = (): [number, number][] => {
+  const points = allBoundaryPoints.map(b => [b.lng, b.lat] as [number, number])
+  
+  if (points.length < 3) {
+    // If less than 3 points, return bounding box
+    const lngs = points.map(p => p[0])
+    const lats = points.map(p => p[1])
+    const minLng = Math.min(...lngs) - 0.005
+    const maxLng = Math.max(...lngs) + 0.005
+    const minLat = Math.min(...lats) - 0.005
+    const maxLat = Math.max(...lats) + 0.005
+    return [
+      [minLng, minLat],
+      [maxLng, minLat],
+      [maxLng, maxLat],
+      [minLng, maxLat],
+      [minLng, minLat],
+    ]
+  }
+
+  // Find the bottom-most point (or left-most in case of tie)
+  let bottom = 0
+  for (let i = 1; i < points.length; i++) {
+    if (points[i][1] < points[bottom][1] || 
+        (points[i][1] === points[bottom][1] && points[i][0] < points[bottom][0])) {
+      bottom = i
+    }
+  }
+
+  // Swap bottom point with first point
+  ;[points[0], points[bottom]] = [points[bottom], points[0]]
+
+  // Sort points by polar angle with respect to bottom point
+  const p0 = points[0]
+  const sortedPoints = [points[0], ...points.slice(1).sort((a, b) => {
+    const angleA = Math.atan2(a[1] - p0[1], a[0] - p0[0])
+    const angleB = Math.atan2(b[1] - p0[1], b[0] - p0[0])
+    if (angleA !== angleB) return angleA - angleB
+    return Math.hypot(a[0] - p0[0], a[1] - p0[1]) - Math.hypot(b[0] - p0[0], b[1] - p0[1])
+  })]
+
+  // Build convex hull
+  const hull: [number, number][] = [sortedPoints[0], sortedPoints[1]]
+  
+  for (let i = 2; i < sortedPoints.length; i++) {
+    while (hull.length > 1) {
+      const p1 = hull[hull.length - 2]
+      const p2 = hull[hull.length - 1]
+      const p3 = sortedPoints[i]
+      
+      // Cross product to determine turn direction
+      const cross = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
+      
+      if (cross <= 0) {
+        hull.pop()
+      } else {
+        break
+      }
+    }
+    hull.push(sortedPoints[i])
+  }
+
+  // Close the polygon
+  if (hull.length > 0 && (hull[0][0] !== hull[hull.length - 1][0] || hull[0][1] !== hull[hull.length - 1][1])) {
+    hull.push(hull[0])
+  }
+
+  return hull.length > 0 ? hull : [
+    [121.17, 13.70],
+    [121.35, 13.70],
+    [121.35, 13.87],
+    [121.17, 13.87],
+    [121.17, 13.70],
+  ]
+}
 
 const calculateMapBounds = (incidents: Incident[]) => {
   const validIncidents = incidents.filter(
@@ -448,6 +600,9 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
 
   const mapBounds = useMemo(() => calculateMapBounds(incidents), [incidents])
 
+  // Get Rosario boundary polygon
+  const rosarioBoundary = useMemo(() => calculateRosarioBoundary(), [])
+
   const filteredIncidents = useMemo(() => {
     return incidents.filter((incident) => {
       if (activeLegendFilters.size === 0) return true
@@ -734,6 +889,18 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
                 console.error("Tile loading error:", e)
                 setMapError(true)
               },
+            }}
+          />
+
+          {/* Rosario Boundary Polygon */}
+          <Polygon
+            positions={rosarioBoundary.map(([lng, lat]) => [lat, lng])}
+            pathOptions={{
+              color: '#ef4444',
+              fillColor: '#fee2e2',
+              fillOpacity: 0.3,
+              weight: 2,
+              dashArray: '5, 5'
             }}
           />
 
