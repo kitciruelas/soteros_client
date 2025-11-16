@@ -1359,18 +1359,21 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Response Activity Trends */}
+              {/* Response Activity Trends - Average Response Time per Month */}
               <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Daily Response Activities (Last 30 Days)</h4>
-                {responseActivities.responseActivityTrends && responseActivities.responseActivityTrends.length > 0 ? (
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Average Response Time per Month</h4>
+                {responseActivities.monthlyResponseSummary && responseActivities.monthlyResponseSummary.length > 0 ? (
                   <div ref={responseTrendsChartRef}>
                     <LineChart
-                      data={responseActivities.responseActivityTrends.map(item => ({
-                        date: new Date(item.activity_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                        count: item.responses_count || 0
-                      }))}
-                      title="Response Activities per Day"
-                      color="#10b981"
+                      data={responseActivities.monthlyResponseSummary.map(item => {
+                        const monthDate = new Date(item.month + '-01');
+                        return {
+                          date: monthDate.toLocaleDateString('en-US', { month: 'short' }),
+                          count: Math.round(item.avg_response_time_minutes || 0)
+                        };
+                      })}
+                      title="Average Response Time per Month"
+                      color="#f59e0b"
                       height={300}
                     />
                   </div>
@@ -1382,6 +1385,9 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                 )}
+                <div className="mt-4 text-sm text-gray-600">
+                  <p>Shows the average time (in minutes) from incident report to first response, grouped by month.</p>
+                </div>
               </div>
 
               {/* Team Performance */}
