@@ -91,6 +91,8 @@ const SafetyProtocolsPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   // Track current slide for each protocol card in grid view
   const [cardSlides, setCardSlides] = useState<Record<number, number>>({});
+  // Track expanded state for each protocol in list view
+  const [expandedProtocols, setExpandedProtocols] = useState<Record<number, boolean>>({});
 
   // Debug: Log file URL handling on mount
   useEffect(() => {
@@ -241,6 +243,25 @@ const SafetyProtocolsPage: React.FC = () => {
     if (type === 'intrusion') return 'Intrusion';
     if (type === 'general') return 'General';
     return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  // Toggle expanded state for protocol description in list view
+  const toggleProtocolExpand = (protocolId: number) => {
+    setExpandedProtocols(prev => ({
+      ...prev,
+      [protocolId]: !prev[protocolId]
+    }));
+  };
+
+  // Check if text should be truncated (longer than 200 characters)
+  const shouldTruncate = (text: string): boolean => {
+    return text.length > 200;
+  };
+
+  // Get truncated text
+  const getTruncatedText = (text: string, length: number = 200): string => {
+    if (text.length <= length) return text;
+    return text.substring(0, length).trim() + '...';
   };
 
   // Get protocol statistics
@@ -544,14 +565,33 @@ const SafetyProtocolsPage: React.FC = () => {
                 {/* Protocol Content */}
                 <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 overflow-hidden' : 'flex-1 flex flex-col'}`}>
                   <div className={`${viewMode === 'list' ? 'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3' : ''}`}>
-                    <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 overflow-hidden pr-0 sm:pr-4' : ''}`}>
-                      <h3 className={`font-bold text-gray-900 mb-2 truncate ${viewMode === 'list' ? 'text-lg sm:text-xl' : 'text-lg'}`}>
+                    <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 pr-0 sm:pr-4' : ''}`}>
+                      <h3 className={`font-bold text-gray-900 mb-2 ${viewMode === 'list' ? 'text-lg sm:text-xl break-words' : 'text-lg truncate'}`}>
                         {protocol.title}
                       </h3>
-                      <div className={`relative ${viewMode === 'grid' ? 'mb-4' : ''}`}>
-                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base mb-1 line-clamp-2 sm:line-clamp-none' : 'text-sm line-clamp-3'}`}>
-                          {protocol.description}
-                        </p>
+                      <div className={`relative ${viewMode === 'grid' ? 'mb-4' : 'mb-2'}`}>
+                        {viewMode === 'list' ? (
+                          <div>
+                            <p className={`text-gray-600 text-sm sm:text-base whitespace-pre-wrap break-words ${!expandedProtocols[protocol.protocol_id] && shouldTruncate(protocol.description) ? 'line-clamp-3' : ''}`}>
+                              {expandedProtocols[protocol.protocol_id] || !shouldTruncate(protocol.description) 
+                                ? protocol.description 
+                                : getTruncatedText(protocol.description)}
+                            </p>
+                            {shouldTruncate(protocol.description) && (
+                              <button
+                                onClick={() => toggleProtocolExpand(protocol.protocol_id)}
+                                className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium flex items-center space-x-1 transition-colors"
+                              >
+                                <span>{expandedProtocols[protocol.protocol_id] ? 'See less' : 'See more'}</span>
+                                <i className={`ri-arrow-${expandedProtocols[protocol.protocol_id] ? 'up' : 'down'}-s-line`}></i>
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-600 text-sm line-clamp-3">
+                            {protocol.description}
+                          </p>
+                        )}
                       </div>
                     </div>
 
