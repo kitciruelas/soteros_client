@@ -114,6 +114,25 @@ const EvacuationCentersManagement: React.FC = () => {
     loadCenters();
   }, []);
 
+  // Auto-update status when occupancy or capacity changes in the form
+  useEffect(() => {
+    if (formData.current_occupancy !== undefined && formData.capacity !== undefined) {
+      const occupancy = Number(formData.current_occupancy) || 0;
+      const capacity = Number(formData.capacity);
+      if (capacity > 0) {
+        const newStatus = calculateStatus(occupancy, capacity, formData.status);
+        // Only update if status actually changed to avoid unnecessary re-renders
+        if (newStatus !== formData.status) {
+          setFormData(prev => ({
+            ...prev,
+            status: newStatus
+          }));
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.current_occupancy, formData.capacity]);
+
   const loadCenters = async () => {
     setLoading(true);
     try {
@@ -187,13 +206,17 @@ const EvacuationCentersManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
+      const capacity = Number(formData.capacity);
+      const occupancy = Number(formData.current_occupancy) || 0;
+      const autoStatus = calculateStatus(occupancy, capacity);
+      
       const payload = {
         name: formData.name as string,
         latitude: Number(formData.latitude),
         longitude: Number(formData.longitude),
-        capacity: Number(formData.capacity),
-        current_occupancy: Number(formData.current_occupancy) || 0,
-        status: formData.status || 'open',
+        capacity: capacity,
+        current_occupancy: occupancy,
+        status: autoStatus,
         contact_person: formData.contact_person || null,
         contact_number: formData.contact_number || null,
         email: formData.email || null,
@@ -231,13 +254,17 @@ const EvacuationCentersManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
+      const capacity = Number(formData.capacity);
+      const occupancy = Number(formData.current_occupancy) || 0;
+      const autoStatus = calculateStatus(occupancy, capacity, formData.status);
+      
       const payload = {
         name: formData.name as string,
         latitude: Number(formData.latitude),
         longitude: Number(formData.longitude),
-        capacity: Number(formData.capacity),
-        current_occupancy: Number(formData.current_occupancy) || 0,
-        status: formData.status || 'open',
+        capacity: capacity,
+        current_occupancy: occupancy,
+        status: autoStatus,
         contact_person: formData.contact_person || null,
         contact_number: formData.contact_number || null,
         email: formData.email || null,
@@ -389,6 +416,20 @@ const EvacuationCentersManagement: React.FC = () => {
   const getOccupancyPercentage = (center: EvacuationCenter) => {
     return Math.round((center.current_occupancy / center.capacity) * 100);
   };
+
+  // Automatically determine status based on occupancy
+  const calculateStatus = useCallback((occupancy: number, capacity: number, currentStatus?: string): 'open' | 'full' | 'closed' => {
+    // Don't auto-change if manually set to closed (unless it's full)
+    if (currentStatus === 'closed' && occupancy < capacity) {
+      return 'closed';
+    }
+    
+    // Auto-update based on occupancy
+    if (occupancy >= capacity) {
+      return 'full';
+    }
+    return 'open';
+  }, []);
 
   // Safely format coordinates that may be strings from the API
   const formatCoordinate = (value: unknown): string => {
@@ -776,7 +817,10 @@ const EvacuationCentersManagement: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Status
+                          <span className="text-xs text-gray-500 ml-2">(Auto-updated based on occupancy)</span>
+                        </label>
                         <select
                           value={formData.status || 'open'}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value as 'open' | 'full' | 'closed' })}
@@ -787,6 +831,13 @@ const EvacuationCentersManagement: React.FC = () => {
                           <option value="full">Full</option>
                           <option value="closed">Closed</option>
                         </select>
+                        {formData.current_occupancy !== undefined && formData.capacity !== undefined && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Status automatically updates: {formData.current_occupancy || 0} / {formData.capacity} = {
+                              formData.current_occupancy && formData.capacity && (formData.current_occupancy >= formData.capacity) ? 'Full' : 'Open'
+                            }
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
