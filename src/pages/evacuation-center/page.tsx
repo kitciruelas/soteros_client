@@ -874,7 +874,7 @@ const EvacuationCenterPage: React.FC = () => {
                           {/* Resources Summary */}
                           <div className="flex items-center space-x-2">
                             <i className="ri-tools-line text-purple-500 text-sm"></i>
-                            <span className="text-sm text-gray-600">
+                            <div className="flex-1">
                               {(() => {
                                 const resources = getResourcesForCenter(center.center_id);
                                 if (resources.length === 0) {
@@ -887,9 +887,27 @@ const EvacuationCenterPage: React.FC = () => {
                                     </button>
                                   );
                                 }
-                                return `${resources.length} resources available`;
+                                return (
+                                  <div
+                                    onClick={() => setSelectedGallery({ 
+                                      center: center,
+                                      resources: resources
+                                    })}
+                                    className="bg-purple-50 rounded-lg p-2 border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-2">
+                                        <i className="ri-tools-line text-purple-600 text-xs"></i>
+                                        <span className="text-xs font-medium text-gray-700">
+                                          {resources.length} resources available
+                                        </span>
+                                      </div>
+                                      <i className="ri-arrow-right-line text-purple-600 text-xs"></i>
+                                    </div>
+                                  </div>
+                                );
                               })()}
-                            </span>
+                            </div>
                           </div>
                         </div>
 

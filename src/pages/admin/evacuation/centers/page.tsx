@@ -115,8 +115,14 @@ const EvacuationCentersManagement: React.FC = () => {
   }, []);
 
   // Auto-update status when occupancy or capacity changes in the form
+  // Only auto-updates if status is not manually set to "closed"
   useEffect(() => {
     if (formData.current_occupancy !== undefined && formData.capacity !== undefined) {
+      // Skip auto-update if status is manually set to "closed"
+      if (formData.status === 'closed') {
+        return;
+      }
+      
       const occupancy = Number(formData.current_occupancy) || 0;
       const capacity = Number(formData.capacity);
       if (capacity > 0) {
@@ -208,7 +214,8 @@ const EvacuationCentersManagement: React.FC = () => {
     try {
       const capacity = Number(formData.capacity);
       const occupancy = Number(formData.current_occupancy) || 0;
-      const autoStatus = calculateStatus(occupancy, capacity);
+      // Only auto-calculate if not manually set to "closed"
+      const autoStatus = formData.status === 'closed' ? 'closed' : calculateStatus(occupancy, capacity);
       
       const payload = {
         name: formData.name as string,
@@ -256,7 +263,8 @@ const EvacuationCentersManagement: React.FC = () => {
     try {
       const capacity = Number(formData.capacity);
       const occupancy = Number(formData.current_occupancy) || 0;
-      const autoStatus = calculateStatus(occupancy, capacity, formData.status);
+      // Only auto-calculate if not manually set to "closed"
+      const autoStatus = formData.status === 'closed' ? 'closed' : calculateStatus(occupancy, capacity);
       
       const payload = {
         name: formData.name as string,
@@ -419,12 +427,12 @@ const EvacuationCentersManagement: React.FC = () => {
 
   // Automatically determine status based on occupancy
   const calculateStatus = useCallback((occupancy: number, capacity: number, currentStatus?: string): 'open' | 'full' | 'closed' => {
-    // Don't auto-change if manually set to closed (unless it's full)
-    if (currentStatus === 'closed' && occupancy < capacity) {
+    // Don't auto-change if manually set to closed - always preserve closed status
+    if (currentStatus === 'closed') {
       return 'closed';
     }
     
-    // Auto-update based on occupancy
+    // Auto-update based on occupancy (only for open/full status)
     if (occupancy >= capacity) {
       return 'full';
     }
@@ -831,11 +839,16 @@ const EvacuationCentersManagement: React.FC = () => {
                           <option value="full">Full</option>
                           <option value="closed">Closed</option>
                         </select>
-                        {formData.current_occupancy !== undefined && formData.capacity !== undefined && (
+                        {formData.current_occupancy !== undefined && formData.capacity !== undefined && formData.status !== 'closed' && (
                           <p className="text-xs text-gray-500 mt-1">
                             Status automatically updates: {formData.current_occupancy || 0} / {formData.capacity} = {
                               formData.current_occupancy && formData.capacity && (formData.current_occupancy >= formData.capacity) ? 'Full' : 'Open'
                             }
+                          </p>
+                        )}
+                        {formData.status === 'closed' && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            Status is manually set to "Closed" and will not auto-update based on occupancy
                           </p>
                         )}
                       </div>
