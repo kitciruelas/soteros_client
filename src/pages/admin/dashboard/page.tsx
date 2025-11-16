@@ -176,10 +176,16 @@ const AdminDashboard: React.FC = () => {
 
   // Reset response time limit when period changes
   useEffect(() => {
-    if (responseTimePeriod === 'days' && responseTimeLimit > 30) {
-      setResponseTimeLimit(7); // Default to 7 days for better performance
-    } else if (responseTimePeriod === 'months' && responseTimeLimit > 24) {
-      setResponseTimeLimit(12); // Default to 12 months
+    if (responseTimePeriod === 'days') {
+      // If current limit is not a valid days option, reset to 7
+      if (![7, 14, 30].includes(responseTimeLimit)) {
+        setResponseTimeLimit(7); // Default to 7 days for better performance
+      }
+    } else if (responseTimePeriod === 'months') {
+      // If current limit is not a valid months option, reset to 12
+      if (![6, 12, 18, 24].includes(responseTimeLimit)) {
+        setResponseTimeLimit(12); // Default to 12 months
+      }
     }
   }, [responseTimePeriod]);
 
@@ -1455,17 +1461,19 @@ const AdminDashboard: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Last:</label>
                 <select
                   value={responseTimeLimit}
-                  onChange={(e) => setResponseTimeLimit(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const newLimit = parseInt(e.target.value);
+                    setResponseTimeLimit(newLimit);
+                  }}
                   className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {responseTimePeriod === 'days' && (
+                  {responseTimePeriod === 'days' ? (
                     <>
                       <option value={7}>7 days</option>
                       <option value={14}>14 days</option>
                       <option value={30}>30 days</option>
                     </>
-                  )}
-                  {responseTimePeriod === 'months' && (
+                  ) : (
                     <>
                       <option value={6}>6 months</option>
                       <option value={12}>12 months</option>
