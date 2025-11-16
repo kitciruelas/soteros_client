@@ -87,7 +87,7 @@ const SafetyProtocolsManagement: React.FC = () => {
   const toCategory = (typeValue: string): string => {
     const t = (typeValue || '').toLowerCase();
     if (t === 'fire') return 'Fire Safety';
-    if (t === 'earthquake') return 'Natural Disasters';
+    if (t === 'earthquake') return 'Natural Hazards';
     if (t === 'medical') return 'Medical';
     if (t === 'intrusion') return 'Security';
     if (t === 'general') return 'Other';
@@ -511,7 +511,7 @@ const SafetyProtocolsManagement: React.FC = () => {
             >
               <option value="all">All Categories</option>
               <option value="Fire Safety">Fire Safety</option>
-              <option value="Natural Disasters">Natural Disasters</option>
+              <option value="Natural Hazards">Natural Hazards</option>
               <option value="Medical">Medical</option>
               <option value="Security">Security</option>
               <option value="Other">Other</option>
@@ -742,7 +742,7 @@ const SafetyProtocolsManagement: React.FC = () => {
                   >
                     <option value="">Select Type</option>
                     <option value="fire">Fire</option>
-                    <option value="earthquake">Natural Disasters</option>
+                    <option value="earthquake">Natural Hazards</option>
                     <option value="medical">Medical</option>
                     <option value="intrusion">Intrusion</option>
                     <option value="general">Other</option>

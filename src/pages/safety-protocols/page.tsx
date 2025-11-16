@@ -232,6 +232,17 @@ const SafetyProtocolsPage: React.FC = () => {
 
   const protocolTypes = ['all', 'fire', 'earthquake', 'medical', 'intrusion', 'general'];
 
+  // Map protocol type to display name
+  const getTypeDisplayName = (type: string): string => {
+    if (type === 'all') return 'All Protocols';
+    if (type === 'fire') return 'Fire';
+    if (type === 'earthquake') return 'Natural Hazards';
+    if (type === 'medical') return 'Medical';
+    if (type === 'intrusion') return 'Intrusion';
+    if (type === 'general') return 'General';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   // Get protocol statistics
   const protocolStats = {
     total: protocols.length,
@@ -413,7 +424,7 @@ const SafetyProtocolsPage: React.FC = () => {
                 >
                   {protocolTypes.map((type) => (
                     <option key={type} value={type}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)} {type === 'all' ? 'Protocols' : ''}
+                      {getTypeDisplayName(type)}
                     </option>
                   ))}
                 </select>
