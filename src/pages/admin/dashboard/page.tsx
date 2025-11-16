@@ -1444,6 +1444,7 @@ const AdminDashboard: React.FC = () => {
                       title={`Average Response Time (Last ${responseTrendsLimit} ${responseTrendsPeriod})`}
                       color="#f59e0b"
                       height={350}
+                      unit="minutes"
                     />
                   </div>
                 ) : (
