@@ -1332,9 +1332,9 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               {/* Response Time by Priority */}
-              {responseActivities.avgResponseTimeByPriority && responseActivities.avgResponseTimeByPriority.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Average Response Time by Priority</h4>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Average Response Time by Priority</h4>
+                {responseActivities.avgResponseTimeByPriority && responseActivities.avgResponseTimeByPriority.length > 0 ? (
                   <div ref={responseTimeChartRef}>
                     <BarChart
                       data={responseActivities.avgResponseTimeByPriority.map(item => ({
@@ -1346,16 +1346,23 @@ const AdminDashboard: React.FC = () => {
                       height={300}
                     />
                   </div>
-                  <div className="mt-4 text-sm text-gray-600">
-                    <p>Response time is calculated from incident report to first team/staff assignment.</p>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
+                    <div className="text-center">
+                      <i className="ri-bar-chart-line text-4xl text-gray-400 mb-2"></i>
+                      <p className="text-gray-500">No data available for response times by priority</p>
+                    </div>
                   </div>
+                )}
+                <div className="mt-4 text-sm text-gray-600">
+                  <p>Response time is calculated from incident report to first team/staff assignment.</p>
                 </div>
-              )}
+              </div>
 
               {/* Response Activity Trends */}
-              {responseActivities.responseActivityTrends && responseActivities.responseActivityTrends.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Daily Response Activities (Last 30 Days)</h4>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Daily Response Activities (Last 30 Days)</h4>
+                {responseActivities.responseActivityTrends && responseActivities.responseActivityTrends.length > 0 ? (
                   <div ref={responseTrendsChartRef}>
                     <LineChart
                       data={responseActivities.responseActivityTrends.map(item => ({
@@ -1367,55 +1374,72 @@ const AdminDashboard: React.FC = () => {
                       height={300}
                     />
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
+                    <div className="text-center">
+                      <i className="ri-line-chart-line text-4xl text-gray-400 mb-2"></i>
+                      <p className="text-gray-500">No response activity trends data available</p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Team Performance */}
-              {responseActivities.teamPerformance && responseActivities.teamPerformance.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Team Performance Metrics</h4>
-                  <div ref={teamPerformanceChartRef}>
-                    <BarChart
-                      data={responseActivities.teamPerformance.map(item => ({
-                        label: item.team_name,
-                        value: item.total_incidents_handled || 0
-                      }))}
-                      title="Total Incidents Handled by Team"
-                      color="#8b5cf6"
-                      height={300}
-                    />
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded p-4 border border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Top Performing Team</p>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {responseActivities.teamPerformance[0]?.team_name || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {responseActivities.teamPerformance[0]?.total_incidents_handled || 0} incidents handled
-                      </p>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Team Performance Metrics</h4>
+                {responseActivities.teamPerformance && responseActivities.teamPerformance.length > 0 ? (
+                  <>
+                    <div ref={teamPerformanceChartRef}>
+                      <BarChart
+                        data={responseActivities.teamPerformance.map(item => ({
+                          label: item.team_name,
+                          value: item.total_incidents_handled || 0
+                        }))}
+                        title="Total Incidents Handled by Team"
+                        color="#8b5cf6"
+                        height={300}
+                      />
                     </div>
-                    <div className="bg-white rounded p-4 border border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Fastest Average Response</p>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {responseActivities.teamPerformance.sort((a, b) => 
-                          (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
-                        )[0]?.team_name || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {Math.round(responseActivities.teamPerformance.sort((a, b) => 
-                          (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
-                        )[0]?.avg_response_time_minutes || 0)} minutes avg
-                      </p>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded p-4 border border-gray-200">
+                        <p className="text-sm text-gray-600 mb-2">Top Performing Team</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {responseActivities.teamPerformance[0]?.team_name || 'N/A'}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {responseActivities.teamPerformance[0]?.total_incidents_handled || 0} incidents handled
+                        </p>
+                      </div>
+                      <div className="bg-white rounded p-4 border border-gray-200">
+                        <p className="text-sm text-gray-600 mb-2">Fastest Average Response</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {responseActivities.teamPerformance.sort((a, b) => 
+                            (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
+                          )[0]?.team_name || 'N/A'}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {Math.round(responseActivities.teamPerformance.sort((a, b) => 
+                            (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
+                          )[0]?.avg_response_time_minutes || 0)} minutes avg
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
+                    <div className="text-center">
+                      <i className="ri-team-line text-4xl text-gray-400 mb-2"></i>
+                      <p className="text-gray-500">No team performance data available</p>
+                      <p className="text-sm text-gray-400 mt-1">Teams will appear here once they are assigned to incidents</p>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Response Time Distribution */}
-              {responseActivities.responseTimeDistribution && responseActivities.responseTimeDistribution.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Response Time Distribution</h4>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Response Time Distribution</h4>
+                {responseActivities.responseTimeDistribution && responseActivities.responseTimeDistribution.length > 0 ? (
                   <div>
                     <BarChart
                       data={responseActivities.responseTimeDistribution.map(item => ({
@@ -1427,8 +1451,15 @@ const AdminDashboard: React.FC = () => {
                       height={300}
                     />
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
+                    <div className="text-center">
+                      <i className="ri-bar-chart-box-line text-4xl text-gray-400 mb-2"></i>
+                      <p className="text-gray-500">No response time distribution data available</p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Monthly Response Summary Table */}
               {responseActivities.monthlyResponseSummary && responseActivities.monthlyResponseSummary.length > 0 && (
