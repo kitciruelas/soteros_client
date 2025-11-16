@@ -549,8 +549,10 @@ const SafetyProtocolsPage: React.FC = () => {
                         {protocol.title}
                       </h3>
                       <div className={`relative ${viewMode === 'grid' ? 'mb-4' : 'mb-2'}`}>
-                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base whitespace-pre-wrap break-words overflow-wrap-anywhere' : 'text-sm line-clamp-3'}`}>
-                          {protocol.description}
+                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base break-words line-clamp-2' : 'text-sm line-clamp-3'}`}>
+                          {viewMode === 'list' 
+                            ? (protocol.description.length > 120 ? `${protocol.description.substring(0, 120).trim()}...` : protocol.description)
+                            : protocol.description}
                         </p>
                       </div>
                     </div>
