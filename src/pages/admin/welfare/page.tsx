@@ -503,7 +503,7 @@ export default function AdminWelfareManagement() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-check-circle-line text-green-600"></i>
+              <i className="ri-checkbox-circle-fill text-green-600 text-xl"></i>
             </div>
             <div>
               <p className="text-sm text-gray-600">Active Welfare</p>
@@ -614,12 +614,6 @@ export default function AdminWelfareManagement() {
                         <i className={`${getActiveStatusIcon(setting.isActive)} mr-1`}></i>
                         {setting.isActive ? 'Active' : 'Disabled'}
                       </span>
-                      {setting.isActive && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          <i className="ri-star-fill mr-1"></i>
-                          Currently Active
-                        </span>
-                      )}
                     </div>
                     <p className="text-gray-600 mb-3">{setting.description || 'No description provided'}</p>
                     <div className="flex items-center text-sm text-gray-500 space-x-4">
