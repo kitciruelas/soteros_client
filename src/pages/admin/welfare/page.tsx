@@ -507,8 +507,7 @@ export default function AdminWelfareManagement() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Active Welfare</p>
-              <p className="text-xl font-bold text-gray-900 flex items-center">
-                <i className="ri-star-fill text-yellow-500 mr-1 text-lg"></i>
+              <p className="text-xl font-bold text-gray-900">
                 {stats?.activeSettings || settings.filter(s => s.isActive).length}
               </p>
             </div>
