@@ -325,7 +325,7 @@ const SafetyProtocolsPage: React.FC = () => {
               </div>
               <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
                 <div className="text-2xl font-bold text-yellow-600">{protocolStats.earthquake}</div>
-                <div className="text-sm text-gray-600">Earthquake</div>
+                <div className="text-sm text-gray-600">Natural Hazards</div>
               </div>
               <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
                 <div className="text-2xl font-bold text-green-600">{protocolStats.medical}</div>
@@ -524,7 +524,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       protocol.type === 'intrusion' ? 'bg-purple-100 text-purple-800' :
                       'bg-green-100 text-green-800'
                     }`}>
-                      {protocol.type.charAt(0).toUpperCase() + protocol.type.slice(1)}
+                      {getTypeDisplayName(protocol.type)}
                     </span>
                   )}
 
@@ -536,7 +536,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       protocol.type === 'intrusion' ? 'bg-purple-100 text-purple-800' :
                       'bg-green-100 text-green-800'
                     }`}>
-                      {protocol.type.charAt(0).toUpperCase() + protocol.type.slice(1)}
+                      {getTypeDisplayName(protocol.type)}
                     </span>
                   )}
                 </div>
@@ -564,7 +564,7 @@ const SafetyProtocolsPage: React.FC = () => {
                           protocol.type === 'intrusion' ? 'bg-purple-100 text-purple-800' :
                           'bg-green-100 text-green-800'
                         }`}>
-                          {protocol.type.charAt(0).toUpperCase() + protocol.type.slice(1)}
+                          {getTypeDisplayName(protocol.type)}
                         </span>
                       </div>
                     )}
@@ -824,7 +824,7 @@ const SafetyProtocolsPage: React.FC = () => {
                       selectedProtocol.type === 'intrusion' ? 'bg-purple-100 text-purple-800' :
                       'bg-green-100 text-green-800'
                     }`}>
-                      {selectedProtocol.type.charAt(0).toUpperCase() + selectedProtocol.type.slice(1)}
+                      {getTypeDisplayName(selectedProtocol.type)}
                     </span>
                   </div>
                 </div>
