@@ -62,6 +62,9 @@ interface ResponseTimeData {
   max_response_time_minutes: number;
   avg_resolution_time_minutes: number | null;
   avg_response_time_hours: string;
+  avg_response_time_days?: number;
+  display_value?: number;
+  display_unit?: 'hours' | 'days';
 }
 
 interface IndividualResponseTimeData {
@@ -72,6 +75,9 @@ interface IndividualResponseTimeData {
   status: string;
   response_time_minutes: number;
   response_time_hours: number;
+  response_time_days: number;
+  display_value: number;
+  display_unit: 'hours' | 'days';
 }
 
 const AdminDashboard: React.FC = () => {
@@ -1398,12 +1404,14 @@ const AdminDashboard: React.FC = () => {
               <LineChart
                 data={responseTimeData.map(item => ({
                   date: item.incident_type,
-                  count: parseFloat(item.avg_response_time_hours),
+                  count: item.display_value || parseFloat(item.avg_response_time_hours),
                   incident_count: item.incident_count,
                   avg_response_time_minutes: item.avg_response_time_minutes,
-                  avg_response_time_hours: parseFloat(item.avg_response_time_hours)
+                  avg_response_time_hours: parseFloat(item.avg_response_time_hours),
+                  avg_response_time_days: item.avg_response_time_days || 0,
+                  display_unit: item.display_unit || 'hours'
                 }))}
-                title="Response Time per Incident Type (Average Hours)"
+                title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'})`}
                 color="#3b82f6"
                 height={350}
               />
@@ -1414,15 +1422,17 @@ const AdminDashboard: React.FC = () => {
               <LineChart
                 data={individualResponseTimeData.map((item, index) => ({
                   date: `#${item.incident_id} ${item.incident_type}`,
-                  count: item.response_time_hours,
+                  count: item.display_value || item.response_time_hours,
                   incident_id: item.incident_id,
                   incident_type: item.incident_type,
                   response_time_minutes: item.response_time_minutes,
                   response_time_hours: item.response_time_hours,
+                  response_time_days: item.response_time_days || 0,
+                  display_unit: item.display_unit || 'hours',
                   date_reported: item.date_reported,
                   status: item.status
                 }))}
-                title="Response Time per Individual Incident (Hours)"
+                title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'})`}
                 color="#10b981"
                 height={350}
               />

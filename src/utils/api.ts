@@ -703,6 +703,9 @@ export const adminDashboardApi = {
         max_response_time_minutes: number;
         avg_resolution_time_minutes: number | null;
         avg_response_time_hours: string;
+        avg_response_time_days: number;
+        display_value: number;
+        display_unit: 'hours' | 'days';
       }>;
       note?: string;
       totalIncidents: number;
@@ -720,6 +723,9 @@ export const adminDashboardApi = {
         status: string;
         response_time_minutes: number;
         response_time_hours: number;
+        response_time_days: number;
+        display_value: number;
+        display_unit: 'hours' | 'days';
       }>;
       total: number;
       note?: string;
