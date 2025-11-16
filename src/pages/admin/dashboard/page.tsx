@@ -604,46 +604,121 @@ const AdminDashboard: React.FC = () => {
 
   const exportResponseTimeData = async () => {
     setShowExportDropdown(false);
-    if (responseTimeData.length === 0) {
-      showToast({ message: 'No response time data available to export', type: 'warning' });
-      return;
+    
+    // Export based on current view
+    if (showIndividualResponseTime) {
+      // Export individual reports
+      if (individualResponseTimeData.length === 0) {
+        showToast({ message: 'No individual response time data available to export', type: 'warning' });
+        return;
+      }
+
+      // Format individual incident data for export
+      const formattedData = individualResponseTimeData.map(item => {
+        // Format response time display
+        let responseTimeDisplay = '';
+        if (item.response_time_minutes < 60) {
+          responseTimeDisplay = `${item.response_time_minutes} Minutes`;
+        } else if (item.response_time_hours >= 24) {
+          responseTimeDisplay = `${item.response_time_days} Days`;
+        } else {
+          responseTimeDisplay = `${item.response_time_hours.toFixed(1)} Hours`;
+        }
+
+        return {
+          incident_id: item.incident_id,
+          incident_type: item.incident_type,
+          date_reported: new Date(item.date_reported).toLocaleString(),
+          updated_at: new Date(item.updated_at).toLocaleString(),
+          status: item.status,
+          response_time_minutes: item.response_time_minutes,
+          response_time_hours: item.response_time_hours.toFixed(2),
+          response_time_days: item.response_time_days || 0,
+          response_time_display: responseTimeDisplay
+        };
+      });
+
+      const columns: ExportColumn[] = [
+        { key: 'incident_id', label: 'Incident ID' },
+        { key: 'incident_type', label: 'Incident Type' },
+        { key: 'date_reported', label: 'Date Reported' },
+        { key: 'updated_at', label: 'Updated At' },
+        { key: 'status', label: 'Status' },
+        { key: 'response_time_display', label: 'Response Time' },
+        { key: 'response_time_minutes', label: 'Response Time (Minutes)' },
+        { key: 'response_time_hours', label: 'Response Time (Hours)' },
+        { key: 'response_time_days', label: 'Response Time (Days)' }
+      ];
+
+      // Capture the response time chart
+      const chartImages = await captureChartImages([
+        { ref: responseTimeChartRef, title: `Response Time per Individual Incident - Last ${responseTimeLimit} ${responseTimePeriod}` }
+      ]);
+
+      setExportData(formattedData);
+      setExportColumns(columns);
+      setExportTitle(`Response Time per Individual Incident - Last ${responseTimeLimit} ${responseTimePeriod}`);
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
+    } else {
+      // Export average by type
+      if (responseTimeData.length === 0) {
+        showToast({ message: 'No response time data available to export', type: 'warning' });
+        return;
+      }
+
+      // Format data for export with readable time formats
+      const formattedData = responseTimeData.map(item => {
+        // Format response time display
+        let avgResponseTimeDisplay = '';
+        if (item.avg_response_time_minutes < 60) {
+          avgResponseTimeDisplay = `${item.avg_response_time_minutes} Minutes`;
+        } else if (item.avg_response_time_hours && parseFloat(item.avg_response_time_hours) >= 24) {
+          avgResponseTimeDisplay = `${item.avg_response_time_days || Math.floor(parseFloat(item.avg_response_time_hours) / 24)} Days`;
+        } else {
+          avgResponseTimeDisplay = `${parseFloat(item.avg_response_time_hours || '0').toFixed(1)} Hours`;
+        }
+
+        return {
+          incident_type: item.incident_type,
+          incident_count: item.incident_count,
+          avg_response_time_display: avgResponseTimeDisplay,
+          avg_response_time_minutes: item.avg_response_time_minutes,
+          avg_response_time_hours: parseFloat(item.avg_response_time_hours || '0').toFixed(2),
+          avg_response_time_days: item.avg_response_time_days || 0,
+          min_response_time_minutes: item.min_response_time_minutes,
+          max_response_time_minutes: item.max_response_time_minutes,
+          avg_resolution_time_minutes: item.avg_resolution_time_minutes || 'N/A',
+          avg_resolution_time_hours: item.avg_resolution_time_minutes 
+            ? (item.avg_resolution_time_minutes / 60).toFixed(2) 
+            : 'N/A'
+        };
+      });
+
+      const columns: ExportColumn[] = [
+        { key: 'incident_type', label: 'Incident Type' },
+        { key: 'incident_count', label: 'Incident Count' },
+        { key: 'avg_response_time_display', label: 'Avg Response Time' },
+        { key: 'avg_response_time_minutes', label: 'Avg Response Time (Minutes)' },
+        { key: 'avg_response_time_hours', label: 'Avg Response Time (Hours)' },
+        { key: 'avg_response_time_days', label: 'Avg Response Time (Days)' },
+        { key: 'min_response_time_minutes', label: 'Min Response Time (Minutes)' },
+        { key: 'max_response_time_minutes', label: 'Max Response Time (Minutes)' },
+        { key: 'avg_resolution_time_minutes', label: 'Avg Resolution Time (Minutes)' },
+        { key: 'avg_resolution_time_hours', label: 'Avg Resolution Time (Hours)' }
+      ];
+
+      // Capture the response time chart
+      const chartImages = await captureChartImages([
+        { ref: responseTimeChartRef, title: `Response Time per Incident Type - Last ${responseTimeLimit} ${responseTimePeriod}` }
+      ]);
+
+      setExportData(formattedData);
+      setExportColumns(columns);
+      setExportTitle(`Response Time per Incident Type - Last ${responseTimeLimit} ${responseTimePeriod}`);
+      setExportChartImages(chartImages);
+      setShowExportModal(true);
     }
-
-    // Format data for export with readable time formats
-    const formattedData = responseTimeData.map(item => ({
-      incident_type: item.incident_type,
-      incident_count: item.incident_count,
-      avg_response_time_minutes: item.avg_response_time_minutes,
-      avg_response_time_hours: parseFloat(item.avg_response_time_hours).toFixed(2),
-      min_response_time_minutes: item.min_response_time_minutes,
-      max_response_time_minutes: item.max_response_time_minutes,
-      avg_resolution_time_minutes: item.avg_resolution_time_minutes || 'N/A',
-      avg_resolution_time_hours: item.avg_resolution_time_minutes 
-        ? (item.avg_resolution_time_minutes / 60).toFixed(2) 
-        : 'N/A'
-    }));
-
-    const columns: ExportColumn[] = [
-      { key: 'incident_type', label: 'Incident Type' },
-      { key: 'incident_count', label: 'Incident Count' },
-      { key: 'avg_response_time_minutes', label: 'Avg Response Time (Minutes)' },
-      { key: 'avg_response_time_hours', label: 'Avg Response Time (Hours)' },
-      { key: 'min_response_time_minutes', label: 'Min Response Time (Minutes)' },
-      { key: 'max_response_time_minutes', label: 'Max Response Time (Minutes)' },
-      { key: 'avg_resolution_time_minutes', label: 'Avg Resolution Time (Minutes)' },
-      { key: 'avg_resolution_time_hours', label: 'Avg Resolution Time (Hours)' }
-    ];
-
-    // Capture the response time chart
-    const chartImages = await captureChartImages([
-      { ref: responseTimeChartRef, title: 'Response Time per Incident Type' }
-    ]);
-
-    setExportData(formattedData);
-    setExportColumns(columns);
-    setExportTitle('Response Time per Incident Type');
-    setExportChartImages(chartImages);
-    setShowExportModal(true);
   };
 
   const exportRecentActivity = () => {
@@ -776,13 +851,41 @@ const AdminDashboard: React.FC = () => {
       });
     });
 
-    // Add response time data
+    // Add response time data (average by type)
     responseTimeData.forEach(item => {
+      let responseTimeDisplay = '';
+      if (item.avg_response_time_minutes < 60) {
+        responseTimeDisplay = `${item.avg_response_time_minutes} Minutes`;
+      } else if (item.avg_response_time_hours && parseFloat(item.avg_response_time_hours) >= 24) {
+        responseTimeDisplay = `${item.avg_response_time_days || Math.floor(parseFloat(item.avg_response_time_hours) / 24)} Days`;
+      } else {
+        responseTimeDisplay = `${parseFloat(item.avg_response_time_hours || '0').toFixed(1)} Hours`;
+      }
+      
       allData.push({
-        section: 'Response Time Analysis',
+        section: 'Response Time Analysis (Average by Type)',
         metric: `${item.incident_type} - Avg Response Time`,
-        value: `${item.avg_response_time_minutes} minutes (${parseFloat(item.avg_response_time_hours).toFixed(2)} hours)`,
+        value: responseTimeDisplay,
         details: `Based on ${item.incident_count} incidents. Min: ${item.min_response_time_minutes} min, Max: ${item.max_response_time_minutes} min`
+      });
+    });
+
+    // Add individual response time data
+    individualResponseTimeData.forEach(item => {
+      let responseTimeDisplay = '';
+      if (item.response_time_minutes < 60) {
+        responseTimeDisplay = `${item.response_time_minutes} Minutes`;
+      } else if (item.response_time_hours >= 24) {
+        responseTimeDisplay = `${item.response_time_days || Math.floor(item.response_time_hours / 24)} Days`;
+      } else {
+        responseTimeDisplay = `${item.response_time_hours.toFixed(1)} Hours`;
+      }
+      
+      allData.push({
+        section: 'Response Time Analysis (Individual Reports)',
+        metric: `Incident #${item.incident_id} - ${item.incident_type}`,
+        value: responseTimeDisplay,
+        details: `Status: ${item.status}, Reported: ${new Date(item.date_reported).toLocaleString()}`
       });
     });
 
