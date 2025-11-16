@@ -105,6 +105,9 @@ const AdminDashboard: React.FC = () => {
   const [responseTimeData, setResponseTimeData] = useState<ResponseTimeData[]>([]);
   const [individualResponseTimeData, setIndividualResponseTimeData] = useState<IndividualResponseTimeData[]>([]);
   const [showIndividualResponseTime, setShowIndividualResponseTime] = useState(false);
+  const [responseTimePeriod, setResponseTimePeriod] = useState<'days' | 'months'>('months');
+  const [responseTimeLimit, setResponseTimeLimit] = useState<number>(12);
+  const [responseTimeLoading, setResponseTimeLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +173,44 @@ const AdminDashboard: React.FC = () => {
     setTrendsLoading(true);
     fetchTrendsData(trendsPeriod, trendsLimit);
   }, [trendsPeriod, trendsLimit]);
+
+  // Reset response time limit when period changes
+  useEffect(() => {
+    if (responseTimePeriod === 'days' && responseTimeLimit > 30) {
+      setResponseTimeLimit(7); // Default to 7 days for better performance
+    } else if (responseTimePeriod === 'months' && responseTimeLimit > 24) {
+      setResponseTimeLimit(12); // Default to 12 months
+    }
+  }, [responseTimePeriod]);
+
+  // Fetch response time data when filter changes
+  useEffect(() => {
+    const fetchResponseTimeData = async () => {
+      setResponseTimeLoading(true);
+      try {
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+        if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
+          setResponseTimeData(responseTimeResponse.responseTimeData || []);
+        }
+      } catch (error) {
+        console.warn('Response time endpoint not available:', error);
+        setResponseTimeData([]);
+      }
+
+      try {
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+        if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
+          setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
+        }
+      } catch (error) {
+        console.warn('Individual response time endpoint not available:', error);
+        setIndividualResponseTimeData([]);
+      } finally {
+        setResponseTimeLoading(false);
+      }
+    };
+    fetchResponseTimeData();
+  }, [responseTimePeriod, responseTimeLimit]);
 
   // Helper function to format hour data for peak hours chart
   const formatPeakHoursData = (peakHours: PeakHoursData[]) => {
@@ -923,7 +964,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch response time data, but don't fail if it doesn't work
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType();
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -934,7 +975,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch individual response time data
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -1397,8 +1438,83 @@ const AdminDashboard: React.FC = () => {
               </button>
             </div>
           </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Period:</label>
+                <select
+                  value={responseTimePeriod}
+                  onChange={(e) => setResponseTimePeriod(e.target.value as 'days' | 'months')}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="days">Days</option>
+                  <option value="months">Months</option>
+                </select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Last:</label>
+                <select
+                  value={responseTimeLimit}
+                  onChange={(e) => setResponseTimeLimit(parseInt(e.target.value))}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {responseTimePeriod === 'days' && (
+                    <>
+                      <option value={7}>7 days</option>
+                      <option value={14}>14 days</option>
+                      <option value={30}>30 days</option>
+                    </>
+                  )}
+                  {responseTimePeriod === 'months' && (
+                    <>
+                      <option value={6}>6 months</option>
+                      <option value={12}>12 months</option>
+                      <option value={18}>18 months</option>
+                      <option value={24}>24 months</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <button
+                onClick={async () => {
+                  setResponseTimeLoading(true);
+                  try {
+                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+                    if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
+                      setResponseTimeData(responseTimeResponse.responseTimeData || []);
+                    }
+                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+                    if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
+                      setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
+                    }
+                  } catch (error) {
+                    console.warn('Error refreshing response time data:', error);
+                  } finally {
+                    setResponseTimeLoading(false);
+                  }
+                }}
+                disabled={responseTimeLoading}
+                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i className={`ri-refresh-line mr-1 ${responseTimeLoading ? 'animate-spin' : ''}`}></i>
+                {responseTimeLoading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
           
-          {!showIndividualResponseTime ? (
+          {responseTimeLoading || (responseTimeData.length === 0 && individualResponseTimeData.length === 0 && !responseTimeLoading) ? (
+            <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">
+                  {responseTimeLoading ? 'Loading response time data...' : 'Loading chart data...'}
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Period: {responseTimePeriod} | Last: {responseTimeLimit}
+                </p>
+              </div>
+            </div>
+          ) : !showIndividualResponseTime ? (
             // Average by Type Chart
             <div ref={responseTimeChartRef}>
               <LineChart
@@ -1411,7 +1527,7 @@ const AdminDashboard: React.FC = () => {
                   avg_response_time_days: item.avg_response_time_days || 0,
                   display_unit: item.display_unit || 'hours'
                 }))}
-                title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'})`}
+                title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
                 color="#3b82f6"
                 height={350}
               />
@@ -1432,14 +1548,14 @@ const AdminDashboard: React.FC = () => {
                   date_reported: item.date_reported,
                   status: item.status
                 }))}
-                title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'})`}
+                title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
                 color="#10b981"
                 height={350}
               />
             </div>
           )}
           
-          {responseTimeData.length === 0 && individualResponseTimeData.length === 0 && (
+          {responseTimeData.length === 0 && individualResponseTimeData.length === 0 && !responseTimeLoading && (
             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
               <div className="flex items-center">
                 <i className="ri-information-line text-indigo-500 text-lg mr-3"></i>

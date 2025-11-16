@@ -692,7 +692,7 @@ export const adminDashboardApi = {
     }>(`/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`);
   },
 
-  getResponseTimeByType: async () => {
+  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12) => {
     return apiRequest<{
       success: boolean;
       responseTimeData: Array<{
@@ -709,10 +709,10 @@ export const adminDashboardApi = {
       }>;
       note?: string;
       totalIncidents: number;
-    }>('/admin/dashboard/response-time-by-type');
+    }>(`/admin/dashboard/response-time-by-type?period=${period}&last=${last}`);
   },
 
-  getResponseTimeIndividual: async (limit: number = 100) => {
+  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12) => {
     return apiRequest<{
       success: boolean;
       incidents: Array<{
@@ -729,7 +729,7 @@ export const adminDashboardApi = {
       }>;
       total: number;
       note?: string;
-    }>(`/admin/dashboard/response-time-individual?limit=${limit}`);
+    }>(`/admin/dashboard/response-time-individual?limit=${limit}&period=${period}&last=${last}`);
   },
 };
 
