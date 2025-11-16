@@ -29,6 +29,13 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
       return 'Invalid Date'
     }
 
+    // If it's not a date format (e.g., incident type names like "medical", "fire"), return as-is
+    const commonIncidentTypes = ['medical', 'fire', 'accident', 'security', 'other']
+    if (commonIncidentTypes.includes(dateString.toLowerCase())) {
+      // Capitalize first letter
+      return dateString.charAt(0).toUpperCase() + dateString.slice(1)
+    }
+
     // Handle YYYY-MM format for monthly data
     if (dateString.includes("-") && dateString.split("-").length === 2) {
       const [year, month] = dateString.split("-")
@@ -60,6 +67,10 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
 
     // Handle regular date format as fallback
     const date = new Date(dateString)
+    // If date is invalid, return the original string (might be a label like incident type)
+    if (isNaN(date.getTime())) {
+      return dateString
+    }
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
   }
 
@@ -86,7 +97,7 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
           <p className="text-sm font-medium text-gray-900 mb-1">{formattedDate}</p>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-sm text-gray-600">Count:</span>
+            <span className="text-sm text-gray-600">Hours:</span>
             <span className="text-sm font-semibold text-gray-900">{value.toLocaleString()}</span>
           </div>
           {/* Display Count and Minutes for response time chart */}

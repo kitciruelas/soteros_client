@@ -1341,23 +1341,16 @@ const AdminDashboard: React.FC = () => {
       {/* Response Time per Incident Type Chart */}
       <div className="grid grid-cols-1 gap-6">
         <div ref={responseTimeChartRef}>
-          <BarChart
+          <LineChart
             data={responseTimeData.map(item => ({
-              name: item.incident_type,
+              date: item.incident_type,
               count: parseFloat(item.avg_response_time_hours),
               incident_count: item.incident_count,
               avg_response_time_minutes: item.avg_response_time_minutes,
               avg_response_time_hours: parseFloat(item.avg_response_time_hours)
             }))}
             title="Response Time per Incident Type (Average Hours)"
-            dataKey="count"
-            color={{
-              medical: '#007BFF',
-              fire: '#DC3545',
-              accident: '#FD7E14',
-              security: '#6610F2',
-              other: '#6C757D'
-            }}
+            color="#3b82f6"
             height={350}
           />
         </div>
