@@ -54,6 +54,16 @@ interface PeakHoursData {
   consecutive_dates: string;
 }
 
+interface ResponseTimeData {
+  incident_type: string;
+  incident_count: number;
+  avg_response_time_minutes: number;
+  min_response_time_minutes: number;
+  max_response_time_minutes: number;
+  avg_resolution_time_minutes: number | null;
+  avg_response_time_hours: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalIncidents: 0,
@@ -76,6 +86,7 @@ const AdminDashboard: React.FC = () => {
   const [trendsLimit, setTrendsLimit] = useState<number>(7);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursData[]>([]);
   const [peakHoursDateRange, setPeakHoursDateRange] = useState<string>('');
+  const [responseTimeData, setResponseTimeData] = useState<ResponseTimeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +107,7 @@ const AdminDashboard: React.FC = () => {
   const trendsChartRef = useRef<HTMLDivElement>(null);
   const peakHoursChartRef = useRef<HTMLDivElement>(null);
   const locationChartRef = useRef<HTMLDivElement>(null);
+  const responseTimeChartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -371,7 +383,8 @@ const AdminDashboard: React.FC = () => {
       ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
       { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
       { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
-      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+      { ref: locationChartRef, title: 'Risky Areas by Barangay' },
+      { ref: responseTimeChartRef, title: 'Response Time per Incident Type' }
     ]);
 
     setExportData(statsData);
@@ -524,6 +537,49 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
+  const exportResponseTimeData = async () => {
+    setShowExportDropdown(false);
+    if (responseTimeData.length === 0) {
+      showToast({ message: 'No response time data available to export', type: 'warning' });
+      return;
+    }
+
+    // Format data for export with readable time formats
+    const formattedData = responseTimeData.map(item => ({
+      incident_type: item.incident_type,
+      incident_count: item.incident_count,
+      avg_response_time_minutes: item.avg_response_time_minutes,
+      avg_response_time_hours: parseFloat(item.avg_response_time_hours).toFixed(2),
+      min_response_time_minutes: item.min_response_time_minutes,
+      max_response_time_minutes: item.max_response_time_minutes,
+      avg_resolution_time_minutes: item.avg_resolution_time_minutes || 'N/A',
+      avg_resolution_time_hours: item.avg_resolution_time_minutes 
+        ? (item.avg_resolution_time_minutes / 60).toFixed(2) 
+        : 'N/A'
+    }));
+
+    const columns: ExportColumn[] = [
+      { key: 'incident_type', label: 'Incident Type' },
+      { key: 'incident_count', label: 'Incident Count' },
+      { key: 'avg_response_time_minutes', label: 'Avg Response Time (Minutes)' },
+      { key: 'avg_response_time_hours', label: 'Avg Response Time (Hours)' },
+      { key: 'min_response_time_minutes', label: 'Min Response Time (Minutes)' },
+      { key: 'max_response_time_minutes', label: 'Max Response Time (Minutes)' },
+      { key: 'avg_resolution_time_minutes', label: 'Avg Resolution Time (Minutes)' },
+      { key: 'avg_resolution_time_hours', label: 'Avg Resolution Time (Hours)' }
+    ];
+
+    // Capture the response time chart
+    const chartImages = await captureChartImages([
+      { ref: responseTimeChartRef, title: 'Response Time per Incident Type' }
+    ]);
+
+    setExportData(formattedData);
+    setExportColumns(columns);
+    setExportTitle('Response Time per Incident Type');
+    setExportChartImages(chartImages);
+    setShowExportModal(true);
+  };
 
   const exportRecentActivity = () => {
     setShowExportDropdown(false);
@@ -655,6 +711,16 @@ const AdminDashboard: React.FC = () => {
       });
     });
 
+    // Add response time data
+    responseTimeData.forEach(item => {
+      allData.push({
+        section: 'Response Time Analysis',
+        metric: `${item.incident_type} - Avg Response Time`,
+        value: `${item.avg_response_time_minutes} minutes (${parseFloat(item.avg_response_time_hours).toFixed(2)} hours)`,
+        details: `Based on ${item.incident_count} incidents. Min: ${item.min_response_time_minutes} min, Max: ${item.max_response_time_minutes} min`
+      });
+    });
+
     const columns: ExportColumn[] = [
       { key: 'section', label: 'Data Section' },
       { key: 'metric', label: 'Metric/Type' },
@@ -668,7 +734,8 @@ const AdminDashboard: React.FC = () => {
       ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
       { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
       { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
-      { ref: locationChartRef, title: 'Risky Areas by Barangay' }
+      { ref: locationChartRef, title: 'Risky Areas by Barangay' },
+      { ref: responseTimeChartRef, title: 'Response Time per Incident Type' }
     ]);
 
     setExportData(allData);
@@ -836,6 +903,17 @@ const AdminDashboard: React.FC = () => {
         setHasActiveWelfare(false);
       }
 
+      // Try to fetch response time data, but don't fail if it doesn't work
+      try {
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType();
+        if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
+          setResponseTimeData(responseTimeResponse.responseTimeData || []);
+        }
+      } catch (error) {
+        console.warn('Response time endpoint not available, using fallback data:', error);
+        setResponseTimeData([]);
+      }
+
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch dashboard statistics');
@@ -976,6 +1054,13 @@ const AdminDashboard: React.FC = () => {
                   >
                     <i className="ri-map-pin-line mr-3 text-purple-500"></i>
                     Location Data
+                  </button>
+                  <button
+                    onClick={exportResponseTimeData}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <i className="ri-timer-line mr-3 text-indigo-500"></i>
+                    Response Time Analysis
                   </button>
                 </div>
               </div>
@@ -1253,7 +1338,42 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-
+      {/* Response Time per Incident Type Chart */}
+      <div className="grid grid-cols-1 gap-6">
+        <div ref={responseTimeChartRef}>
+          <BarChart
+            data={responseTimeData.map(item => ({
+              name: item.incident_type,
+              count: item.avg_response_time_minutes
+            }))}
+            title="Response Time per Incident Type (Average Minutes)"
+            dataKey="count"
+            color={{
+              medical: '#007BFF',
+              fire: '#DC3545',
+              accident: '#FD7E14',
+              security: '#6610F2',
+              other: '#6C757D'
+            }}
+            height={350}
+          />
+        </div>
+        {responseTimeData.length === 0 && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <i className="ri-information-line text-indigo-500 text-lg mr-3"></i>
+              <div>
+                <h4 className="text-indigo-800 font-medium">Response Time Analysis</h4>
+                <p className="text-indigo-600 text-sm mt-1">
+                  This chart shows the average response time (in minutes) for each incident type. 
+                  Response time is calculated as the time from when an incident is reported to when it is first responded to (status changes from 'pending').
+                  Only incidents that have been responded to in the last 12 months are included.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Export Preview Modal */}
       <ExportPreviewModal
@@ -1262,8 +1382,6 @@ const AdminDashboard: React.FC = () => {
         data={exportData}
         columns={exportColumns}
         title={exportTitle}
-        orientation={exportOrientation}
-        onOrientationChange={(orientation) => setExportOrientation(orientation)}
         onExportCSV={() => {
           try {
             ExportUtils.exportToCSV(exportData, exportColumns, { 
@@ -1292,13 +1410,13 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}
-        onExportPDF={async (orientation) => {
+        onExportPDF={async () => {
           try {
             await ExportUtils.exportToPDF(exportData, exportColumns, { 
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
               title: exportTitle,
               chartImages: exportChartImages,
-              orientation: orientation || 'portrait',
+              orientation: exportOrientation,
               hideTotalRecords: true
             });
             showToast({ message: 'Data exported to PDF successfully!', type: 'success' });

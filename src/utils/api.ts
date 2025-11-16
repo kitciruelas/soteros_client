@@ -691,6 +691,23 @@ export const adminDashboardApi = {
       note?: string;
     }>(`/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`);
   },
+
+  getResponseTimeByType: async () => {
+    return apiRequest<{
+      success: boolean;
+      responseTimeData: Array<{
+        incident_type: string;
+        incident_count: number;
+        avg_response_time_minutes: number;
+        min_response_time_minutes: number;
+        max_response_time_minutes: number;
+        avg_resolution_time_minutes: number | null;
+        avg_response_time_hours: string;
+      }>;
+      note?: string;
+      totalIncidents: number;
+    }>('/admin/dashboard/response-time-by-type');
+  },
 };
 
 // User Management API
