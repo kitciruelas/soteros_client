@@ -256,9 +256,9 @@ const EvacuationCenterPage: React.FC = () => {
   }, [latitude, longitude, evacuationCenters]);
 
   // Get nearby centers (closest centers only) - now using route-based distances
-  // Exclude centers with status "full" from closest centers suggestions
+  // Only show centers with status "open" in closest centers suggestions
   const nearbyCenters = centersWithRoutes
-    .filter(center => center.status !== 'full')
+    .filter(center => center.status === 'open')
     .sort((a, b) => a.distance - b.distance)
     .slice(0, maxNearbyCount);
 
