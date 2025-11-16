@@ -274,7 +274,7 @@ const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
               ) : (
                 <>
                   <i className="ri-file-pdf-line"></i>
-                  Export PDF (Landscape)
+                  Export PDF
                 </>
               )}
             </button>

@@ -699,11 +699,7 @@ const AdminDashboard: React.FC = () => {
         { key: 'avg_response_time_display', label: 'Avg Response Time' },
         { key: 'avg_response_time_minutes', label: 'Avg Response Time (Minutes)' },
         { key: 'avg_response_time_hours', label: 'Avg Response Time (Hours)' },
-        { key: 'avg_response_time_days', label: 'Avg Response Time (Days)' },
-        { key: 'min_response_time_minutes', label: 'Min Response Time (Minutes)' },
-        { key: 'max_response_time_minutes', label: 'Max Response Time (Minutes)' },
-        { key: 'avg_resolution_time_minutes', label: 'Avg Resolution Time (Minutes)' },
-        { key: 'avg_resolution_time_hours', label: 'Avg Resolution Time (Hours)' }
+   
       ];
 
       // Capture the response time chart
