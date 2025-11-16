@@ -675,13 +675,13 @@ const AlertsManagement: React.FC = () => {
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-mail-send-line text-green-600"></i>
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+              <i className="ri-information-line text-blue-600"></i>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Sent Today</p>
+              <p className="text-sm text-gray-600">Information</p>
               <p className="text-xl font-bold text-gray-900">
-                {filteredAlerts.filter(a => a.sent_at && new Date(a.sent_at).toDateString() === new Date().toDateString()).length}
+                {filteredAlerts.filter(a => a.type === 'info').length}
               </p>
             </div>
           </div>
