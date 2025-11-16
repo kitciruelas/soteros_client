@@ -91,8 +91,6 @@ const SafetyProtocolsPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   // Track current slide for each protocol card in grid view
   const [cardSlides, setCardSlides] = useState<Record<number, number>>({});
-  // Track expanded state for each protocol in list view
-  const [expandedProtocols, setExpandedProtocols] = useState<Record<number, boolean>>({});
 
   // Debug: Log file URL handling on mount
   useEffect(() => {
@@ -243,25 +241,6 @@ const SafetyProtocolsPage: React.FC = () => {
     if (type === 'intrusion') return 'Intrusion';
     if (type === 'general') return 'General';
     return type.charAt(0).toUpperCase() + type.slice(1);
-  };
-
-  // Toggle expanded state for protocol description in list view
-  const toggleProtocolExpand = (protocolId: number) => {
-    setExpandedProtocols(prev => ({
-      ...prev,
-      [protocolId]: !prev[protocolId]
-    }));
-  };
-
-  // Check if text should be truncated (longer than 200 characters)
-  const shouldTruncate = (text: string): boolean => {
-    return text.length > 200;
-  };
-
-  // Get truncated text
-  const getTruncatedText = (text: string, length: number = 200): string => {
-    if (text.length <= length) return text;
-    return text.substring(0, length).trim() + '...';
   };
 
   // Get protocol statistics
@@ -570,28 +549,9 @@ const SafetyProtocolsPage: React.FC = () => {
                         {protocol.title}
                       </h3>
                       <div className={`relative ${viewMode === 'grid' ? 'mb-4' : 'mb-2'}`}>
-                        {viewMode === 'list' ? (
-                          <div>
-                            <p className={`text-gray-600 text-sm sm:text-base whitespace-pre-wrap break-words ${!expandedProtocols[protocol.protocol_id] && shouldTruncate(protocol.description) ? 'line-clamp-3' : ''}`}>
-                              {expandedProtocols[protocol.protocol_id] || !shouldTruncate(protocol.description) 
-                                ? protocol.description 
-                                : getTruncatedText(protocol.description)}
-                            </p>
-                            {shouldTruncate(protocol.description) && (
-                              <button
-                                onClick={() => toggleProtocolExpand(protocol.protocol_id)}
-                                className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium flex items-center space-x-1 transition-colors"
-                              >
-                                <span>{expandedProtocols[protocol.protocol_id] ? 'See less' : 'See more'}</span>
-                                <i className={`ri-arrow-${expandedProtocols[protocol.protocol_id] ? 'up' : 'down'}-s-line`}></i>
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-600 text-sm line-clamp-3">
-                            {protocol.description}
-                          </p>
-                        )}
+                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base whitespace-pre-wrap break-words' : 'text-sm line-clamp-3'}`}>
+                          {protocol.description}
+                        </p>
                       </div>
                     </div>
 
