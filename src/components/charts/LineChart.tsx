@@ -107,7 +107,15 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
             <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
               <span className="font-semibold">Count: {data.incident_count}</span>
               {' '}
-              <span className="font-semibold">Minutes: {data.avg_response_time_minutes.toLocaleString()}</span>
+              <span className="font-semibold">
+                Response Time:{' '}
+                {data.avg_response_time_minutes < 60
+                  ? `${data.avg_response_time_minutes.toLocaleString()} Minutes`
+                  : data.avg_response_time_hours && parseFloat(data.avg_response_time_hours) >= 24
+                    ? `${data.avg_response_time_days?.toLocaleString() || Math.floor(parseFloat(data.avg_response_time_hours) / 24).toLocaleString()} Days`
+                    : `${parseFloat(data.avg_response_time_hours || '0').toFixed(1)} Hours`
+                }
+              </span>
             </p>
           )}
           {/* Display individual incident details */}
@@ -120,13 +128,14 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
                 <span className="font-semibold">Type:</span> {data.incident_type}
               </p>
               <p>
-                <span className="font-semibold">Minutes:</span> {data.response_time_minutes.toLocaleString()}
+                <span className="font-semibold">Response Time:</span>{' '}
+                {data.response_time_minutes < 60 
+                  ? `${data.response_time_minutes.toLocaleString()} Minutes`
+                  : data.response_time_hours >= 24
+                    ? `${data.response_time_days?.toLocaleString() || Math.floor(data.response_time_hours / 24).toLocaleString()} Days`
+                    : `${data.response_time_hours.toFixed(1)} Hours`
+                }
               </p>
-              {data.response_time_days !== undefined && data.response_time_days > 0 && (
-                <p>
-                  <span className="font-semibold">Days:</span> {data.response_time_days.toLocaleString()}
-                </p>
-              )}
               {data.status && (
                 <p>
                   <span className="font-semibold">Status:</span> {data.status}

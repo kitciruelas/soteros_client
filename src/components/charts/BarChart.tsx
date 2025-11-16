@@ -49,7 +49,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
             <span className="font-semibold">Count: {data.incident_count}</span>
             {' '}
-            <span className="font-semibold">Minutes: {data.avg_response_time_minutes.toLocaleString()}</span>
+            <span className="font-semibold">
+              Response Time:{' '}
+              {data.avg_response_time_minutes < 60
+                ? `${data.avg_response_time_minutes.toLocaleString()} Minutes`
+                : data.avg_response_time_hours && parseFloat(data.avg_response_time_hours) >= 24
+                  ? `${data.avg_response_time_days?.toLocaleString() || Math.floor(parseFloat(data.avg_response_time_hours) / 24).toLocaleString()} Days`
+                  : `${parseFloat(data.avg_response_time_hours || '0').toFixed(1)} Hours`
+              }
+            </span>
           </p>
         )}
         {data?.formattedTime && (
