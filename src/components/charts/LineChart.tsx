@@ -239,6 +239,7 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
               fontSize={12}
               stroke="#6b7280"
               tickLine={{ stroke: "#d1d5db" }}
+              reversed={false}
             />
             <YAxis
               fontSize={12}

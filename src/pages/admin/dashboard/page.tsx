@@ -1515,10 +1515,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
           ) : !showIndividualResponseTime ? (
-            // Average by Type Chart
+            // Average by Type Chart - Reverse order so newest is on the right
             <div ref={responseTimeChartRef}>
               <LineChart
-                data={responseTimeData.map(item => ({
+                data={[...responseTimeData].reverse().map(item => ({
                   date: item.incident_type,
                   count: item.display_value || parseFloat(item.avg_response_time_hours),
                   incident_count: item.incident_count,
@@ -1533,10 +1533,10 @@ const AdminDashboard: React.FC = () => {
               />
             </div>
           ) : (
-            // Individual Reports Chart
+            // Individual Reports Chart - Reverse order so newest is on the right
             <div ref={responseTimeChartRef}>
               <LineChart
-                data={individualResponseTimeData.map((item, index) => ({
+                data={[...individualResponseTimeData].reverse().map((item, index) => ({
                   date: `#${item.incident_id} ${item.incident_type}`,
                   count: item.display_value || item.response_time_hours,
                   incident_id: item.incident_id,
