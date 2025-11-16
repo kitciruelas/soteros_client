@@ -509,7 +509,7 @@ const SafetyProtocolsPage: React.FC = () => {
                   } shadow-lg`}>
                     <i className={`${viewMode === 'list' ? 'text-xl sm:text-2xl' : 'text-xl'} text-white ${
                       protocol.type === 'fire' ? 'ri-fire-line' :
-                      protocol.type === 'earthquake' ? 'ri-earthquake-line' :
+                      protocol.type === 'earthquake' ? 'ri-tornado-line' :
                       protocol.type === 'medical' ? 'ri-heart-pulse-line' :
                       protocol.type === 'intrusion' ? 'ri-shield-keyhole-line' :
                       'ri-alert-line'
@@ -809,7 +809,7 @@ const SafetyProtocolsPage: React.FC = () => {
                   }`}>
                     <i className={`text-2xl text-white ${
                       selectedProtocol.type === 'fire' ? 'ri-fire-line' :
-                      selectedProtocol.type === 'earthquake' ? 'ri-earthquake-line' :
+                      selectedProtocol.type === 'earthquake' ? 'ri-tornado-line' :
                       selectedProtocol.type === 'medical' ? 'ri-heart-pulse-line' :
                       selectedProtocol.type === 'intrusion' ? 'ri-shield-keyhole-line' :
                       'ri-alert-line'
