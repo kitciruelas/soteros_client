@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { incidentsApi, teamsApi, staffManagementApi, adminNotificationsApi } from '../../../../utils/api';
 import ExportPreviewModal from '../../../../components/base/ExportPreviewModal';
 import { ExportUtils } from '../../../../utils/exportUtils';
@@ -109,6 +110,7 @@ const incidentExportColumns: ExportColumn[] = [
 ];
 
 const ViewIncidents: React.FC = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -1038,6 +1040,14 @@ const ViewIncidents: React.FC = () => {
           <p className="text-gray-600 mt-1">Monitor and manage reported incidents</p>
         </div>
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => navigate('/incident-report')}
+            className="px-4 py-2 rounded-lg transition-colors flex items-center bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+            title="Report a new incident"
+          >
+            <i className="ri-add-circle-line mr-2"></i>
+            Report Incident
+          </button>
           {newIncidentIds.size > 0 && (
             <button
               onClick={markAllIncidentsAsRead}
