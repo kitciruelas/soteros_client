@@ -708,6 +708,23 @@ export const adminDashboardApi = {
       totalIncidents: number;
     }>('/admin/dashboard/response-time-by-type');
   },
+
+  getResponseTimeIndividual: async (limit: number = 100) => {
+    return apiRequest<{
+      success: boolean;
+      incidents: Array<{
+        incident_id: number;
+        incident_type: string;
+        date_reported: string;
+        updated_at: string;
+        status: string;
+        response_time_minutes: number;
+        response_time_hours: number;
+      }>;
+      total: number;
+      note?: string;
+    }>(`/admin/dashboard/response-time-individual?limit=${limit}`);
+  },
 };
 
 // User Management API

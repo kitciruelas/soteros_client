@@ -64,6 +64,16 @@ interface ResponseTimeData {
   avg_response_time_hours: string;
 }
 
+interface IndividualResponseTimeData {
+  incident_id: number;
+  incident_type: string;
+  date_reported: string;
+  updated_at: string;
+  status: string;
+  response_time_minutes: number;
+  response_time_hours: number;
+}
+
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalIncidents: 0,
@@ -87,6 +97,8 @@ const AdminDashboard: React.FC = () => {
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursData[]>([]);
   const [peakHoursDateRange, setPeakHoursDateRange] = useState<string>('');
   const [responseTimeData, setResponseTimeData] = useState<ResponseTimeData[]>([]);
+  const [individualResponseTimeData, setIndividualResponseTimeData] = useState<IndividualResponseTimeData[]>([]);
+  const [showIndividualResponseTime, setShowIndividualResponseTime] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -914,6 +926,17 @@ const AdminDashboard: React.FC = () => {
         setResponseTimeData([]);
       }
 
+      // Try to fetch individual response time data
+      try {
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200);
+        if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
+          setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
+        }
+      } catch (error) {
+        console.warn('Individual response time endpoint not available, using fallback data:', error);
+        setIndividualResponseTimeData([]);
+      }
+
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch dashboard statistics');
@@ -1338,37 +1361,91 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Response Time per Incident Type Chart */}
+      {/* Response Time Chart */}
       <div className="grid grid-cols-1 gap-6">
-        <div ref={responseTimeChartRef}>
-          <LineChart
-            data={responseTimeData.map(item => ({
-              date: item.incident_type,
-              count: parseFloat(item.avg_response_time_hours),
-              incident_count: item.incident_count,
-              avg_response_time_minutes: item.avg_response_time_minutes,
-              avg_response_time_hours: parseFloat(item.avg_response_time_hours)
-            }))}
-            title="Response Time per Incident Type (Average Hours)"
-            color="#3b82f6"
-            height={350}
-          />
-        </div>
-        {responseTimeData.length === 0 && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <i className="ri-information-line text-indigo-500 text-lg mr-3"></i>
-              <div>
-                <h4 className="text-indigo-800 font-medium">Response Time Analysis</h4>
-                <p className="text-indigo-600 text-sm mt-1">
-                  This chart shows the average response time (in hours) for each incident type. 
-                  Response time is calculated as the time from when an incident is reported to when it is first responded to (status changes from 'pending').
-                  Only incidents that have been responded to in the last 12 months are included.
-                </p>
-              </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Response Time Analysis</h3>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowIndividualResponseTime(false)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  !showIndividualResponseTime
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <i className="ri-bar-chart-line mr-2"></i>
+                By Type (Average)
+              </button>
+              <button
+                onClick={() => setShowIndividualResponseTime(true)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showIndividualResponseTime
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <i className="ri-file-list-line mr-2"></i>
+                Individual Reports
+              </button>
             </div>
           </div>
-        )}
+          
+          {!showIndividualResponseTime ? (
+            // Average by Type Chart
+            <div ref={responseTimeChartRef}>
+              <LineChart
+                data={responseTimeData.map(item => ({
+                  date: item.incident_type,
+                  count: parseFloat(item.avg_response_time_hours),
+                  incident_count: item.incident_count,
+                  avg_response_time_minutes: item.avg_response_time_minutes,
+                  avg_response_time_hours: parseFloat(item.avg_response_time_hours)
+                }))}
+                title="Response Time per Incident Type (Average Hours)"
+                color="#3b82f6"
+                height={350}
+              />
+            </div>
+          ) : (
+            // Individual Reports Chart
+            <div ref={responseTimeChartRef}>
+              <LineChart
+                data={individualResponseTimeData.map((item, index) => ({
+                  date: `#${item.incident_id} ${item.incident_type}`,
+                  count: item.response_time_hours,
+                  incident_id: item.incident_id,
+                  incident_type: item.incident_type,
+                  response_time_minutes: item.response_time_minutes,
+                  response_time_hours: item.response_time_hours,
+                  date_reported: item.date_reported,
+                  status: item.status
+                }))}
+                title="Response Time per Individual Incident (Hours)"
+                color="#10b981"
+                height={350}
+              />
+            </div>
+          )}
+          
+          {responseTimeData.length === 0 && individualResponseTimeData.length === 0 && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <i className="ri-information-line text-indigo-500 text-lg mr-3"></i>
+                <div>
+                  <h4 className="text-indigo-800 font-medium">Response Time Analysis</h4>
+                  <p className="text-indigo-600 text-sm mt-1">
+                    {!showIndividualResponseTime 
+                      ? "This chart shows the average response time (in hours) for each incident type. Response time is calculated as the time from when an incident is reported to when it is first responded to (status changes from 'pending'). Only incidents that have been responded to in the last 12 months are included."
+                      : "This chart shows the response time for each individual incident report. Each point represents one incident with its actual response time. Response time is calculated as the time from when an incident is reported to when it is first responded to. Only incidents that have been responded to in the last 12 months are included."
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Export Preview Modal */}

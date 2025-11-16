@@ -100,13 +100,32 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
             <span className="text-sm text-gray-600">Hours:</span>
             <span className="text-sm font-semibold text-gray-900">{value.toLocaleString()}</span>
           </div>
-          {/* Display Count and Minutes for response time chart */}
+          {/* Display Count and Minutes for response time chart (average by type) */}
           {data?.incident_count !== undefined && data?.avg_response_time_minutes !== undefined && (
             <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
               <span className="font-semibold">Count: {data.incident_count}</span>
               {' '}
               <span className="font-semibold">Minutes: {data.avg_response_time_minutes.toLocaleString()}</span>
             </p>
+          )}
+          {/* Display individual incident details */}
+          {data?.incident_id !== undefined && data?.response_time_minutes !== undefined && (
+            <div className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200 space-y-1">
+              <p>
+                <span className="font-semibold">Incident ID:</span> #{data.incident_id}
+              </p>
+              <p>
+                <span className="font-semibold">Type:</span> {data.incident_type}
+              </p>
+              <p>
+                <span className="font-semibold">Minutes:</span> {data.response_time_minutes.toLocaleString()}
+              </p>
+              {data.status && (
+                <p>
+                  <span className="font-semibold">Status:</span> {data.status}
+                </p>
+              )}
+            </div>
           )}
           {averageCount > 0 && !data?.incident_count && (
             <p className="text-xs text-gray-500 mt-1">
