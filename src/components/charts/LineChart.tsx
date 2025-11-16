@@ -78,6 +78,7 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const value = payload[0].value
+      const data = payload[0]?.payload
       const formattedDate = formatDate(label)
 
       return (
@@ -88,7 +89,15 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
             <span className="text-sm text-gray-600">Count:</span>
             <span className="text-sm font-semibold text-gray-900">{value.toLocaleString()}</span>
           </div>
-          {averageCount > 0 && (
+          {/* Display Count and Minutes for response time chart */}
+          {data?.incident_count !== undefined && data?.avg_response_time_minutes !== undefined && (
+            <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
+              <span className="font-semibold">Count: {data.incident_count}</span>
+              {' '}
+              <span className="font-semibold">Minutes: {data.avg_response_time_minutes.toLocaleString()}</span>
+            </p>
+          )}
+          {averageCount > 0 && !data?.incident_count && (
             <p className="text-xs text-gray-500 mt-1">
               {value > averageCount
                 ? `+${value - averageCount} above avg`
