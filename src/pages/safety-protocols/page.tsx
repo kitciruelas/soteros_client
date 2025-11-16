@@ -542,14 +542,14 @@ const SafetyProtocolsPage: React.FC = () => {
                 </div>
 
                 {/* Protocol Content */}
-                <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 overflow-hidden' : 'flex-1 flex flex-col'}`}>
+                <div className={`${viewMode === 'list' ? 'flex-1 min-w-0' : 'flex-1 flex flex-col'}`}>
                   <div className={`${viewMode === 'list' ? 'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3' : ''}`}>
                     <div className={`${viewMode === 'list' ? 'flex-1 min-w-0 pr-0 sm:pr-4' : ''}`}>
                       <h3 className={`font-bold text-gray-900 mb-2 ${viewMode === 'list' ? 'text-lg sm:text-xl break-words' : 'text-lg truncate'}`}>
                         {protocol.title}
                       </h3>
                       <div className={`relative ${viewMode === 'grid' ? 'mb-4' : 'mb-2'}`}>
-                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base whitespace-pre-wrap break-words' : 'text-sm line-clamp-3'}`}>
+                        <p className={`text-gray-600 ${viewMode === 'list' ? 'text-sm sm:text-base whitespace-pre-wrap break-words overflow-wrap-anywhere' : 'text-sm line-clamp-3'}`}>
                           {protocol.description}
                         </p>
                       </div>
