@@ -645,9 +645,7 @@ const AdminDashboard: React.FC = () => {
         { key: 'updated_at', label: 'Updated At' },
         { key: 'status', label: 'Status' },
         { key: 'response_time_display', label: 'Response Time' },
-        { key: 'response_time_minutes', label: 'Response Time (Minutes)' },
-        { key: 'response_time_hours', label: 'Response Time (Hours)' },
-        { key: 'response_time_days', label: 'Response Time (Days)' }
+       
       ];
 
       // Capture the response time chart
