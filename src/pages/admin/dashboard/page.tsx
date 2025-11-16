@@ -1344,9 +1344,12 @@ const AdminDashboard: React.FC = () => {
           <BarChart
             data={responseTimeData.map(item => ({
               name: item.incident_type,
-              count: item.avg_response_time_minutes
+              count: parseFloat(item.avg_response_time_hours),
+              incident_count: item.incident_count,
+              avg_response_time_minutes: item.avg_response_time_minutes,
+              avg_response_time_hours: parseFloat(item.avg_response_time_hours)
             }))}
-            title="Response Time per Incident Type (Average Minutes)"
+            title="Response Time per Incident Type (Average Hours)"
             dataKey="count"
             color={{
               medical: '#007BFF',
@@ -1365,7 +1368,7 @@ const AdminDashboard: React.FC = () => {
               <div>
                 <h4 className="text-indigo-800 font-medium">Response Time Analysis</h4>
                 <p className="text-indigo-600 text-sm mt-1">
-                  This chart shows the average response time (in minutes) for each incident type. 
+                  This chart shows the average response time (in hours) for each incident type. 
                   Response time is calculated as the time from when an incident is reported to when it is first responded to (status changes from 'pending').
                   Only incidents that have been responded to in the last 12 months are included.
                 </p>

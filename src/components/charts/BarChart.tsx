@@ -44,6 +44,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             {`${entry.dataKey}: ${entry.value.toLocaleString()}`}
           </p>
         ))}
+        {/* Display Count and Minutes for response time chart */}
+        {data?.incident_count !== undefined && data?.avg_response_time_minutes !== undefined && (
+          <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
+            <span className="font-semibold">Count: {data.incident_count}</span>
+            {' '}
+            <span className="font-semibold">Minutes: {data.avg_response_time_minutes.toLocaleString()}</span>
+          </p>
+        )}
         {data?.formattedTime && (
           <p className="text-xs text-gray-500 mt-1">
             Time: {data.formattedTime}
