@@ -527,7 +527,7 @@ const AboutPage: React.FC = () => {
                   </div>
                   <div className="flex items-center">
                     <i className="ri-mail-line text-blue-400 mr-3"></i>
-                    <p className="text-gray-300 text-sm">rosariobatangasmdrrmo@gmail.com</p>
+                    <p className="text-gray-300 text-sm">rosariomdrrmo.batangas@gmail.com</p>
                   </div>
                 </div>
               </div>
