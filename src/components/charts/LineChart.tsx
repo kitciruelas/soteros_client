@@ -20,49 +20,9 @@ interface LineChartProps {
   title: string
   color?: string
   height?: number
-  unit?: string // Optional unit label (e.g., "minutes", "hours", "days")
-  formatValue?: (value: number) => string // Optional custom formatter
 }
 
-const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "#3b82f6", height = 300, unit, formatValue }) => {
-  // Helper function to format minutes into readable format
-  const formatMinutes = (minutes: number): string => {
-    if (minutes < 60) {
-      return `${Math.round(minutes)} min`
-    } else if (minutes < 1440) { // Less than 24 hours
-      const hours = Math.floor(minutes / 60)
-      const mins = Math.round(minutes % 60)
-      return mins > 0 ? `${hours}h ${mins}m` : `${hours} hrs`
-    } else { // 24+ hours
-      const days = Math.floor(minutes / 1440)
-      const hours = Math.floor((minutes % 1440) / 60)
-      if (hours > 0) {
-        return `${days}d ${hours}h`
-      }
-      return `${days} ${days === 1 ? 'day' : 'days'}`
-    }
-  }
-
-  // Format value based on unit or custom formatter
-  const formatStatValue = (value: number): string => {
-    if (formatValue) {
-      return formatValue(value)
-    }
-    
-    // Auto-detect if this is response time data (in minutes)
-    const isResponseTime = title.toLowerCase().includes('response time')
-    
-    if (isResponseTime || unit === 'minutes') {
-      return formatMinutes(value)
-    }
-    
-    if (unit) {
-      return `${value.toLocaleString()} ${unit}`
-    }
-    
-    return value.toLocaleString()
-  }
-
+const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "#3b82f6", height = 300 }) => {
   const formatDate = (dateString: string) => {
     // Check if dateString is valid
     if (!dateString || typeof dateString !== 'string') {
@@ -168,45 +128,18 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
       <div className="flex items-start justify-between mb-6">
-        <div className="flex-1">
+        <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <div className="grid grid-cols-3 gap-3 text-sm">
-            <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
-              <div className="text-blue-600 font-medium mb-0.5">
-                <i className="ri-file-list-line mr-1"></i>
-                Kabuuan (Total)
-              </div>
-              <div className="text-blue-900 font-bold text-lg">
-                {formatStatValue(totalCount)}
-              </div>
-              <div className="text-xs text-blue-600 mt-0.5">
-                Sum of all periods
-              </div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-2 border border-green-100">
-              <div className="text-green-600 font-medium mb-0.5">
-                <i className="ri-bar-chart-line mr-1"></i>
-                Karaniwan (Average)
-              </div>
-              <div className="text-green-900 font-bold text-lg">
-                {formatStatValue(averageCount)}
-              </div>
-              <div className="text-xs text-green-600 mt-0.5">
-                Average per period
-              </div>
-            </div>
-            <div className="bg-orange-50 rounded-lg p-2 border border-orange-100">
-              <div className="text-orange-600 font-medium mb-0.5">
-                <i className="ri-arrow-up-line mr-1"></i>
-                Pinakamataas (Peak)
-              </div>
-              <div className="text-orange-900 font-bold text-lg">
-                {formatStatValue(maxCount)}
-              </div>
-              <div className="text-xs text-orange-600 mt-0.5">
-                Highest value
-              </div>
-            </div>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <span>
+              Total: <span className="font-medium text-gray-900">{totalCount.toLocaleString()}</span>
+            </span>
+            <span>
+              Avg: <span className="font-medium text-gray-900">{averageCount.toLocaleString()}</span>
+            </span>
+            <span>
+              Peak: <span className="font-medium text-gray-900">{maxCount.toLocaleString()}</span>
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-1 text-sm">

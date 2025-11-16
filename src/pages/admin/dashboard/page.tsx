@@ -76,10 +76,6 @@ const AdminDashboard: React.FC = () => {
   const [trendsLimit, setTrendsLimit] = useState<number>(7);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursData[]>([]);
   const [peakHoursDateRange, setPeakHoursDateRange] = useState<string>('');
-  const [responseActivities, setResponseActivities] = useState<any>(null);
-  const [responseActivitiesLoading, setResponseActivitiesLoading] = useState(false);
-  const [responseTrendsPeriod, setResponseTrendsPeriod] = useState<'days' | 'months'>('months');
-  const [responseTrendsLimit, setResponseTrendsLimit] = useState<number>(12);
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,9 +96,6 @@ const AdminDashboard: React.FC = () => {
   const trendsChartRef = useRef<HTMLDivElement>(null);
   const peakHoursChartRef = useRef<HTMLDivElement>(null);
   const locationChartRef = useRef<HTMLDivElement>(null);
-  const responseTimeChartRef = useRef<HTMLDivElement>(null);
-  const responseTrendsChartRef = useRef<HTMLDivElement>(null);
-  const teamPerformanceChartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -715,21 +708,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const fetchResponseActivities = async (period: 'days' | 'months' = 'months', limit: number = 12) => {
-    try {
-      setResponseActivitiesLoading(true);
-      const response = await adminDashboardApi.getResponseActivities(period, limit);
-      if (response.success && response.responseActivities) {
-        setResponseActivities(response.responseActivities);
-      }
-    } catch (error) {
-      console.error('Failed to fetch response activities:', error);
-      setResponseActivities(null);
-    } finally {
-      setResponseActivitiesLoading(false);
-    }
-  };
-
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
@@ -744,9 +722,6 @@ const AdminDashboard: React.FC = () => {
 
       // Fetch trends data with current filter settings
       await fetchTrendsData(trendsPeriod, trendsLimit);
-
-      // Fetch response activities with current filter settings
-      await fetchResponseActivities(responseTrendsPeriod, responseTrendsLimit);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1278,315 +1253,7 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Emergency Response Activities Analytics */}
-      <div className="grid grid-cols-1 gap-6 mt-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Emergency Response Activities Analytics</h3>
-            <button
-              onClick={() => fetchResponseActivities(responseTrendsPeriod, responseTrendsLimit)}
-              disabled={responseActivitiesLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <i className={`ri-refresh-line ${responseActivitiesLoading ? 'animate-spin' : ''}`}></i>
-              {responseActivitiesLoading ? 'Loading...' : 'Refresh'}
-            </button>
-          </div>
 
-          {responseActivitiesLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading response activities data...</p>
-              </div>
-            </div>
-          ) : responseActivities ? (
-            <div className="space-y-6">
-              {/* Response Rate Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-blue-600 font-medium">Total Incidents</p>
-                      <p className="text-2xl font-bold text-blue-900 mt-1">{responseActivities.responseRate?.total_incidents || 0}</p>
-                    </div>
-                    <i className="ri-file-list-3-line text-3xl text-blue-400"></i>
-                  </div>
-                </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-green-600 font-medium">Responded</p>
-                      <p className="text-2xl font-bold text-green-900 mt-1">{responseActivities.responseRate?.responded_incidents || 0}</p>
-                    </div>
-                    <i className="ri-check-line text-3xl text-green-400"></i>
-                  </div>
-                </div>
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-purple-600 font-medium">Response Rate</p>
-                      <p className="text-2xl font-bold text-purple-900 mt-1">{responseActivities.responseRate?.response_rate_percentage || 0}%</p>
-                    </div>
-                    <i className="ri-percent-line text-3xl text-purple-400"></i>
-                  </div>
-                </div>
-              </div>
-
-              {/* Response Time by Priority */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Average Response Time by Priority</h4>
-                {responseActivities.avgResponseTimeByPriority && responseActivities.avgResponseTimeByPriority.length > 0 ? (
-                  <div ref={responseTimeChartRef}>
-                    <BarChart
-                      data={responseActivities.avgResponseTimeByPriority.map((item: any) => ({
-                        name: item.priority_level.charAt(0).toUpperCase() + item.priority_level.slice(1),
-                        count: Math.round(item.avg_response_time_minutes || 0)
-                      }))}
-                      title="Average Response Time (minutes)"
-                      color="#3b82f6"
-                      height={300}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
-                    <div className="text-center">
-                      <i className="ri-bar-chart-line text-4xl text-gray-400 mb-2"></i>
-                      <p className="text-gray-500">No data available for response times by priority</p>
-                    </div>
-                  </div>
-                )}
-                <div className="mt-4 text-sm text-gray-600">
-                  <p>Response time is calculated from incident report to first team/staff assignment.</p>
-                </div>
-              </div>
-
-              {/* Response Activity Trends - Average Response Time with Filter */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Average Response Time per Month</h3>
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                      <label className="text-sm font-medium text-gray-700">Period:</label>
-                      <select
-                        value={responseTrendsPeriod}
-                        onChange={(e) => {
-                          const newPeriod = e.target.value as 'days' | 'months';
-                          setResponseTrendsPeriod(newPeriod);
-                          // Adjust limit based on period
-                          if (newPeriod === 'days' && responseTrendsLimit > 90) {
-                            setResponseTrendsLimit(30);
-                          } else if (newPeriod === 'months' && responseTrendsLimit > 24) {
-                            setResponseTrendsLimit(12);
-                          }
-                        }}
-                        className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="days">Days</option>
-                        <option value="months">Months</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <label className="text-sm font-medium text-gray-700">Last:</label>
-                      <select
-                        value={responseTrendsLimit}
-                        onChange={(e) => setResponseTrendsLimit(parseInt(e.target.value))}
-                        className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {responseTrendsPeriod === 'days' && (
-                          <>
-                            <option value={7}>7 days</option>
-                            <option value={14}>14 days</option>
-                            <option value={30}>30 days</option>
-                            <option value={60}>60 days</option>
-                            <option value={90}>90 days</option>
-                          </>
-                        )}
-                        {responseTrendsPeriod === 'months' && (
-                          <>
-                            <option value={6}>6 months</option>
-                            <option value={12}>12 months</option>
-                            <option value={18}>18 months</option>
-                            <option value={24}>24 months</option>
-                          </>
-                        )}
-                      </select>
-                    </div>
-                    <button
-                      onClick={() => fetchResponseActivities(responseTrendsPeriod, responseTrendsLimit)}
-                      disabled={responseActivitiesLoading}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <i className={`ri-refresh-line mr-1 ${responseActivitiesLoading ? 'animate-spin' : ''}`}></i>
-                      {responseActivitiesLoading ? 'Loading...' : 'Refresh'}
-                    </button>
-                  </div>
-                </div>
-                {responseActivitiesLoading || (responseActivities?.monthlyResponseSummary?.length === 0 && !responseActivitiesLoading) ? (
-                  <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-gray-500">
-                        {responseActivitiesLoading ? 'Loading response time data...' : 'Loading chart data...'}
-                      </p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        Period: {responseTrendsPeriod} | Limit: {responseTrendsLimit}
-                      </p>
-                    </div>
-                  </div>
-                ) : responseActivities?.monthlyResponseSummary && responseActivities.monthlyResponseSummary.length > 0 ? (
-                  <div ref={responseTrendsChartRef}>
-                    <LineChart
-                      data={responseActivities.monthlyResponseSummary.map((item: any) => ({
-                        date: item.period || (item.month ? new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'short' }) : 'Unknown'),
-                        count: Math.round(item.avg_response_time_minutes || 0)
-                      }))}
-                      title={`Average Response Time (Last ${responseTrendsLimit} ${responseTrendsPeriod})`}
-                      color="#f59e0b"
-                      height={350}
-                      unit="minutes"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
-                    <div className="text-center">
-                      <i className="ri-line-chart-line text-4xl text-gray-400 mb-2"></i>
-                      <p className="text-gray-500">No response time data available for the selected period</p>
-                      <p className="text-sm text-gray-400 mt-1">Try adjusting the time range or check back later</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Team Performance */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Team Performance Metrics</h4>
-                {responseActivities.teamPerformance && responseActivities.teamPerformance.length > 0 ? (
-                  <>
-                    <div ref={teamPerformanceChartRef}>
-                      <BarChart
-                        data={responseActivities.teamPerformance.map((item: any) => ({
-                          name: item.team_name,
-                          count: item.total_incidents_handled || 0
-                        }))}
-                        title="Total Incidents Handled by Team"
-                        color="#8b5cf6"
-                        height={300}
-                      />
-                    </div>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white rounded p-4 border border-gray-200">
-                        <p className="text-sm text-gray-600 mb-2">Top Performing Team</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {responseActivities.teamPerformance[0]?.team_name || 'N/A'}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {responseActivities.teamPerformance[0]?.total_incidents_handled || 0} incidents handled
-                        </p>
-                      </div>
-                      <div className="bg-white rounded p-4 border border-gray-200">
-                        <p className="text-sm text-gray-600 mb-2">Fastest Average Response</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {responseActivities.teamPerformance.sort((a: any, b: any) => 
-                            (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
-                          )[0]?.team_name || 'N/A'}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {Math.round(responseActivities.teamPerformance.sort((a: any, b: any) => 
-                            (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
-                          )[0]?.avg_response_time_minutes || 0)} minutes avg
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
-                    <div className="text-center">
-                      <i className="ri-team-line text-4xl text-gray-400 mb-2"></i>
-                      <p className="text-gray-500">No team performance data available</p>
-                      <p className="text-sm text-gray-400 mt-1">Teams will appear here once they are assigned to incidents</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Response Time Distribution */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Response Time Distribution</h4>
-                {responseActivities.responseTimeDistribution && responseActivities.responseTimeDistribution.length > 0 ? (
-                  <div>
-                    <BarChart
-                      data={responseActivities.responseTimeDistribution.map((item: any) => ({
-                        name: item.time_category,
-                        count: item.count || 0
-                      }))}
-                      title="Incidents by Response Time Category"
-                      color="#f59e0b"
-                      height={300}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
-                    <div className="text-center">
-                      <i className="ri-bar-chart-box-line text-4xl text-gray-400 mb-2"></i>
-                      <p className="text-gray-500">No response time distribution data available</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Monthly Response Summary Table */}
-              {responseActivities.monthlyResponseSummary && responseActivities.monthlyResponseSummary.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Monthly Response Summary</h4>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Month</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Total Responses</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Resolved</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Avg Response Time</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Avg Resolution Time</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {responseActivities.monthlyResponseSummary.slice(-6).reverse().map((item: any, index: number) => (
-                          <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{item.total_responses || 0}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{item.resolved_count || 0}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                              {Math.round(item.avg_response_time_minutes || 0)} min
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                              {Math.round(item.avg_resolution_hours || 0)} hrs
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-              <div className="flex items-center">
-                <i className="ri-information-line text-yellow-500 text-lg mr-3"></i>
-                <div>
-                  <h4 className="text-yellow-800 font-medium">No Response Activities Data Available</h4>
-                  <p className="text-yellow-600 text-sm mt-1">
-                    Response activities analytics will appear here once incidents are assigned to teams or staff members.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Export Preview Modal */}
       <ExportPreviewModal
@@ -1595,6 +1262,8 @@ const AdminDashboard: React.FC = () => {
         data={exportData}
         columns={exportColumns}
         title={exportTitle}
+        orientation={exportOrientation}
+        onOrientationChange={(orientation) => setExportOrientation(orientation)}
         onExportCSV={() => {
           try {
             ExportUtils.exportToCSV(exportData, exportColumns, { 
@@ -1623,13 +1292,13 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}
-        onExportPDF={async () => {
+        onExportPDF={async (orientation) => {
           try {
             await ExportUtils.exportToPDF(exportData, exportColumns, { 
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
               title: exportTitle,
               chartImages: exportChartImages,
-              orientation: exportOrientation || 'portrait',
+              orientation: orientation || 'portrait',
               hideTotalRecords: true
             });
             showToast({ message: 'Data exported to PDF successfully!', type: 'success' });
