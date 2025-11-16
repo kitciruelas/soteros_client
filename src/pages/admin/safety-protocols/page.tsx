@@ -478,7 +478,7 @@ const SafetyProtocolsManagement: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-              <i className="ri-check-circle-line text-green-600"></i>
+              <i className="ri-shield-star-line text-green-600"></i>
             </div>
             <div>
               <p className="text-sm text-gray-600">Active Protocols</p>
