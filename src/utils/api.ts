@@ -692,7 +692,7 @@ export const adminDashboardApi = {
     }>(`/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`);
   },
 
-  getResponseActivities: async () => {
+  getResponseActivities: async (period: 'days' | 'months' = 'months', limit: number = 12) => {
     return apiRequest<{
       success: boolean;
       responseActivities: {
@@ -754,7 +754,7 @@ export const adminDashboardApi = {
         }>;
       };
       note?: string;
-    }>('/admin/dashboard/response-activities');
+    }>(`/admin/dashboard/response-activities?period=${period}&limit=${limit}`);
   },
 };
 

@@ -78,6 +78,8 @@ const AdminDashboard: React.FC = () => {
   const [peakHoursDateRange, setPeakHoursDateRange] = useState<string>('');
   const [responseActivities, setResponseActivities] = useState<any>(null);
   const [responseActivitiesLoading, setResponseActivitiesLoading] = useState(false);
+  const [responseTrendsPeriod, setResponseTrendsPeriod] = useState<'days' | 'months'>('months');
+  const [responseTrendsLimit, setResponseTrendsLimit] = useState<number>(12);
   const [loading, setLoading] = useState(true);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -713,10 +715,10 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const fetchResponseActivities = async () => {
+  const fetchResponseActivities = async (period: 'days' | 'months' = 'months', limit: number = 12) => {
     try {
       setResponseActivitiesLoading(true);
-      const response = await adminDashboardApi.getResponseActivities();
+      const response = await adminDashboardApi.getResponseActivities(period, limit);
       if (response.success && response.responseActivities) {
         setResponseActivities(response.responseActivities);
       }
@@ -743,8 +745,8 @@ const AdminDashboard: React.FC = () => {
       // Fetch trends data with current filter settings
       await fetchTrendsData(trendsPeriod, trendsLimit);
 
-      // Fetch response activities
-      await fetchResponseActivities();
+      // Fetch response activities with current filter settings
+      await fetchResponseActivities(responseTrendsPeriod, responseTrendsLimit);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1282,7 +1284,7 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Emergency Response Activities Analytics</h3>
             <button
-              onClick={fetchResponseActivities}
+              onClick={() => fetchResponseActivities(responseTrendsPeriod, responseTrendsLimit)}
               disabled={responseActivitiesLoading}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
@@ -1337,7 +1339,7 @@ const AdminDashboard: React.FC = () => {
                 {responseActivities.avgResponseTimeByPriority && responseActivities.avgResponseTimeByPriority.length > 0 ? (
                   <div ref={responseTimeChartRef}>
                     <BarChart
-                      data={responseActivities.avgResponseTimeByPriority.map(item => ({
+                      data={responseActivities.avgResponseTimeByPriority.map((item: any) => ({
                         name: item.priority_level.charAt(0).toUpperCase() + item.priority_level.slice(1),
                         count: Math.round(item.avg_response_time_minutes || 0)
                       }))}
@@ -1359,35 +1361,100 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Response Activity Trends - Average Response Time per Month */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Average Response Time per Month</h4>
-                {responseActivities.monthlyResponseSummary && responseActivities.monthlyResponseSummary.length > 0 ? (
+              {/* Response Activity Trends - Average Response Time with Filter */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Average Response Time per Month</h3>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">Period:</label>
+                      <select
+                        value={responseTrendsPeriod}
+                        onChange={(e) => {
+                          const newPeriod = e.target.value as 'days' | 'months';
+                          setResponseTrendsPeriod(newPeriod);
+                          // Adjust limit based on period
+                          if (newPeriod === 'days' && responseTrendsLimit > 90) {
+                            setResponseTrendsLimit(30);
+                          } else if (newPeriod === 'months' && responseTrendsLimit > 24) {
+                            setResponseTrendsLimit(12);
+                          }
+                        }}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="days">Days</option>
+                        <option value="months">Months</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">Last:</label>
+                      <select
+                        value={responseTrendsLimit}
+                        onChange={(e) => setResponseTrendsLimit(parseInt(e.target.value))}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {responseTrendsPeriod === 'days' && (
+                          <>
+                            <option value={7}>7 days</option>
+                            <option value={14}>14 days</option>
+                            <option value={30}>30 days</option>
+                            <option value={60}>60 days</option>
+                            <option value={90}>90 days</option>
+                          </>
+                        )}
+                        {responseTrendsPeriod === 'months' && (
+                          <>
+                            <option value={6}>6 months</option>
+                            <option value={12}>12 months</option>
+                            <option value={18}>18 months</option>
+                            <option value={24}>24 months</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+                    <button
+                      onClick={() => fetchResponseActivities(responseTrendsPeriod, responseTrendsLimit)}
+                      disabled={responseActivitiesLoading}
+                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <i className={`ri-refresh-line mr-1 ${responseActivitiesLoading ? 'animate-spin' : ''}`}></i>
+                      {responseActivitiesLoading ? 'Loading...' : 'Refresh'}
+                    </button>
+                  </div>
+                </div>
+                {responseActivitiesLoading || (responseActivities?.monthlyResponseSummary?.length === 0 && !responseActivitiesLoading) ? (
+                  <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="text-gray-500">
+                        {responseActivitiesLoading ? 'Loading response time data...' : 'Loading chart data...'}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Period: {responseTrendsPeriod} | Limit: {responseTrendsLimit}
+                      </p>
+                    </div>
+                  </div>
+                ) : responseActivities?.monthlyResponseSummary && responseActivities.monthlyResponseSummary.length > 0 ? (
                   <div ref={responseTrendsChartRef}>
                     <LineChart
-                      data={responseActivities.monthlyResponseSummary.map(item => {
-                        const monthDate = new Date(item.month + '-01');
-                        return {
-                          date: monthDate.toLocaleDateString('en-US', { month: 'short' }),
-                          count: Math.round(item.avg_response_time_minutes || 0)
-                        };
-                      })}
-                      title="Average Response Time per Month"
+                      data={responseActivities.monthlyResponseSummary.map((item: any) => ({
+                        date: item.period || (item.month ? new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'short' }) : 'Unknown'),
+                        count: Math.round(item.avg_response_time_minutes || 0)
+                      }))}
+                      title={`Average Response Time (Last ${responseTrendsLimit} ${responseTrendsPeriod})`}
                       color="#f59e0b"
-                      height={300}
+                      height={350}
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-[300px] bg-white rounded border border-gray-200">
+                  <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
                     <div className="text-center">
                       <i className="ri-line-chart-line text-4xl text-gray-400 mb-2"></i>
-                      <p className="text-gray-500">No response activity trends data available</p>
+                      <p className="text-gray-500">No response time data available for the selected period</p>
+                      <p className="text-sm text-gray-400 mt-1">Try adjusting the time range or check back later</p>
                     </div>
                   </div>
                 )}
-                <div className="mt-4 text-sm text-gray-600">
-                  <p>Shows the average time (in minutes) from incident report to first response, grouped by month.</p>
-                </div>
               </div>
 
               {/* Team Performance */}
@@ -1397,7 +1464,7 @@ const AdminDashboard: React.FC = () => {
                   <>
                     <div ref={teamPerformanceChartRef}>
                       <BarChart
-                        data={responseActivities.teamPerformance.map(item => ({
+                        data={responseActivities.teamPerformance.map((item: any) => ({
                           name: item.team_name,
                           count: item.total_incidents_handled || 0
                         }))}
@@ -1419,12 +1486,12 @@ const AdminDashboard: React.FC = () => {
                       <div className="bg-white rounded p-4 border border-gray-200">
                         <p className="text-sm text-gray-600 mb-2">Fastest Average Response</p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {responseActivities.teamPerformance.sort((a, b) => 
+                          {responseActivities.teamPerformance.sort((a: any, b: any) => 
                             (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
                           )[0]?.team_name || 'N/A'}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
-                          {Math.round(responseActivities.teamPerformance.sort((a, b) => 
+                          {Math.round(responseActivities.teamPerformance.sort((a: any, b: any) => 
                             (a.avg_response_time_minutes || Infinity) - (b.avg_response_time_minutes || Infinity)
                           )[0]?.avg_response_time_minutes || 0)} minutes avg
                         </p>
@@ -1448,7 +1515,7 @@ const AdminDashboard: React.FC = () => {
                 {responseActivities.responseTimeDistribution && responseActivities.responseTimeDistribution.length > 0 ? (
                   <div>
                     <BarChart
-                      data={responseActivities.responseTimeDistribution.map(item => ({
+                      data={responseActivities.responseTimeDistribution.map((item: any) => ({
                         name: item.time_category,
                         count: item.count || 0
                       }))}
@@ -1483,7 +1550,7 @@ const AdminDashboard: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {responseActivities.monthlyResponseSummary.slice(-6).reverse().map((item, index) => (
+                        {responseActivities.monthlyResponseSummary.slice(-6).reverse().map((item: any, index: number) => (
                           <tr key={index} className="hover:bg-gray-50">
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                               {new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -1527,8 +1594,6 @@ const AdminDashboard: React.FC = () => {
         data={exportData}
         columns={exportColumns}
         title={exportTitle}
-        orientation={exportOrientation}
-        onOrientationChange={(orientation) => setExportOrientation(orientation)}
         onExportCSV={() => {
           try {
             ExportUtils.exportToCSV(exportData, exportColumns, { 
@@ -1557,13 +1622,13 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}
-        onExportPDF={async (orientation) => {
+        onExportPDF={async () => {
           try {
             await ExportUtils.exportToPDF(exportData, exportColumns, { 
               filename: exportTitle.toLowerCase().replace(/\s+/g, '_'),
               title: exportTitle,
               chartImages: exportChartImages,
-              orientation: orientation || 'portrait',
+              orientation: exportOrientation || 'portrait',
               hideTotalRecords: true
             });
             showToast({ message: 'Data exported to PDF successfully!', type: 'success' });
