@@ -806,7 +806,8 @@ const ViewIncidents: React.FC = () => {
   };
 
   const filteredIncidents = incidents.filter(incident => {
-    const matchesSearch = getIncidentTypeText(incident.type).includes(searchTerm.toUpperCase()) ||
+    const matchesSearch = incident.id.toString().includes(searchTerm) ||
+                         getIncidentTypeText(incident.type).includes(searchTerm.toUpperCase()) ||
                          incident.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          incident.description.toLowerCase().includes(searchTerm.toLowerCase());
