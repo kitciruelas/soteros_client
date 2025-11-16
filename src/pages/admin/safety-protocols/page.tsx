@@ -742,7 +742,7 @@ const SafetyProtocolsManagement: React.FC = () => {
                   >
                     <option value="">Select Type</option>
                     <option value="fire">Fire</option>
-                    <option value="earthquake">Earthquake</option>
+                    <option value="earthquake">Natural Disasters</option>
                     <option value="medical">Medical</option>
                     <option value="intrusion">Intrusion</option>
                     <option value="general">Other</option>
@@ -915,8 +915,6 @@ const SafetyProtocolsManagement: React.FC = () => {
           data={exportData}
           columns={exportColumns}
           title={getExportTitle()}
-          orientation={exportOrientation}
-          onOrientationChange={setExportOrientation}
         />
     </div>
   );
