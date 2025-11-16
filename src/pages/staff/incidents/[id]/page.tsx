@@ -41,6 +41,7 @@ const StaffIncidentDetails: React.FC = () => {
   const fetchIncident = async () => {
     try {
       setLoading(true);
+      setError(null);
       console.log('🔍 Fetching incident details for staff:', id);
 
       const response = await incidentsApi.getIncidentById(Number(id));
@@ -48,31 +49,8 @@ const StaffIncidentDetails: React.FC = () => {
       if (response.success && response.incident) {
         const incidentData = response.incident;
 
-        // Check if this incident is assigned to the current staff member
-        const isAssignedToStaff = incidentData.assigned_staff_id === currentStaffId;
-        const currentTeamId = authState.userData?.assigned_team_id;
-        
-        // Check both single and multiple team assignments
-        let isAssignedToTeam = false;
-        if (currentTeamId) {
-          // Check single team assignment
-          if (incidentData.assigned_team_id === currentTeamId) {
-            isAssignedToTeam = true;
-          }
-          // Check multiple team assignments
-          if (incidentData.assigned_team_ids) {
-            const teamIds = incidentData.assigned_team_ids.split(',').map(id => Number(id.trim()));
-            if (teamIds.includes(currentTeamId)) {
-              isAssignedToTeam = true;
-            }
-          }
-        }
-
-        if (!isAssignedToStaff && !isAssignedToTeam) {
-          setError('You do not have permission to view this incident');
-          return;
-        }
-
+        // Backend already handles permission checks, so we can trust the response
+        // If we got here, the staff member has permission to view this incident
         setIncident(incidentData);
 
         // Geocode location
@@ -80,11 +58,18 @@ const StaffIncidentDetails: React.FC = () => {
           getLocationName(incidentData.latitude, incidentData.longitude);
         }
       } else {
-        setError('Incident not found');
+        setError(response.message || 'Incident not found');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching incident:', err);
-      setError('Failed to load incident details');
+      // Handle permission errors from backend (403)
+      if (err?.status === 403 || err?.message?.includes('permission')) {
+        setError(err.message || 'You do not have permission to view this incident');
+      } else if (err?.message) {
+        setError(err.message);
+      } else {
+        setError('Failed to load incident details');
+      }
     } finally {
       setLoading(false);
     }
