@@ -314,22 +314,22 @@ const SafetyProtocolsPage: React.FC = () => {
             </p>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
-              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-green-600">{protocolStats.total}</div>
-                <div className="text-sm text-gray-600">Total Protocols</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8 max-w-4xl mx-auto">
+              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
+                <div className="text-xl sm:text-2xl font-bold text-green-600">{protocolStats.total}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Total Protocols</div>
               </div>
-              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-red-600">{protocolStats.fire}</div>
-                <div className="text-sm text-gray-600">Fire Safety</div>
+              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
+                <div className="text-xl sm:text-2xl font-bold text-red-600">{protocolStats.fire}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Fire Safety</div>
               </div>
-              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-yellow-600">{protocolStats.earthquake}</div>
-                <div className="text-sm text-gray-600">Natural Hazards</div>
+              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
+                <div className="text-xl sm:text-2xl font-bold text-yellow-600">{protocolStats.earthquake}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Natural Hazards</div>
               </div>
-              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-green-600">{protocolStats.medical}</div>
-                <div className="text-sm text-gray-600">Medical</div>
+              <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
+                <div className="text-xl sm:text-2xl font-bold text-green-600">{protocolStats.medical}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Medical</div>
               </div>
             </div>
 
@@ -488,14 +488,14 @@ const SafetyProtocolsPage: React.FC = () => {
         ) : (
           <div className={`${
             viewMode === 'grid'
-              ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6'
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
               : 'space-y-4'
           }`}>
             {filteredProtocols.map((protocol) => (
               <div
                 key={protocol.protocol_id}
                 className={`bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ${
-                  viewMode === 'grid' ? 'p-6 flex flex-col h-full' : 'p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6'
+                  viewMode === 'grid' ? 'p-4 sm:p-6 flex flex-col h-full' : 'p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6'
                 }`}
               >
                 {/* Protocol Icon and Type */}
