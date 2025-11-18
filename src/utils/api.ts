@@ -677,7 +677,11 @@ export const adminDashboardApi = {
     }>('/admin/dashboard/seasonal-patterns');
   },
 
-  getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12) => {
+  getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
+    let url = `/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`;
+    if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       trendsData: Array<{
@@ -689,7 +693,7 @@ export const adminDashboardApi = {
       period: string;
       limit: number;
       note?: string;
-    }>(`/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`);
+    }>(url);
   },
 
   getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12) => {

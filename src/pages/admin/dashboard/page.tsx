@@ -112,6 +112,12 @@ const AdminDashboard: React.FC = () => {
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Date filter states
+  const currentDate = new Date();
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
+  const [selectedDay, setSelectedDay] = useState<number>(currentDate.getDate());
+  
   // Export functionality
   const [showExportModal, setShowExportModal] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -129,6 +135,50 @@ const AdminDashboard: React.FC = () => {
   const peakHoursChartRef = useRef<HTMLDivElement>(null);
   const locationChartRef = useRef<HTMLDivElement>(null);
   const responseTimeChartRef = useRef<HTMLDivElement>(null);
+
+  // Helper functions for date filters
+  const getYears = (): number[] => {
+    const years: number[] = [];
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear; i >= currentYear - 5; i--) {
+      years.push(i);
+    }
+    return years;
+  };
+
+  const getMonths = (): Array<{ value: number; label: string }> => {
+    return [
+      { value: 1, label: 'January' },
+      { value: 2, label: 'February' },
+      { value: 3, label: 'March' },
+      { value: 4, label: 'April' },
+      { value: 5, label: 'May' },
+      { value: 6, label: 'June' },
+      { value: 7, label: 'July' },
+      { value: 8, label: 'August' },
+      { value: 9, label: 'September' },
+      { value: 10, label: 'October' },
+      { value: 11, label: 'November' },
+      { value: 12, label: 'December' }
+    ];
+  };
+
+  const getDays = (year: number, month: number): number[] => {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const days: number[] = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  };
+
+  // Adjust day when month or year changes
+  useEffect(() => {
+    const daysInMonth = getDays(selectedYear, selectedMonth).length;
+    if (selectedDay > daysInMonth) {
+      setSelectedDay(daysInMonth);
+    }
+  }, [selectedYear, selectedMonth, selectedDay]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -168,11 +218,11 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch trends data when filter changes
   useEffect(() => {
-    console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}`);
-    // Force refresh trends data when period or limit changes
+    console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}, Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
+    // Force refresh trends data when period, limit, or date filters change
     setTrendsLoading(true);
-    fetchTrendsData(trendsPeriod, trendsLimit);
-  }, [trendsPeriod, trendsLimit]);
+    fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay);
+  }, [trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -907,11 +957,11 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
-  const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12) => {
+  const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
     try {
       setTrendsLoading(true);
-      console.log(`Fetching trends data for period: ${period}, limit: ${limit}`);
-      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit);
+      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
+      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
       console.log('Trends response:', trendsResponse);
       
       if (trendsResponse.success && trendsResponse.trendsData) {
@@ -950,7 +1000,7 @@ const AdminDashboard: React.FC = () => {
       ]);
 
       // Fetch trends data with current filter settings
-      await fetchTrendsData(trendsPeriod, trendsLimit);
+      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1165,8 +1215,66 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="relative export-dropdown-container">
+      </div>
+
+      {/* Date Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700">Filter by Date:</label>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Year:</label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {getYears().map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Month:</label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {getMonths().map(month => (
+                <option key={month.value} value={month.value}>{month.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Day:</label>
+            <select
+              value={selectedDay}
+              onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {getDays(selectedYear, selectedMonth).map(day => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={() => {
+              const today = new Date();
+              setSelectedYear(today.getFullYear());
+              setSelectedMonth(today.getMonth() + 1);
+              setSelectedDay(today.getDate());
+            }}
+            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
+          >
+            <i className="ri-calendar-line mr-1"></i>
+            Today
+          </button>
+        </div>
+      </div>
+
+      {/* Page Header Actions */}
+      <div className="flex items-center justify-end space-x-3">
+        <div className="relative export-dropdown-container">
             <button 
               onClick={() => setShowExportDropdown(!showExportDropdown)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
@@ -1238,16 +1346,15 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-          <button
-            onClick={fetchDashboardStats}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <i className={`ri-refresh-line mr-2 ${loading ? 'animate-spin' : ''}`}></i>
-            Refresh Data
-          </button>
         </div>
+        <button
+          onClick={fetchDashboardStats}
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <i className={`ri-refresh-line mr-2 ${loading ? 'animate-spin' : ''}`}></i>
+          Refresh Data
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -1315,14 +1422,14 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Welfare Chart - Only show if there's an active welfare setting */}
-        {hasActiveWelfare && (
+        {hasActiveWelfare && welfareStats && (
           <div ref={welfareChartRef}>
             <PieChart
-              data={welfareStats ? [
+              data={[
                 { name: 'Safe', count: welfareStats.safeReports },
                 { name: 'Needs Help', count: welfareStats.needsHelpReports },
                 { name: 'Not Submitted', count: welfareStats.notSubmitted }
-              ] : []}
+              ]}
               title="Welfare Status Overview"
               dataKey="count"
               nameKey="name"
