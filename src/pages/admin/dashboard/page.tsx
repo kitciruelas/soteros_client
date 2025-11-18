@@ -225,10 +225,7 @@ const AdminDashboard: React.FC = () => {
 
   // Refetch dashboard data when year/month filters change
   useEffect(() => {
-    if (filterType !== 'none' && !loading) {
-      // Note: Most API endpoints don't support year/month filtering yet
-      // Data is filtered client-side where possible
-      // For full filtering support, backend API endpoints would need to be updated
+    if (!loading) {
       fetchDashboardStats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -982,7 +979,9 @@ const AdminDashboard: React.FC = () => {
     try {
       setTrendsLoading(true);
       console.log(`Fetching trends data for period: ${period}, limit: ${limit}`);
-      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit);
+      const year = filterType === 'year' || filterType === 'month' ? selectedYear : undefined;
+      const month = filterType === 'month' ? selectedMonth : undefined;
+      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month);
       console.log('Trends response:', trendsResponse);
       
       if (trendsResponse.success && trendsResponse.trendsData) {
@@ -1013,11 +1012,15 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch stats, overview, and analytics data
+      // Get filter parameters
+      const year = filterType === 'year' || filterType === 'month' ? selectedYear : undefined;
+      const month = filterType === 'month' ? selectedMonth : undefined;
+
+      // Fetch stats, overview, and analytics data with filters
       const [statsResponse, overviewResponse, analyticsResponse] = await Promise.all([
-        adminDashboardApi.getStats(),
-        adminDashboardApi.getOverview(),
-        adminDashboardApi.getAnalytics()
+        adminDashboardApi.getStats(year, month),
+        adminDashboardApi.getOverview(year, month),
+        adminDashboardApi.getAnalytics(year, month)
       ]);
 
       // Fetch trends data with current filter settings
@@ -1026,7 +1029,7 @@ const AdminDashboard: React.FC = () => {
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
       try {
-        locationResponse = await adminDashboardApi.getLocationIncidents();
+        locationResponse = await adminDashboardApi.getLocationIncidents(year, month);
       } catch (error) {
         console.warn('Location incidents endpoint not available, using fallback data:', error);
         // Set empty data as fallback
@@ -1546,18 +1549,10 @@ const AdminDashboard: React.FC = () => {
           ) : monthlyIncidents.length > 0 ? (
             <div ref={trendsChartRef}>
               <LineChart
-                data={(() => {
-                  let filteredData = monthlyIncidents;
-                  if (filterType === 'year') {
-                    filteredData = filterDataByDate(monthlyIncidents, selectedYear);
-                  } else if (filterType === 'month') {
-                    filteredData = filterDataByDate(monthlyIncidents, selectedYear, selectedMonth);
-                  }
-                  return filteredData.map(item => ({
-                    date: item.period || item.month || 'Unknown',
-                    count: item.total_incidents || 0
-                  }));
-                })()}
+                data={monthlyIncidents.map(item => ({
+                  date: item.period || item.month || 'Unknown',
+                  count: item.total_incidents || 0
+                }))}
                 title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})${filterType !== 'none' ? ` - ${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}` : ''}`}
                 color="#10b981"
                 height={350}
@@ -1797,26 +1792,18 @@ const AdminDashboard: React.FC = () => {
             // Individual Reports Chart - Reverse order so newest is on the right
             <div ref={responseTimeChartRef}>
               <LineChart
-                data={(() => {
-                  let filteredData = individualResponseTimeData;
-                  if (filterType === 'year') {
-                    filteredData = filterDataByDate(individualResponseTimeData, selectedYear);
-                  } else if (filterType === 'month') {
-                    filteredData = filterDataByDate(individualResponseTimeData, selectedYear, selectedMonth);
-                  }
-                  return [...filteredData].reverse().map((item, index) => ({
-                    date: `#${item.incident_id} ${item.incident_type}`,
-                    count: item.display_value || item.response_time_hours,
-                    incident_id: item.incident_id,
-                    incident_type: item.incident_type,
-                    response_time_minutes: item.response_time_minutes,
-                    response_time_hours: item.response_time_hours,
-                    response_time_days: item.response_time_days || 0,
-                    display_unit: item.display_unit || 'hours',
-                    date_reported: item.date_reported,
-                    status: item.status
-                  }));
-                })()}
+                data={[...individualResponseTimeData].reverse().map((item, index) => ({
+                  date: `#${item.incident_id} ${item.incident_type}`,
+                  count: item.display_value || item.response_time_hours,
+                  incident_id: item.incident_id,
+                  incident_type: item.incident_type,
+                  response_time_minutes: item.response_time_minutes,
+                  response_time_hours: item.response_time_hours,
+                  response_time_days: item.response_time_days || 0,
+                  display_unit: item.display_unit || 'hours',
+                  date_reported: item.date_reported,
+                  status: item.status
+                }))}
                 title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}${filterType !== 'none' ? ` - ${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}` : ''}`}
                 color="#10b981"
                 height={350}

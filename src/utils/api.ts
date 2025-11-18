@@ -558,7 +558,11 @@ export const staffAuthApi = {
 
 // Admin Dashboard API
 export const adminDashboardApi = {
-  getStats: async () => {
+  getStats: async (year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    const queryString = params.toString();
     return apiRequest<{
       success: boolean;
       stats: {
@@ -594,10 +598,14 @@ export const adminDashboardApi = {
         incidents: Array<{ date: string; count: number }>;
         users: Array<{ date: string; count: number }>;
       };
-    }>('/admin/dashboard/stats');
+    }>(`/admin/dashboard/stats${queryString ? `?${queryString}` : ''}`);
   },
   
-  getOverview: async () => {
+  getOverview: async (year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    const queryString = params.toString();
     return apiRequest<{
       success: boolean;
       overview: {
@@ -612,10 +620,14 @@ export const adminDashboardApi = {
           total_occupancy: number;
         };
       };
-    }>('/admin/dashboard/overview');
+    }>(`/admin/dashboard/overview${queryString ? `?${queryString}` : ''}`);
   },
 
-  getAnalytics: async () => {
+  getAnalytics: async (year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    const queryString = params.toString();
     return apiRequest<{
       success: boolean;
       analytics: {
@@ -640,10 +652,14 @@ export const adminDashboardApi = {
           incident_count: number;
         }>;
       };
-    }>('/admin/dashboard/analytics');
+    }>(`/admin/dashboard/analytics${queryString ? `?${queryString}` : ''}`);
   },
 
-  getLocationIncidents: async () => {
+  getLocationIncidents: async (year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    const queryString = params.toString();
     return apiRequest<{
       success: boolean;
       locationIncidents: Array<{
@@ -651,7 +667,7 @@ export const adminDashboardApi = {
         [key: string]: string | number;
       }>;
       note?: string;
-    }>('/admin/dashboard/location-incidents');
+    }>(`/admin/dashboard/location-incidents${queryString ? `?${queryString}` : ''}`);
   },
 
   getSeasonalPatterns: async () => {
@@ -677,7 +693,12 @@ export const adminDashboardApi = {
     }>('/admin/dashboard/seasonal-patterns');
   },
 
-  getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12) => {
+  getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12, year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    params.append('period', period);
+    params.append('limit', limit.toString());
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
     return apiRequest<{
       success: boolean;
       trendsData: Array<{
@@ -689,7 +710,7 @@ export const adminDashboardApi = {
       period: string;
       limit: number;
       note?: string;
-    }>(`/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`);
+    }>(`/admin/dashboard/monthly-trends?${params.toString()}`);
   },
 
   getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12) => {
