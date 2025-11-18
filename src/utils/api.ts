@@ -558,9 +558,13 @@ export const staffAuthApi = {
 
 // Admin Dashboard API
 export const adminDashboardApi = {
-  getStats: async (year?: number) => {
+  getStats: async (year?: number, month?: number, day?: number) => {
     let url = '/admin/dashboard/stats';
-    if (year) url += `?year=${year}`;
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       stats: {
@@ -599,9 +603,13 @@ export const adminDashboardApi = {
     }>(url);
   },
   
-  getOverview: async (year?: number) => {
+  getOverview: async (year?: number, month?: number, day?: number) => {
     let url = '/admin/dashboard/overview';
-    if (year) url += `?year=${year}`;
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       overview: {
@@ -619,9 +627,13 @@ export const adminDashboardApi = {
     }>(url);
   },
 
-  getAnalytics: async (year?: number) => {
+  getAnalytics: async (year?: number, month?: number, day?: number) => {
     let url = '/admin/dashboard/analytics';
-    if (year) url += `?year=${year}`;
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       analytics: {
@@ -649,9 +661,13 @@ export const adminDashboardApi = {
     }>(url);
   },
 
-  getLocationIncidents: async (year?: number) => {
+  getLocationIncidents: async (year?: number, month?: number, day?: number) => {
     let url = '/admin/dashboard/location-incidents';
-    if (year) url += `?year=${year}`;
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       locationIncidents: Array<{
@@ -685,9 +701,11 @@ export const adminDashboardApi = {
     }>('/admin/dashboard/seasonal-patterns');
   },
 
-  getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12, year?: number) => {
+  getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
     let url = `/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`;
     if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       trendsData: Array<{
@@ -702,9 +720,11 @@ export const adminDashboardApi = {
     }>(url);
   },
 
-  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12, year?: number) => {
+  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12, year?: number, month?: number, day?: number) => {
     let url = `/admin/dashboard/response-time-by-type?period=${period}&last=${last}`;
     if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       responseTimeData: Array<{
@@ -724,9 +744,11 @@ export const adminDashboardApi = {
     }>(url);
   },
 
-  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12, year?: number) => {
+  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12, year?: number, month?: number, day?: number) => {
     let url = `/admin/dashboard/response-time-individual?limit=${limit}&period=${period}&last=${last}`;
     if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       incidents: Array<{
