@@ -172,7 +172,36 @@ const AdminDashboard: React.FC = () => {
     return days;
   };
 
-  // Adjust day when month or year changes
+  // Cascading filter behavior: Year selection resets Month/Day, Month selection resets Day
+  const prevYearRef = useRef(selectedYear);
+  const prevMonthRef = useRef(selectedMonth);
+  
+  useEffect(() => {
+    // When year changes, reset to first month and first day of that year
+    if (prevYearRef.current !== selectedYear) {
+      prevYearRef.current = selectedYear;
+      const currentDate = new Date();
+      if (selectedYear !== currentDate.getFullYear()) {
+        // If year is not current year, reset to January 1st
+        setSelectedMonth(1);
+        setSelectedDay(1);
+      } else {
+        // If year is current year, reset to current month and day
+        setSelectedMonth(currentDate.getMonth() + 1);
+        setSelectedDay(currentDate.getDate());
+      }
+    }
+  }, [selectedYear]);
+
+  useEffect(() => {
+    // When month changes, reset to first day of that month
+    if (prevMonthRef.current !== selectedMonth) {
+      prevMonthRef.current = selectedMonth;
+      setSelectedDay(1);
+    }
+  }, [selectedMonth]);
+
+  // Adjust day when month or year changes to ensure valid day
   useEffect(() => {
     const daysInMonth = getDays(selectedYear, selectedMonth).length;
     if (selectedDay > daysInMonth) {
@@ -216,13 +245,19 @@ const AdminDashboard: React.FC = () => {
     }
   }, [trendsPeriod]);
 
+  // Fetch all dashboard data when date filters change
+  useEffect(() => {
+    console.log(`Date filters changed - Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
+    fetchDashboardStats();
+  }, [selectedYear, selectedMonth, selectedDay]);
+
   // Fetch trends data when filter changes
   useEffect(() => {
     console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}, Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
-    // Force refresh trends data when period, limit, or date filters change
+    // Force refresh trends data when period or limit changes
     setTrendsLoading(true);
     fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay);
-  }, [trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay]);
+  }, [trendsPeriod, trendsLimit]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -244,7 +279,7 @@ const AdminDashboard: React.FC = () => {
     const fetchResponseTimeData = async () => {
       setResponseTimeLoading(true);
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -254,7 +289,7 @@ const AdminDashboard: React.FC = () => {
       }
 
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -266,7 +301,7 @@ const AdminDashboard: React.FC = () => {
       }
     };
     fetchResponseTimeData();
-  }, [responseTimePeriod, responseTimeLimit]);
+  }, [responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay]);
 
   // Helper function to format hour data for peak hours chart
   const formatPeakHoursData = (peakHours: PeakHoursData[]) => {
@@ -992,11 +1027,11 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch stats, overview, and analytics data
+      // Fetch stats, overview, and analytics data with date filters
       const [statsResponse, overviewResponse, analyticsResponse] = await Promise.all([
-        adminDashboardApi.getStats(),
-        adminDashboardApi.getOverview(),
-        adminDashboardApi.getAnalytics()
+        adminDashboardApi.getStats(selectedYear, selectedMonth, selectedDay),
+        adminDashboardApi.getOverview(selectedYear, selectedMonth, selectedDay),
+        adminDashboardApi.getAnalytics(selectedYear, selectedMonth, selectedDay)
       ]);
 
       // Fetch trends data with current filter settings
@@ -1005,7 +1040,7 @@ const AdminDashboard: React.FC = () => {
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
       try {
-        locationResponse = await adminDashboardApi.getLocationIncidents();
+        locationResponse = await adminDashboardApi.getLocationIncidents(selectedYear, selectedMonth, selectedDay);
       } catch (error) {
         console.warn('Location incidents endpoint not available, using fallback data:', error);
         // Set empty data as fallback
@@ -1117,7 +1152,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch response time data, but don't fail if it doesn't work
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -1128,7 +1163,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch individual response time data
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -1691,11 +1726,11 @@ const AdminDashboard: React.FC = () => {
                 onClick={async () => {
                   setResponseTimeLoading(true);
                   try {
-                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
                     if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
                       setResponseTimeData(responseTimeResponse.responseTimeData || []);
                     }
-                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
                     if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
                       setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
                     }

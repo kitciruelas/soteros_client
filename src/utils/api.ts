@@ -558,7 +558,13 @@ export const staffAuthApi = {
 
 // Admin Dashboard API
 export const adminDashboardApi = {
-  getStats: async () => {
+  getStats: async (year?: number, month?: number, day?: number) => {
+    let url = '/admin/dashboard/stats';
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       stats: {
@@ -594,10 +600,16 @@ export const adminDashboardApi = {
         incidents: Array<{ date: string; count: number }>;
         users: Array<{ date: string; count: number }>;
       };
-    }>('/admin/dashboard/stats');
+    }>(url);
   },
   
-  getOverview: async () => {
+  getOverview: async (year?: number, month?: number, day?: number) => {
+    let url = '/admin/dashboard/overview';
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       overview: {
@@ -612,10 +624,16 @@ export const adminDashboardApi = {
           total_occupancy: number;
         };
       };
-    }>('/admin/dashboard/overview');
+    }>(url);
   },
 
-  getAnalytics: async () => {
+  getAnalytics: async (year?: number, month?: number, day?: number) => {
+    let url = '/admin/dashboard/analytics';
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       analytics: {
@@ -640,10 +658,16 @@ export const adminDashboardApi = {
           incident_count: number;
         }>;
       };
-    }>('/admin/dashboard/analytics');
+    }>(url);
   },
 
-  getLocationIncidents: async () => {
+  getLocationIncidents: async (year?: number, month?: number, day?: number) => {
+    let url = '/admin/dashboard/location-incidents';
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
+    if (day) params.append('day', day.toString());
+    if (params.toString()) url += `?${params.toString()}`;
     return apiRequest<{
       success: boolean;
       locationIncidents: Array<{
@@ -651,7 +675,7 @@ export const adminDashboardApi = {
         [key: string]: string | number;
       }>;
       note?: string;
-    }>('/admin/dashboard/location-incidents');
+    }>(url);
   },
 
   getSeasonalPatterns: async () => {
@@ -696,7 +720,11 @@ export const adminDashboardApi = {
     }>(url);
   },
 
-  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12) => {
+  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12, year?: number, month?: number, day?: number) => {
+    let url = `/admin/dashboard/response-time-by-type?period=${period}&last=${last}`;
+    if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       responseTimeData: Array<{
@@ -713,10 +741,14 @@ export const adminDashboardApi = {
       }>;
       note?: string;
       totalIncidents: number;
-    }>(`/admin/dashboard/response-time-by-type?period=${period}&last=${last}`);
+    }>(url);
   },
 
-  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12) => {
+  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12, year?: number, month?: number, day?: number) => {
+    let url = `/admin/dashboard/response-time-individual?limit=${limit}&period=${period}&last=${last}`;
+    if (year) url += `&year=${year}`;
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       incidents: Array<{
@@ -733,7 +765,7 @@ export const adminDashboardApi = {
       }>;
       total: number;
       note?: string;
-    }>(`/admin/dashboard/response-time-individual?limit=${limit}&period=${period}&last=${last}`);
+    }>(url);
   },
 };
 
