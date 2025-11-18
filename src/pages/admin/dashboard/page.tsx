@@ -115,8 +115,8 @@ const AdminDashboard: React.FC = () => {
   // Date filter states
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
-  const [selectedDay, setSelectedDay] = useState<number>(currentDate.getDate());
+  const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = All (optional)
+  const [selectedDay, setSelectedDay] = useState<number>(0); // 0 = All (optional)
   
   // Export functionality
   const [showExportModal, setShowExportModal] = useState(false);
@@ -148,6 +148,7 @@ const AdminDashboard: React.FC = () => {
 
   const getMonths = (): Array<{ value: number; label: string }> => {
     return [
+      { value: 0, label: 'All Months' },
       { value: 1, label: 'January' },
       { value: 2, label: 'February' },
       { value: 3, label: 'March' },
@@ -164,15 +165,17 @@ const AdminDashboard: React.FC = () => {
   };
 
   const getDays = (year: number, month: number): number[] => {
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const days: number[] = [];
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
+    const days: number[] = [0]; // 0 = All Days
+    if (month > 0) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      for (let i = 1; i <= daysInMonth; i++) {
+        days.push(i);
+      }
     }
     return days;
   };
 
-  // Date filters: Year is required, Month and Day are optional and work in combination with Year
+  // Date filters: Year is required, Month and Day are optional (0 = All, not applied)
 
   useEffect(() => {
     const loadData = async () => {
@@ -210,7 +213,7 @@ const AdminDashboard: React.FC = () => {
     }
   }, [trendsPeriod]);
 
-  // Fetch all dashboard data when date filters change (year required, month and day optional)
+  // Fetch all dashboard data when date filters change
   useEffect(() => {
     console.log(`Date filters changed - Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
     fetchDashboardStats();
@@ -218,10 +221,12 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch trends data when filter changes
   useEffect(() => {
-    console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}, Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
+    const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+    const dayParam = selectedDay > 0 ? selectedDay : undefined;
+    console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}, Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}`);
     // Force refresh trends data when period or limit changes
     setTrendsLoading(true);
-    fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay);
+    fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
   }, [trendsPeriod, trendsLimit]);
 
   // Reset response time limit when period changes
@@ -243,8 +248,10 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchResponseTimeData = async () => {
       setResponseTimeLoading(true);
+      const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+      const dayParam = selectedDay > 0 ? selectedDay : undefined;
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -254,7 +261,7 @@ const AdminDashboard: React.FC = () => {
       }
 
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -992,20 +999,23 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch stats, overview, and analytics data with date filters (year required, month and day optional)
+      // Fetch stats, overview, and analytics data with date filters (year required, month/day optional)
+      const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+      const dayParam = selectedDay > 0 ? selectedDay : undefined;
+      
       const [statsResponse, overviewResponse, analyticsResponse] = await Promise.all([
-        adminDashboardApi.getStats(selectedYear, selectedMonth, selectedDay),
-        adminDashboardApi.getOverview(selectedYear, selectedMonth, selectedDay),
-        adminDashboardApi.getAnalytics(selectedYear, selectedMonth, selectedDay)
+        adminDashboardApi.getStats(selectedYear, monthParam, dayParam),
+        adminDashboardApi.getOverview(selectedYear, monthParam, dayParam),
+        adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
       // Fetch trends data with current filter settings
-      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay);
+      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
       try {
-        locationResponse = await adminDashboardApi.getLocationIncidents(selectedYear, selectedMonth, selectedDay);
+        locationResponse = await adminDashboardApi.getLocationIncidents(selectedYear, monthParam, dayParam);
       } catch (error) {
         console.warn('Location incidents endpoint not available, using fallback data:', error);
         // Set empty data as fallback
@@ -1094,8 +1104,8 @@ const AdminDashboard: React.FC = () => {
       try {
         const welfareParams = new URLSearchParams();
         if (selectedYear) welfareParams.append('year', selectedYear.toString());
-        if (selectedMonth) welfareParams.append('month', selectedMonth.toString());
-        if (selectedDay) welfareParams.append('day', selectedDay.toString());
+        if (monthParam) welfareParams.append('month', monthParam.toString());
+        if (dayParam) welfareParams.append('day', dayParam.toString());
         const welfareUrl = welfareParams.toString() ? `/admin/welfare/stats?${welfareParams.toString()}` : '/admin/welfare/stats';
         const welfareResponse = await apiRequest(welfareUrl);
         if (welfareResponse.success && welfareResponse.stats) {
@@ -1122,7 +1132,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch response time data, but don't fail if it doesn't work
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -1133,7 +1143,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch individual response time data
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -1242,7 +1252,14 @@ const AdminDashboard: React.FC = () => {
             <label className="text-sm text-gray-600">Month:</label>
             <select
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              onChange={(e) => {
+                const newMonth = parseInt(e.target.value);
+                setSelectedMonth(newMonth);
+                // Reset day to "All" if month is set to "All"
+                if (newMonth === 0) {
+                  setSelectedDay(0);
+                }
+              }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {getMonths().map(month => (
@@ -1255,10 +1272,13 @@ const AdminDashboard: React.FC = () => {
             <select
               value={selectedDay}
               onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={selectedMonth === 0}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               {getDays(selectedYear, selectedMonth).map(day => (
-                <option key={day} value={day}>{day}</option>
+                <option key={day} value={day}>
+                  {day === 0 ? 'All Days' : day.toString()}
+                </option>
               ))}
             </select>
           </div>
@@ -1491,7 +1511,11 @@ const AdminDashboard: React.FC = () => {
                 </select>
               </div>
               <button
-                onClick={() => fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay)}
+                onClick={() => {
+                  const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+                  const dayParam = selectedDay > 0 ? selectedDay : undefined;
+                  fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
+                }}
                 disabled={trendsLoading}
                 className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1695,12 +1719,14 @@ const AdminDashboard: React.FC = () => {
               <button
                 onClick={async () => {
                   setResponseTimeLoading(true);
+                  const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+                  const dayParam = selectedDay > 0 ? selectedDay : undefined;
                   try {
-                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
+                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
                     if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
                       setResponseTimeData(responseTimeResponse.responseTimeData || []);
                     }
-                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay);
+                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
                     if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
                       setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
                     }
