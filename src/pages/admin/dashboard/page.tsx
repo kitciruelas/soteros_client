@@ -198,8 +198,11 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchResponseTimeData = async () => {
       setResponseTimeLoading(true);
+      const year = filterType === 'year' || filterType === 'month' ? selectedYear : undefined;
+      const month = filterType === 'month' ? selectedMonth : undefined;
+      
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, year, month);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -209,7 +212,7 @@ const AdminDashboard: React.FC = () => {
       }
 
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, year, month);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -221,7 +224,7 @@ const AdminDashboard: React.FC = () => {
       }
     };
     fetchResponseTimeData();
-  }, [responseTimePeriod, responseTimeLimit]);
+  }, [responseTimePeriod, responseTimeLimit, filterType, selectedYear, selectedMonth]);
 
   // Refetch dashboard data when year/month filters change
   useEffect(() => {
@@ -1141,7 +1144,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch response time data, but don't fail if it doesn't work
       try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, year, month);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
@@ -1152,7 +1155,7 @@ const AdminDashboard: React.FC = () => {
 
       // Try to fetch individual response time data
       try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, year, month);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
@@ -1729,12 +1732,14 @@ const AdminDashboard: React.FC = () => {
               <button
                 onClick={async () => {
                   setResponseTimeLoading(true);
+                  const year = filterType === 'year' || filterType === 'month' ? selectedYear : undefined;
+                  const month = filterType === 'month' ? selectedMonth : undefined;
                   try {
-                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit);
+                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, year, month);
                     if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
                       setResponseTimeData(responseTimeResponse.responseTimeData || []);
                     }
-                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit);
+                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, year, month);
                     if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
                       setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
                     }

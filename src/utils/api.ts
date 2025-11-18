@@ -713,7 +713,12 @@ export const adminDashboardApi = {
     }>(`/admin/dashboard/monthly-trends?${params.toString()}`);
   },
 
-  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12) => {
+  getResponseTimeByType: async (period: 'days' | 'months' = 'months', last: number = 12, year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    params.append('period', period);
+    params.append('last', last.toString());
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
     return apiRequest<{
       success: boolean;
       responseTimeData: Array<{
@@ -730,10 +735,16 @@ export const adminDashboardApi = {
       }>;
       note?: string;
       totalIncidents: number;
-    }>(`/admin/dashboard/response-time-by-type?period=${period}&last=${last}`);
+    }>(`/admin/dashboard/response-time-by-type?${params.toString()}`);
   },
 
-  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12) => {
+  getResponseTimeIndividual: async (limit: number = 200, period: 'days' | 'months' = 'months', last: number = 12, year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    params.append('period', period);
+    params.append('last', last.toString());
+    if (year) params.append('year', year.toString());
+    if (month) params.append('month', month.toString());
     return apiRequest<{
       success: boolean;
       incidents: Array<{
@@ -750,7 +761,7 @@ export const adminDashboardApi = {
       }>;
       total: number;
       note?: string;
-    }>(`/admin/dashboard/response-time-individual?limit=${limit}&period=${period}&last=${last}`);
+    }>(`/admin/dashboard/response-time-individual?${params.toString()}`);
   },
 };
 
