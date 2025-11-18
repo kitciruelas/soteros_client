@@ -1108,21 +1108,39 @@ const AdminDashboard: React.FC = () => {
         if (dayParam) welfareParams.append('day', dayParam.toString());
         const welfareUrl = welfareParams.toString() ? `/admin/welfare/stats?${welfareParams.toString()}` : '/admin/welfare/stats';
         const welfareResponse = await apiRequest(welfareUrl);
+        console.log('Welfare response:', welfareResponse);
+        
         if (welfareResponse.success && welfareResponse.stats) {
-          // Check if there are active welfare settings
+          // Check if there are active welfare settings OR if there's any welfare data
           const hasActive = welfareResponse.stats.activeSettings > 0;
-          setHasActiveWelfare(hasActive);
+          const hasData = (welfareResponse.stats.safeReports || 0) + 
+                         (welfareResponse.stats.needsHelpReports || 0) + 
+                         (welfareResponse.stats.notSubmitted || 0) > 0;
           
-          if (hasActive) {
+          // Show welfare chart if there are active settings OR if there's data to display
+          const shouldShowWelfare = hasActive || hasData;
+          setHasActiveWelfare(shouldShowWelfare);
+          
+          if (shouldShowWelfare) {
             setWelfareStats({
               safeReports: welfareResponse.stats.safeReports || 0,
               needsHelpReports: welfareResponse.stats.needsHelpReports || 0,
               notSubmitted: welfareResponse.stats.notSubmitted || 0,
               uniqueUsers: welfareResponse.stats.uniqueUsers || 0
             });
+            console.log('Welfare stats set:', {
+              safeReports: welfareResponse.stats.safeReports || 0,
+              needsHelpReports: welfareResponse.stats.needsHelpReports || 0,
+              notSubmitted: welfareResponse.stats.notSubmitted || 0
+            });
           } else {
             setWelfareStats(null);
+            console.log('Welfare not shown - no active settings and no data');
           }
+        } else {
+          console.warn('Welfare response missing success or stats:', welfareResponse);
+          setWelfareStats(null);
+          setHasActiveWelfare(false);
         }
       } catch (error) {
         console.warn('Welfare stats endpoint not available, using fallback data:', error);
