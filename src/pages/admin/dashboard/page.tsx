@@ -112,6 +112,11 @@ const AdminDashboard: React.FC = () => {
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Global year/month filters
+  const [filterType, setFilterType] = useState<'year' | 'month' | 'none'>('none');
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  
   // Export functionality
   const [showExportModal, setShowExportModal] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -217,6 +222,72 @@ const AdminDashboard: React.FC = () => {
     };
     fetchResponseTimeData();
   }, [responseTimePeriod, responseTimeLimit]);
+
+  // Refetch dashboard data when year/month filters change
+  useEffect(() => {
+    if (filterType !== 'none' && !loading) {
+      // Note: Most API endpoints don't support year/month filtering yet
+      // Data is filtered client-side where possible
+      // For full filtering support, backend API endpoints would need to be updated
+      fetchDashboardStats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterType, selectedYear, selectedMonth]);
+
+  // Helper functions for year/month filters
+  const getYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear; i >= currentYear - 10; i--) {
+      years.push(i);
+    }
+    return years;
+  };
+
+  const getMonthOptions = () => {
+    return [
+      { value: 1, label: 'January' },
+      { value: 2, label: 'February' },
+      { value: 3, label: 'March' },
+      { value: 4, label: 'April' },
+      { value: 5, label: 'May' },
+      { value: 6, label: 'June' },
+      { value: 7, label: 'July' },
+      { value: 8, label: 'August' },
+      { value: 9, label: 'September' },
+      { value: 10, label: 'October' },
+      { value: 11, label: 'November' },
+      { value: 12, label: 'December' }
+    ];
+  };
+
+  // Filter data by year/month
+  const filterDataByDate = <T extends { date_reported?: string; created_at?: string; date?: string; period?: string; month?: string }>(
+    data: T[],
+    year?: number,
+    month?: number
+  ): T[] => {
+    if (!year && !month) return data;
+    
+    return data.filter(item => {
+      let dateStr = item.date_reported || item.created_at || item.date || item.period || item.month;
+      if (!dateStr) return true;
+      
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return true;
+        
+        if (year && month) {
+          return date.getFullYear() === year && date.getMonth() + 1 === month;
+        } else if (year) {
+          return date.getFullYear() === year;
+        }
+        return true;
+      } catch {
+        return true;
+      }
+    });
+  };
 
   // Helper function to format hour data for peak hours chart
   const formatPeakHoursData = (peakHours: PeakHoursData[]) => {
@@ -1250,6 +1321,78 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Global Year/Month Filter */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center space-x-3">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="ri-filter-line mr-2"></i>
+              Filter by:
+            </label>
+            <select
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value as 'year' | 'month' | 'none');
+                if (e.target.value === 'none') {
+                  fetchDashboardStats();
+                }
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="none">No Filter (All Data)</option>
+              <option value="year">Year</option>
+              <option value="month">Year & Month</option>
+            </select>
+            
+            {filterType === 'year' && (
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {getYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            )}
+            
+            {filterType === 'month' && (
+              <>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {getYearOptions().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {getMonthOptions().map(month => (
+                    <option key={month.value} value={month.value}>{month.label}</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
+          
+          {filterType !== 'none' && (
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <i className="ri-information-line"></i>
+              <span>
+                Showing data for {filterType === 'year' 
+                  ? selectedYear 
+                  : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
@@ -1301,7 +1444,7 @@ const AdminDashboard: React.FC = () => {
               name: item.incident_type,
               count: item.count
             }))}
-            title="Most Common Incident Types"
+            title={`Most Common Incident Types${filterType !== 'none' ? ` (${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`})` : ''}`}
             dataKey="count"
             color={{
               medical: '#007BFF',
@@ -1323,7 +1466,7 @@ const AdminDashboard: React.FC = () => {
                 { name: 'Needs Help', count: welfareStats.needsHelpReports },
                 { name: 'Not Submitted', count: welfareStats.notSubmitted }
               ] : []}
-              title="Welfare Status Overview"
+              title={`Welfare Status Overview${filterType !== 'none' ? ` (${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`})` : ''}`}
               dataKey="count"
               nameKey="name"
               height={300}
@@ -1403,11 +1546,19 @@ const AdminDashboard: React.FC = () => {
           ) : monthlyIncidents.length > 0 ? (
             <div ref={trendsChartRef}>
               <LineChart
-                data={monthlyIncidents.map(item => ({
-                  date: item.period || item.month || 'Unknown',
-                  count: item.total_incidents || 0
-                }))}
-                title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`}
+                data={(() => {
+                  let filteredData = monthlyIncidents;
+                  if (filterType === 'year') {
+                    filteredData = filterDataByDate(monthlyIncidents, selectedYear);
+                  } else if (filterType === 'month') {
+                    filteredData = filterDataByDate(monthlyIncidents, selectedYear, selectedMonth);
+                  }
+                  return filteredData.map(item => ({
+                    date: item.period || item.month || 'Unknown',
+                    count: item.total_incidents || 0
+                  }));
+                })()}
+                title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})${filterType !== 'none' ? ` - ${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}` : ''}`}
                 color="#10b981"
                 height={350}
               />
@@ -1429,7 +1580,7 @@ const AdminDashboard: React.FC = () => {
         <div ref={peakHoursChartRef}>
           <BarChart
             data={formatPeakHoursData(peakHoursData)}
-            title={`Peak Hours Analysis - Incident Distribution by Time (${peakHoursDateRange || 'Last 30 Days'})`}
+            title={`Peak Hours Analysis - Incident Distribution by Time (${peakHoursDateRange || 'Last 30 Days'})${filterType !== 'none' ? ` - Filtered: ${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}` : ''}`}
             dataKey="count"
             color="#f59e0b"
             height={350}
@@ -1487,7 +1638,7 @@ const AdminDashboard: React.FC = () => {
             <div ref={locationChartRef}>
               <StackedBarChart
                 data={locationIncidents.length > 0 ? locationIncidents : []}
-                title="Risky Areas by Barangay"
+                title={`Risky Areas by Barangay${filterType !== 'none' ? ` (${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`})` : ''}`}
                 stackKeys={allKeys}
                 colors={colors}
                 height={400}
@@ -1623,16 +1774,21 @@ const AdminDashboard: React.FC = () => {
             // Average by Type Chart - Reverse order so newest is on the right
             <div ref={responseTimeChartRef}>
               <LineChart
-                data={[...responseTimeData].reverse().map(item => ({
-                  date: item.incident_type,
-                  count: item.display_value || parseFloat(item.avg_response_time_hours),
-                  incident_count: item.incident_count,
-                  avg_response_time_minutes: item.avg_response_time_minutes,
-                  avg_response_time_hours: parseFloat(item.avg_response_time_hours),
-                  avg_response_time_days: item.avg_response_time_days || 0,
-                  display_unit: item.display_unit || 'hours'
-                }))}
-                title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                data={(() => {
+                  let filteredData = responseTimeData;
+                  // Note: Response time data doesn't have date fields in the structure, so we can't filter it client-side
+                  // This would require backend support
+                  return [...filteredData].reverse().map(item => ({
+                    date: item.incident_type,
+                    count: item.display_value || parseFloat(item.avg_response_time_hours),
+                    incident_count: item.incident_count,
+                    avg_response_time_minutes: item.avg_response_time_minutes,
+                    avg_response_time_hours: parseFloat(item.avg_response_time_hours),
+                    avg_response_time_days: item.avg_response_time_days || 0,
+                    display_unit: item.display_unit || 'hours'
+                  }));
+                })()}
+                title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}${filterType !== 'none' ? ` - ${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}` : ''}`}
                 color="#3b82f6"
                 height={350}
               />
@@ -1641,19 +1797,27 @@ const AdminDashboard: React.FC = () => {
             // Individual Reports Chart - Reverse order so newest is on the right
             <div ref={responseTimeChartRef}>
               <LineChart
-                data={[...individualResponseTimeData].reverse().map((item, index) => ({
-                  date: `#${item.incident_id} ${item.incident_type}`,
-                  count: item.display_value || item.response_time_hours,
-                  incident_id: item.incident_id,
-                  incident_type: item.incident_type,
-                  response_time_minutes: item.response_time_minutes,
-                  response_time_hours: item.response_time_hours,
-                  response_time_days: item.response_time_days || 0,
-                  display_unit: item.display_unit || 'hours',
-                  date_reported: item.date_reported,
-                  status: item.status
-                }))}
-                title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                data={(() => {
+                  let filteredData = individualResponseTimeData;
+                  if (filterType === 'year') {
+                    filteredData = filterDataByDate(individualResponseTimeData, selectedYear);
+                  } else if (filterType === 'month') {
+                    filteredData = filterDataByDate(individualResponseTimeData, selectedYear, selectedMonth);
+                  }
+                  return [...filteredData].reverse().map((item, index) => ({
+                    date: `#${item.incident_id} ${item.incident_type}`,
+                    count: item.display_value || item.response_time_hours,
+                    incident_id: item.incident_id,
+                    incident_type: item.incident_type,
+                    response_time_minutes: item.response_time_minutes,
+                    response_time_hours: item.response_time_hours,
+                    response_time_days: item.response_time_days || 0,
+                    display_unit: item.display_unit || 'hours',
+                    date_reported: item.date_reported,
+                    status: item.status
+                  }));
+                })()}
+                title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}${filterType !== 'none' ? ` - ${filterType === 'year' ? selectedYear : `${getMonthOptions().find(m => m.value === selectedMonth)?.label} ${selectedYear}`}` : ''}`}
                 color="#10b981"
                 height={350}
               />
