@@ -75,60 +75,10 @@ export default function AdminWelfareManagement() {
   const [settingToActivate, setSettingToActivate] = useState<WelfareSettings | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Date filter states
-  const currentDate = new Date();
-  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = All (optional)
-  const [selectedDay, setSelectedDay] = useState<number>(0); // 0 = All (optional)
-
-  // Helper functions for date filters
-  const getYears = (): number[] => {
-    const years: number[] = [];
-    const currentYear = new Date().getFullYear();
-    for (let i = currentYear; i >= currentYear - 5; i--) {
-      years.push(i);
-    }
-    return years;
-  };
-
-  const getMonths = (): Array<{ value: number; label: string }> => {
-    return [
-      { value: 0, label: 'All Months' },
-      { value: 1, label: 'January' },
-      { value: 2, label: 'February' },
-      { value: 3, label: 'March' },
-      { value: 4, label: 'April' },
-      { value: 5, label: 'May' },
-      { value: 6, label: 'June' },
-      { value: 7, label: 'July' },
-      { value: 8, label: 'August' },
-      { value: 9, label: 'September' },
-      { value: 10, label: 'October' },
-      { value: 11, label: 'November' },
-      { value: 12, label: 'December' }
-    ];
-  };
-
-  const getDays = (year: number, month: number): number[] => {
-    const days: number[] = [0]; // 0 = All Days
-    if (month > 0) {
-      const daysInMonth = new Date(year, month, 0).getDate();
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push(i);
-      }
-    }
-    return days;
-  };
-
   useEffect(() => {
     fetchSettings()
     fetchStats()
   }, [])
-
-  // Fetch stats when date filters change
-  useEffect(() => {
-    fetchStats()
-  }, [selectedYear, selectedMonth, selectedDay])
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -193,12 +143,7 @@ export default function AdminWelfareManagement() {
 
   const fetchStats = async () => {
     try {
-      const params = new URLSearchParams();
-      if (selectedYear) params.append('year', selectedYear.toString());
-      if (selectedMonth > 0) params.append('month', selectedMonth.toString());
-      if (selectedDay > 0) params.append('day', selectedDay.toString());
-      const url = params.toString() ? `/admin/welfare/stats?${params.toString()}` : '/admin/welfare/stats';
-      const response = await apiRequest(url)
+      const response = await apiRequest('/admin/welfare/stats')
       
       if (response.success) {
         setStats(response.stats)
@@ -541,71 +486,6 @@ export default function AdminWelfareManagement() {
           </div>
         </div>
       )}
-
-      {/* Date Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">Filter Statistics by Date:</label>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">Year:</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {getYears().map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">Month:</label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => {
-                const newMonth = parseInt(e.target.value);
-                setSelectedMonth(newMonth);
-                // Reset day to "All" if month is set to "All"
-                if (newMonth === 0) {
-                  setSelectedDay(0);
-                }
-              }}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {getMonths().map(month => (
-                <option key={month.value} value={month.value}>{month.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">Day:</label>
-            <select
-              value={selectedDay}
-              onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-              disabled={selectedMonth === 0}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              {getDays(selectedYear, selectedMonth).map(day => (
-                <option key={day} value={day}>
-                  {day === 0 ? 'All Days' : day.toString()}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={() => {
-              const today = new Date();
-              setSelectedYear(today.getFullYear());
-              setSelectedMonth(today.getMonth() + 1);
-              setSelectedDay(today.getDate());
-            }}
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
-          >
-            <i className="ri-calendar-line mr-1"></i>
-            Today
-          </button>
-        </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
