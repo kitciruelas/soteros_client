@@ -1122,7 +1122,7 @@ const StaffIncidentsPage: React.FC = () => {
                           }`}
                         >
                           <i className="ri-edit-line mr-2"></i>
-                          {incident.status === "resolved" || incident.status === "closed" ? "Completed" : "Update"}
+                          {incident.status === "resolved" || incident.status === "closed" ? "Completed" : "Update Status"}
                         </button>
                       </div>
                     </div>
