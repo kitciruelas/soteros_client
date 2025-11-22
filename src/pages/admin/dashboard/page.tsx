@@ -1776,40 +1776,29 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
           ) : !showIndividualResponseTime ? (
-            // Average by Type Chart - Reverse order so newest is on the right
+            // Average by Type Chart
             <div ref={responseTimeChartRef}>
-              <LineChart
-                data={[...responseTimeData].reverse().map(item => ({
-                  date: item.incident_type,
-                  count: item.display_value || parseFloat(item.avg_response_time_hours),
-                  incident_count: item.incident_count,
-                  avg_response_time_minutes: item.avg_response_time_minutes,
-                  avg_response_time_hours: parseFloat(item.avg_response_time_hours),
-                  avg_response_time_days: item.avg_response_time_days || 0,
-                  display_unit: item.display_unit || 'hours'
+              <BarChart
+                data={responseTimeData.map(item => ({
+                  name: item.incident_type,
+                  count: item.display_value || parseFloat(item.avg_response_time_hours)
                 }))}
                 title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                dataKey="count"
                 color="#3b82f6"
                 height={350}
               />
             </div>
           ) : (
-            // Individual Reports Chart - Reverse order so newest is on the right
+            // Individual Reports Chart
             <div ref={responseTimeChartRef}>
-              <LineChart
-                data={[...individualResponseTimeData].reverse().map((item, index) => ({
-                  date: `#${item.incident_id} ${item.incident_type}`,
-                  count: item.display_value || item.response_time_hours,
-                  incident_id: item.incident_id,
-                  incident_type: item.incident_type,
-                  response_time_minutes: item.response_time_minutes,
-                  response_time_hours: item.response_time_hours,
-                  response_time_days: item.response_time_days || 0,
-                  display_unit: item.display_unit || 'hours',
-                  date_reported: item.date_reported,
-                  status: item.status
+              <BarChart
+                data={individualResponseTimeData.map((item, index) => ({
+                  name: `#${item.incident_id} ${item.incident_type}`,
+                  count: item.display_value || item.response_time_hours
                 }))}
                 title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                dataKey="count"
                 color="#10b981"
                 height={350}
               />
