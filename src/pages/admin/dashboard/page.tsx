@@ -1535,13 +1535,11 @@ const AdminDashboard: React.FC = () => {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
-          {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
+          {trendsLoading ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">
-                  {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
-                </p>
+                <p className="text-gray-500">Loading trends data...</p>
                 <p className="text-sm text-gray-400 mt-1">
                   Based on selected date filters
                 </p>
