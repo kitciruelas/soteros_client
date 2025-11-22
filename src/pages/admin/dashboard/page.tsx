@@ -219,15 +219,15 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when filter changes
+  // Fetch trends data when filter changes (including date filters)
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}, Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}`);
-    // Force refresh trends data when period or limit changes
+    // Force refresh trends data when period, limit, or date filters change
     setTrendsLoading(true);
     fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
-  }, [trendsPeriod, trendsLimit]);
+  }, [trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
   useEffect(() => {
