@@ -167,6 +167,11 @@ const AdminDashboard: React.FC = () => {
   const getDays = (year: number, month: number): number[] => {
     const days: number[] = [0]; // 0 = All Days
     if (month > 0) {
+      // JavaScript Date months are 0-indexed (0=Jan, 11=Dec)
+      // Our month values are 1-indexed (1=Jan, 12=Dec)
+      // So we need to use month directly (not month-1) because:
+      // new Date(year, month, 0) gives the last day of the previous month
+      // So new Date(year, 10, 0) when month=10 (October) gives last day of October
       const daysInMonth = new Date(year, month, 0).getDate();
       for (let i = 1; i <= daysInMonth; i++) {
         days.push(i);
@@ -212,6 +217,21 @@ const AdminDashboard: React.FC = () => {
       setTrendsLimit(12); // Default to 12 months
     }
   }, [trendsPeriod]);
+
+  // Reset day to "All Days" when month changes or validate day range
+  useEffect(() => {
+    if (selectedMonth > 0 && selectedDay > 0) {
+      const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+      // If selected day is greater than days in month, reset to "All Days"
+      if (selectedDay > daysInMonth) {
+        setSelectedDay(0);
+      }
+    }
+    // If month is "All Months", reset day to "All Days"
+    if (selectedMonth === 0 && selectedDay > 0) {
+      setSelectedDay(0);
+    }
+  }, [selectedMonth, selectedYear]);
 
   // Fetch all dashboard data when date filters change
   useEffect(() => {
@@ -1273,10 +1293,8 @@ const AdminDashboard: React.FC = () => {
               onChange={(e) => {
                 const newMonth = parseInt(e.target.value);
                 setSelectedMonth(newMonth);
-                // Reset day to "All" if month is set to "All"
-                if (newMonth === 0) {
-                  setSelectedDay(0);
-                }
+                // Reset day to "All Days" when month changes
+                setSelectedDay(0);
               }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
