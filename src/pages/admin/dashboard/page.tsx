@@ -288,16 +288,23 @@ const AdminDashboard: React.FC = () => {
     }
   }, [responseTimePeriod]);
 
-  // Fetch response time data when filter changes
+  // Fetch response time data when filter changes - automatically updates without refresh
   useEffect(() => {
     const fetchResponseTimeData = async () => {
       setResponseTimeLoading(true);
       const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
       const dayParam = selectedDay > 0 ? selectedDay : undefined;
+      
+      console.log(`Fetching response time data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${responseTimePeriod}, Limit: ${responseTimeLimit}`);
+      
       try {
         const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
+          console.log(`Response time data received: ${responseTimeResponse.responseTimeData.length} items`);
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
+        } else {
+          console.warn('Response time API returned success: false or no data');
+          setResponseTimeData([]);
         }
       } catch (error) {
         console.warn('Response time endpoint not available:', error);
@@ -307,7 +314,11 @@ const AdminDashboard: React.FC = () => {
       try {
         const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
+          console.log(`Individual response time data received: ${individualResponseTimeResponse.incidents.length} items`);
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
+        } else {
+          console.warn('Individual response time API returned success: false or no data');
+          setIndividualResponseTimeData([]);
         }
       } catch (error) {
         console.warn('Individual response time endpoint not available:', error);
@@ -317,6 +328,7 @@ const AdminDashboard: React.FC = () => {
       }
     };
     fetchResponseTimeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay]);
 
   // Helper function to format hour data for peak hours chart
@@ -1198,27 +1210,8 @@ const AdminDashboard: React.FC = () => {
         setHasActiveWelfare(false);
       }
 
-      // Try to fetch response time data, but don't fail if it doesn't work
-      try {
-        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
-        if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
-          setResponseTimeData(responseTimeResponse.responseTimeData || []);
-        }
-      } catch (error) {
-        console.warn('Response time endpoint not available, using fallback data:', error);
-        setResponseTimeData([]);
-      }
-
-      // Try to fetch individual response time data
-      try {
-        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
-        if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
-          setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
-        }
-      } catch (error) {
-        console.warn('Individual response time endpoint not available, using fallback data:', error);
-        setIndividualResponseTimeData([]);
-      }
+      // Response time data is automatically fetched by the separate useEffect when date filters change
+      // No need to fetch here to avoid duplicate calls
 
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
