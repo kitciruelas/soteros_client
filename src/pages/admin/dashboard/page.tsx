@@ -185,7 +185,8 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       await fetchDashboardStats();
-      // Trends data will be loaded automatically by the date filters useEffect
+      // Trends data will be loaded automatically by the date filters useEffect (line 236)
+      // No manual refresh needed - fully automatic when date filters change
     };
     loadData();
   }, []);
@@ -208,14 +209,8 @@ const AdminDashboard: React.FC = () => {
     };
   }, [showExportDropdown]);
 
-  // Reset limit when period changes to ensure valid combinations
-  useEffect(() => {
-    if (trendsPeriod === 'days' && trendsLimit > 30) {
-      setTrendsLimit(7); // Default to 7 days for better performance
-    } else if (trendsPeriod === 'months' && trendsLimit > 24) {
-      setTrendsLimit(12); // Default to 12 months
-    }
-  }, [trendsPeriod]);
+  // Note: trendsPeriod and trendsLimit are now fully automatic based on date filters
+  // No manual period/limit controls needed for Incident Trends Analysis
 
   // Reset day to "All Days" when month changes or validate day range
   useEffect(() => {
@@ -618,9 +613,9 @@ const AdminDashboard: React.FC = () => {
       { key: 'high_priority_incidents', label: 'High Priority Incidents' }
     ];
 
-    // Capture the trends chart
+    // Capture the trends chart (fully automatic based on date filters)
     const chartImages = await captureChartImages([
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
+      { ref: trendsChartRef, title: 'Incident Trends Analysis' }
     ]);
 
     setExportData(monthlyIncidents);
@@ -1058,8 +1053,8 @@ const AdminDashboard: React.FC = () => {
         adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
-      // Fetch trends data with current filter settings
-      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
+      // Note: Trends data is automatically fetched by the useEffect when date filters change
+      // No need to fetch here - it's fully automatic
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
