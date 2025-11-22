@@ -185,8 +185,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       await fetchDashboardStats();
-      // Trends data will be loaded automatically by the date filters useEffect (line 236)
-      // No manual refresh needed - fully automatic when date filters change
+      // Trends data will be loaded automatically by the date filters useEffect
     };
     loadData();
   }, []);
@@ -209,8 +208,14 @@ const AdminDashboard: React.FC = () => {
     };
   }, [showExportDropdown]);
 
-  // Note: trendsPeriod and trendsLimit are now fully automatic based on date filters
-  // No manual period/limit controls needed for Incident Trends Analysis
+  // Reset limit when period changes to ensure valid combinations
+  useEffect(() => {
+    if (trendsPeriod === 'days' && trendsLimit > 30) {
+      setTrendsLimit(7); // Default to 7 days for better performance
+    } else if (trendsPeriod === 'months' && trendsLimit > 24) {
+      setTrendsLimit(12); // Default to 12 months
+    }
+  }, [trendsPeriod]);
 
   // Reset day to "All Days" when month changes or validate day range
   useEffect(() => {
@@ -233,42 +238,32 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when date filters change - FULLY AUTOMATIC
+  // Fetch trends data when date filters change
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
-    // Fully automatic period and limit based on date filters (no manual settings needed):
-    // - If month is selected, automatically use daily breakdown for that month
-    // - If only year is selected, automatically use monthly breakdown for the year
-    // - If day is selected, automatically use daily breakdown (shows single day)
-    let periodToUse: 'days' | 'months' = 'months'; // Default
-    let limitToUse: number = 12; // Default
+    // Auto-adjust period and limit based on date filters:
+    // - If month is selected, use daily breakdown
+    // - If only year is selected, use monthly breakdown
+    // - If day is selected, still use daily breakdown
+    let periodToUse: 'days' | 'months' = trendsPeriod;
+    let limitToUse: number = trendsLimit;
     
-    if (selectedYear) {
-      if (dayParam && monthParam) {
-        // If both day and month are selected, automatically show daily breakdown (single day)
-        periodToUse = 'days';
-        limitToUse = 1; // Single day
-      } else if (monthParam) {
-        // If month is selected, automatically show daily breakdown for that month
-        periodToUse = 'days';
-        // Automatically calculate days in the selected month
-        const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
-        limitToUse = daysInMonth;
-      } else {
-        // If only year is selected, automatically show monthly breakdown for the year
-        periodToUse = 'months';
-        limitToUse = 12;
-      }
-    } else {
-      // No date filter - use default period/limit (fallback)
-      periodToUse = trendsPeriod;
-      limitToUse = trendsLimit;
+    if (monthParam) {
+      // If month is selected, show daily breakdown for that month
+      periodToUse = 'days';
+      // Calculate days in the selected month
+      const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
+      limitToUse = daysInMonth;
+    } else if (selectedYear) {
+      // If only year is selected, show monthly breakdown for the year
+      periodToUse = 'months';
+      limitToUse = 12;
     }
     
-    console.log(`Auto-fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
-    // Automatically refresh trends data when date filters change
+    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    // Force refresh trends data when date filters change
     setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
   }, [selectedYear, selectedMonth, selectedDay]);
@@ -613,9 +608,9 @@ const AdminDashboard: React.FC = () => {
       { key: 'high_priority_incidents', label: 'High Priority Incidents' }
     ];
 
-    // Capture the trends chart (fully automatic based on date filters)
+    // Capture the trends chart
     const chartImages = await captureChartImages([
-      { ref: trendsChartRef, title: 'Incident Trends Analysis' }
+      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
     ]);
 
     setExportData(monthlyIncidents);
@@ -1053,8 +1048,8 @@ const AdminDashboard: React.FC = () => {
         adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
-      // Note: Trends data is automatically fetched by the useEffect when date filters change
-      // No need to fetch here - it's fully automatic
+      // Fetch trends data with current filter settings
+      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1533,28 +1528,7 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
-              {monthlyIncidents.length > 0 && (
-                <div className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-md">
-                  <i className="ri-information-line mr-1"></i>
-                  Showing <strong>{monthlyIncidents.length}</strong> {selectedMonth > 0 ? 'days' : 'months'}
-                  {selectedMonth > 0 && ` in ${getMonths().find(m => m.value === selectedMonth)?.label || 'selected month'}`}
-                  {selectedMonth > 0 && selectedDay === 0 && (
-                    <span className="ml-1 text-blue-600">(All days should be visible)</span>
-                  )}
-                </div>
-              )}
-            </div>
-            {selectedMonth > 0 && selectedDay === 0 && monthlyIncidents.length > 0 && (
-              <div className="text-xs text-gray-500 mt-1">
-                Expected: {new Date(selectedYear, selectedMonth, 0).getDate()} days | 
-                Actual: {monthlyIncidents.length} data points
-                {monthlyIncidents.length < new Date(selectedYear, selectedMonth, 0).getDate() && (
-                  <span className="text-orange-600 ml-2">⚠ Some days may be missing</span>
-                )}
-              </div>
-            )}
+            <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
           {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
