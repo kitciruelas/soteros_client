@@ -1534,7 +1534,23 @@ const AdminDashboard: React.FC = () => {
               onClick={() => {
                 const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
                 const dayParam = selectedDay > 0 ? selectedDay : undefined;
-                fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
+                
+                // Auto-adjust period and limit based on date filters (same logic as useEffect)
+                let periodToUse: 'days' | 'months' = trendsPeriod;
+                let limitToUse: number = trendsLimit;
+                
+                if (monthParam) {
+                  // If month is selected, show daily breakdown for that month
+                  periodToUse = 'days';
+                  const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
+                  limitToUse = daysInMonth;
+                } else if (selectedYear) {
+                  // If only year is selected, show monthly breakdown for the year
+                  periodToUse = 'months';
+                  limitToUse = 12;
+                }
+                
+                fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
               }}
               disabled={trendsLoading}
               className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
