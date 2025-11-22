@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { getAuthState } from "../../../utils/auth"
 import { incidentsApi, alertsApi, evacuationCentersApi, staffDashboardApi } from "../../../utils/api"
+import BarChart from "../../../components/charts/BarChart"
 import L from "leaflet"
 
 // Fix for default markers in react-leaflet
@@ -73,6 +74,8 @@ interface Incident {
   status: string
   priority_level: string
   date_reported: string
+  updated_at?: string
+  date_resolved?: string
   latitude?: number
   longitude?: number
 }
@@ -134,6 +137,15 @@ const StaffDashboardPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [evacuationCenters, setEvacuationCenters] = useState<EvacuationCenter[]>([])
   const [allIncidents, setAllIncidents] = useState<Incident[]>([])
+  const [responseTimeData, setResponseTimeData] = useState<Array<{
+    name: string
+    count: number
+    incident_count: number
+    avg_response_time_minutes: number
+    avg_response_time_hours: number
+    avg_response_time_days?: number
+    display_unit: 'hours' | 'days'
+  }>>([])
 
   const authState = getAuthState()
   const currentStaffId = authState.userData?.id || authState.userData?.staff_id || authState.userData?.user_id
@@ -163,6 +175,9 @@ const StaffDashboardPage: React.FC = () => {
       (a, b) => new Date(b.date_reported).getTime() - new Date(a.date_reported).getTime(),
     )
     setRecentIncidents(sortedIncidents.slice(0, 5))
+    
+    // Calculate response time data
+    calculateResponseTimeData(allIncidents)
   }, [allIncidents])
 
   const fetchIncidents = async () => {
@@ -271,6 +286,63 @@ const StaffDashboardPage: React.FC = () => {
     if (hour < 12) return "Good morning"
     if (hour < 17) return "Good afternoon"
     return "Good evening"
+  }
+
+  const calculateResponseTimeData = (incidents: Incident[]) => {
+    // Filter incidents that have been responded to (not pending)
+    const respondedIncidents = incidents.filter(
+      (incident) => incident.status !== "pending" && (incident.updated_at || incident.date_resolved)
+    )
+
+    if (respondedIncidents.length === 0) {
+      setResponseTimeData([])
+      return
+    }
+
+    // Group by incident type and calculate average response time
+    const typeMap = new Map<string, { totalMinutes: number; count: number }>()
+
+    respondedIncidents.forEach((incident) => {
+      const reportedDate = new Date(incident.date_reported)
+      const updatedDate = incident.updated_at 
+        ? new Date(incident.updated_at) 
+        : incident.date_resolved 
+        ? new Date(incident.date_resolved) 
+        : null
+
+      if (!updatedDate || updatedDate <= reportedDate) return
+
+      const responseTimeMinutes = Math.round((updatedDate.getTime() - reportedDate.getTime()) / (1000 * 60))
+      
+      if (responseTimeMinutes <= 0) return
+
+      const existing = typeMap.get(incident.incident_type) || { totalMinutes: 0, count: 0 }
+      typeMap.set(incident.incident_type, {
+        totalMinutes: existing.totalMinutes + responseTimeMinutes,
+        count: existing.count + 1,
+      })
+    })
+
+    // Convert to chart data format
+    const chartData = Array.from(typeMap.entries())
+      .map(([incidentType, data]) => {
+        const avgMinutes = Math.round(data.totalMinutes / data.count)
+        const avgHours = parseFloat((avgMinutes / 60).toFixed(2))
+        const avgDays = avgHours >= 24 ? parseFloat((avgHours / 24).toFixed(2)) : undefined
+
+        return {
+          name: incidentType,
+          count: avgDays !== undefined ? avgDays : avgHours,
+          incident_count: data.count,
+          avg_response_time_minutes: avgMinutes,
+          avg_response_time_hours: avgHours,
+          avg_response_time_days: avgDays,
+          display_unit: avgDays !== undefined ? ('days' as const) : ('hours' as const),
+        }
+      })
+      .sort((a, b) => b.count - a.count) // Sort by response time descending
+
+    setResponseTimeData(chartData)
   }
 
   if (loading) {
@@ -576,6 +648,44 @@ const StaffDashboardPage: React.FC = () => {
                   ))}
                 </div>
               </>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-200/50">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg">
+                <i className="ri-time-line text-white text-xl sm:text-2xl"></i>
+              </div>
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">Response Time Analysis</h3>
+                <p className="text-slate-600 font-medium text-sm sm:text-base">Average response time by incident type</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-8">
+            {responseTimeData.length === 0 ? (
+              <div className="text-center py-12 sm:py-16">
+                <div className="relative mb-6 sm:mb-8">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+                    <i className="ri-time-line text-4xl sm:text-5xl text-slate-400"></i>
+                  </div>
+                </div>
+                <h4 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3">No Response Time Data</h4>
+                <p className="text-slate-600 text-base sm:text-lg max-w-md mx-auto">
+                  Response time data will appear here once you have responded to incidents. Response time is calculated from when an incident is reported to when it's first updated.
+                </p>
+              </div>
+            ) : (
+              <BarChart
+                data={responseTimeData}
+                title={`Average Response Time by Incident Type${responseTimeData[0]?.display_unit ? ` (${responseTimeData[0].display_unit === 'days' ? 'Days' : 'Hours'})` : ''}`}
+                dataKey="count"
+                color="#3b82f6"
+                height={350}
+              />
             )}
           </div>
         </div>
