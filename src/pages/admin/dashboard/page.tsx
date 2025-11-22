@@ -1,5 +1,5 @@
 // ...existing code...
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminDashboardApi, apiRequest } from '../../../utils/api';
 import BarChart from '../../../components/charts/BarChart';
 import PieChart from '../../../components/charts/PieChart';
@@ -165,7 +165,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const getDays = (year: number, month: number): number[] => {
-    const days: number[] = [0]; // 0 = All Days - always include this option first
+    const days: number[] = [0]; // 0 = All Days
     if (month > 0) {
       // JavaScript Date months are 0-indexed (0=Jan, 11=Dec)
       // Our month values are 1-indexed (1=Jan, 12=Dec)
@@ -177,42 +177,10 @@ const AdminDashboard: React.FC = () => {
         days.push(i);
       }
     }
-    // Always return array with at least [0] for "All Days" option
     return days;
   };
 
   // Date filters: Year is required, Month and Day are optional (0 = All, not applied)
-
-  // Fetch trends data function - wrapped in useCallback for stability
-  const fetchTrendsData = useCallback(async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
-    try {
-      setTrendsLoading(true);
-      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
-      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
-      console.log('Trends response:', trendsResponse);
-      
-      if (trendsResponse.success && trendsResponse.trendsData) {
-        // Map the API response to the expected interface format
-        const mappedData = trendsResponse.trendsData.map(item => ({
-          month: item.period, // Use period as month for compatibility
-          period: item.period,
-          total_incidents: item.total_incidents || 0,
-          resolved_incidents: item.resolved_incidents || 0,
-          high_priority_incidents: item.high_priority_incidents || 0
-        }));
-        console.log('Mapped data:', mappedData);
-        setMonthlyIncidents(mappedData);
-      } else {
-        console.warn('Trends API returned success: false or no data');
-        setMonthlyIncidents([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch trends data:', error);
-      setMonthlyIncidents([]);
-    } finally {
-      setTrendsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -262,7 +230,7 @@ const AdminDashboard: React.FC = () => {
     if (selectedMonth === 0 && selectedDay > 0) {
       setSelectedDay(0);
     }
-  }, [selectedMonth, selectedYear, selectedDay]);
+  }, [selectedMonth, selectedYear]);
 
   // Fetch all dashboard data when date filters change
   useEffect(() => {
@@ -270,46 +238,35 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data automatically when date filters change
+  // Fetch trends data when date filters change
   useEffect(() => {
-    // Skip if year is not selected yet
-    if (!selectedYear) {
-      console.log('[TRENDS AUTO-UPDATE] Skipped - no year selected');
-      return;
-    }
-    
-    console.log(`[TRENDS AUTO-UPDATE] Triggered - Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
-    
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
-    // dayParam should be undefined when selectedDay is 0 (All Days) - this means show all days in the month
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
     // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown (shows all days in month when dayParam is undefined)
+    // - If month is selected, use daily breakdown
     // - If only year is selected, use monthly breakdown
-    let periodToUse: 'days' | 'months' = 'months';
-    let limitToUse: number = 12;
+    // - If day is selected, still use daily breakdown
+    let periodToUse: 'days' | 'months' = trendsPeriod;
+    let limitToUse: number = trendsLimit;
     
     if (monthParam) {
-      // If month is selected, show daily breakdown for that month (all days when dayParam is undefined)
+      // If month is selected, show daily breakdown for that month
       periodToUse = 'days';
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
-      console.log(`[TRENDS AUTO-UPDATE] Month selected (${monthParam}) - using daily breakdown, limit: ${limitToUse} days`);
-    } else {
-      // If only year is selected (no month), show monthly breakdown for the year
+    } else if (selectedYear) {
+      // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
       limitToUse = 12;
-      console.log(`[TRENDS AUTO-UPDATE] Only year selected - using monthly breakdown`);
     }
     
-    console.log(`[TRENDS AUTO-UPDATE] Fetching with - Year: ${selectedYear}, Month: ${monthParam || 'All'}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
-    
-    // Automatically fetch trends data when date filters change
-    // When monthParam is set and dayParam is undefined, it will fetch all days in that month
+    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    // Force refresh trends data when date filters change
+    setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
-  }, [selectedYear, selectedMonth, selectedDay, fetchTrendsData]);
+  }, [selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -1046,6 +1003,36 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
+  const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
+    try {
+      setTrendsLoading(true);
+      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
+      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
+      console.log('Trends response:', trendsResponse);
+      
+      if (trendsResponse.success && trendsResponse.trendsData) {
+        // Map the API response to the expected interface format
+        const mappedData = trendsResponse.trendsData.map(item => ({
+          month: item.period, // Use period as month for compatibility
+          period: item.period,
+          total_incidents: item.total_incidents || 0,
+          resolved_incidents: item.resolved_incidents || 0,
+          high_priority_incidents: item.high_priority_incidents || 0
+        }));
+        console.log('Mapped data:', mappedData);
+        setMonthlyIncidents(mappedData);
+      } else {
+        console.warn('Trends API returned success: false or no data');
+        setMonthlyIncidents([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch trends data:', error);
+      setMonthlyIncidents([]);
+    } finally {
+      setTrendsLoading(false);
+    }
+  };
+
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
@@ -1324,11 +1311,9 @@ const AdminDashboard: React.FC = () => {
               value={selectedMonth}
               onChange={(e) => {
                 const newMonth = parseInt(e.target.value);
-                console.log(`[MONTH CHANGED] Setting month to: ${newMonth}`);
                 setSelectedMonth(newMonth);
-                // Reset day to "All Days" when month changes - React will batch these updates
+                // Reset day to "All Days" when month changes
                 setSelectedDay(0);
-                console.log(`[MONTH CHANGED] Reset day to: 0 (All Days)`);
               }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -1345,15 +1330,11 @@ const AdminDashboard: React.FC = () => {
               disabled={selectedMonth === 0}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              {(() => {
-                const days = getDays(selectedYear, selectedMonth);
-                console.log('[DAY DROPDOWN] Days array:', days);
-                return days.map(day => (
-                  <option key={`day-${day}`} value={day}>
-                    {day === 0 ? 'All Days' : day.toString()}
-                  </option>
-                ));
-              })()}
+              {getDays(selectedYear, selectedMonth).map(day => (
+                <option key={day} value={day}>
+                  {day === 0 ? 'All Days' : day.toString()}
+                </option>
+              ))}
             </select>
           </div>
           <button
@@ -1549,11 +1530,13 @@ const AdminDashboard: React.FC = () => {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
-          {trendsLoading ? (
+          {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading trends data...</p>
+                <p className="text-gray-500">
+                  {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
+                </p>
                 <p className="text-sm text-gray-400 mt-1">
                   Based on selected date filters
                 </p>
