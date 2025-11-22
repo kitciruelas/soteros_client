@@ -1798,18 +1798,28 @@ const AdminDashboard: React.FC = () => {
             // Individual Reports Chart - Display in minutes
             <div ref={responseTimeChartRef}>
               <BarChart
-                data={individualResponseTimeData.map((item, index) => ({
-                  name: `#${item.incident_id} ${item.incident_type}`,
-                  count: item.response_time_minutes,
-                  incident_id: item.incident_id,
-                  incident_type: item.incident_type,
-                  response_time_minutes: item.response_time_minutes,
-                  response_time_hours: item.response_time_hours,
-                  response_time_days: item.response_time_days || 0,
-                  display_unit: 'minutes',
-                  date_reported: item.date_reported,
-                  status: item.status
-                }))}
+                data={individualResponseTimeData.map((item, index) => {
+                  // Format response time for tooltip: minutes if < 60, hours if >= 60
+                  const responseTimeDisplay = item.response_time_minutes < 60
+                    ? `${item.response_time_minutes} Minutes`
+                    : item.response_time_hours >= 24
+                      ? `${item.response_time_days || Math.floor(item.response_time_hours / 24)} Days`
+                      : `${item.response_time_hours.toFixed(1)} Hours`;
+                  
+                  return {
+                    name: `#${item.incident_id} ${item.incident_type}`,
+                    count: item.response_time_minutes,
+                    incident_id: item.incident_id,
+                    incident_type: item.incident_type,
+                    response_time_minutes: item.response_time_minutes,
+                    response_time_hours: item.response_time_hours,
+                    response_time_days: item.response_time_days || 0,
+                    response_time_display: responseTimeDisplay,
+                    display_unit: item.response_time_minutes < 60 ? 'minutes' : 'hours',
+                    date_reported: item.date_reported,
+                    status: item.status
+                  };
+                })}
                 title={`Response Time per Individual Incident (Minutes) - Last ${responseTimeLimit} ${responseTimePeriod}`}
                 dataKey="count"
                 color="#10b981"

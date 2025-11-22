@@ -39,12 +39,22 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="font-medium text-gray-900 mb-1">
           {data?.timeLabel || label}
         </p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {`${entry.dataKey}: ${entry.value.toLocaleString()}`}
-          </p>
-        ))}
-        {/* Display Count and Minutes for response time chart */}
+        {payload.map((entry: any, index: number) => {
+          // For individual response time reports, show formatted time instead of raw minutes
+          if (data?.response_time_display && data?.response_time_minutes !== undefined && data?.incident_count === undefined) {
+            return (
+              <p key={index} className="text-sm" style={{ color: entry.color }}>
+                {`${entry.dataKey}: ${data.response_time_display}`}
+              </p>
+            );
+          }
+          return (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {`${entry.dataKey}: ${entry.value.toLocaleString()}`}
+            </p>
+          );
+        })}
+        {/* Display Count and Minutes for response time chart (average by type) */}
         {data?.incident_count !== undefined && data?.avg_response_time_minutes !== undefined && (
           <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
             <span className="font-semibold">Count: {data.incident_count}</span>
@@ -58,6 +68,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                   : `${parseFloat(data.avg_response_time_hours || '0').toFixed(1)} Hours`
               }
             </span>
+          </p>
+        )}
+        {/* Display additional info for individual response time reports */}
+        {data?.response_time_minutes !== undefined && data?.incident_count === undefined && (data?.status || data?.date_reported) && (
+          <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-200">
+            {data?.status && (
+              <span className="text-gray-500">Status: {data.status}</span>
+            )}
+            {data?.date_reported && (
+              <>
+                {data?.status && <br />}
+                <span className="text-gray-500">Reported: {new Date(data.date_reported).toLocaleString()}</span>
+              </>
+            )}
           </p>
         )}
         {data?.formattedTime && (
