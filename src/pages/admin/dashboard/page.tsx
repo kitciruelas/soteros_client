@@ -1792,16 +1792,41 @@ const AdminDashboard: React.FC = () => {
           ) : (
             // Individual Reports Chart
             <div ref={responseTimeChartRef}>
-              <BarChart
-                data={individualResponseTimeData.map((item, index) => ({
-                  name: `#${item.incident_id} ${item.incident_type}`,
-                  count: item.display_value || item.response_time_hours
-                }))}
-                title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
-                dataKey="count"
-                color="#10b981"
-                height={350}
-              />
+              {(() => {
+                // Sort by date reported (most recent first) and limit to 50 for better visualization
+                const sortedData = [...individualResponseTimeData].sort((a, b) => {
+                  const dateA = new Date(a.date_reported).getTime();
+                  const dateB = new Date(b.date_reported).getTime();
+                  return dateB - dateA; // Most recent first
+                });
+                
+                const displayLimit = 50;
+                const displayData = sortedData.slice(0, displayLimit);
+                const totalCount = individualResponseTimeData.length;
+                
+                return (
+                  <>
+                    <BarChart
+                      data={displayData.map((item) => ({
+                        name: `#${item.incident_id}`,
+                        count: item.display_value || item.response_time_hours
+                      }))}
+                      title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                      dataKey="count"
+                      color="#10b981"
+                      height={350}
+                      xAxisAngle={-45}
+                    />
+                    {totalCount > displayLimit && (
+                      <div className="mt-3 text-sm text-gray-500 text-center">
+                        <i className="ri-information-line mr-1"></i>
+                        Showing {displayLimit} most recent incidents out of {totalCount} total. 
+                        Use export feature to view all data.
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
           
