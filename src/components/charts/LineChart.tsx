@@ -20,9 +20,11 @@ interface LineChartProps {
   title: string
   color?: string
   height?: number
+  legendLabel?: string
+  showLegend?: boolean
 }
 
-const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "#3b82f6", height = 300 }) => {
+const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "#3b82f6", height = 300, legendLabel, showLegend = true }) => {
   const formatDate = (dateString: string) => {
     // Check if dateString is valid
     if (!dateString || typeof dateString !== 'string') {
@@ -257,10 +259,11 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
               tickFormatter={(value) => value.toLocaleString()}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
+            {showLegend && <Legend />}
             <Line
               type="monotone"
               dataKey="count"
+              name={legendLabel || "count"}
               stroke={color}
               strokeWidth={3}
               dot={{

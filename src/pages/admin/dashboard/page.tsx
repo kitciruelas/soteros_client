@@ -1564,6 +1564,7 @@ const AdminDashboard: React.FC = () => {
                 title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`}
                 color="#10b981"
                 height={350}
+                legendLabel="Total Incidents"
               />
             </div>
           ) : (
