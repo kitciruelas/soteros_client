@@ -185,8 +185,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       await fetchDashboardStats();
-      // Ensure trends data is loaded
-      await fetchTrendsData(trendsPeriod, trendsLimit);
+      // Trends data will be loaded automatically by the date filters useEffect
     };
     loadData();
   }, []);
