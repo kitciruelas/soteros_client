@@ -262,7 +262,7 @@ const AdminDashboard: React.FC = () => {
     if (selectedMonth === 0 && selectedDay > 0) {
       setSelectedDay(0);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, selectedDay]);
 
   // Fetch all dashboard data when date filters change
   useEffect(() => {
@@ -274,8 +274,11 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     // Skip if year is not selected yet
     if (!selectedYear) {
+      console.log('[TRENDS AUTO-UPDATE] Skipped - no year selected');
       return;
     }
+    
+    console.log(`[TRENDS AUTO-UPDATE] Triggered - Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
     
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     // dayParam should be undefined when selectedDay is 0 (All Days) - this means show all days in the month
@@ -293,13 +296,15 @@ const AdminDashboard: React.FC = () => {
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
+      console.log(`[TRENDS AUTO-UPDATE] Month selected (${monthParam}) - using daily breakdown, limit: ${limitToUse} days`);
     } else {
       // If only year is selected (no month), show monthly breakdown for the year
       periodToUse = 'months';
       limitToUse = 12;
+      console.log(`[TRENDS AUTO-UPDATE] Only year selected - using monthly breakdown`);
     }
     
-    console.log(`[TRENDS AUTO-UPDATE] Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    console.log(`[TRENDS AUTO-UPDATE] Fetching with - Year: ${selectedYear}, Month: ${monthParam || 'All'}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
     
     // Automatically fetch trends data when date filters change
     // When monthParam is set and dayParam is undefined, it will fetch all days in that month
@@ -1319,9 +1324,11 @@ const AdminDashboard: React.FC = () => {
               value={selectedMonth}
               onChange={(e) => {
                 const newMonth = parseInt(e.target.value);
+                console.log(`[MONTH CHANGED] Setting month to: ${newMonth}`);
                 setSelectedMonth(newMonth);
-                // Reset day to "All Days" when month changes
+                // Reset day to "All Days" when month changes - React will batch these updates
                 setSelectedDay(0);
+                console.log(`[MONTH CHANGED] Reset day to: 0 (All Days)`);
               }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
