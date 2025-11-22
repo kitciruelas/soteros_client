@@ -1299,7 +1299,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Date Filters */}
+      {/* Date Filters - Auto-updates all charts when changed */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex items-center space-x-4">
           <label className="text-sm font-medium text-gray-700">Filter by Date:</label>
@@ -1307,7 +1307,11 @@ const AdminDashboard: React.FC = () => {
             <label className="text-sm text-gray-600">Year:</label>
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              onChange={(e) => {
+                const newYear = parseInt(e.target.value);
+                setSelectedYear(newYear);
+                console.log(`📅 Year filter changed to: ${newYear} - Auto-updating all charts...`);
+              }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {getYears().map(year => (
@@ -1324,6 +1328,7 @@ const AdminDashboard: React.FC = () => {
                 setSelectedMonth(newMonth);
                 // Reset day to "All Days" when month changes
                 setSelectedDay(0);
+                console.log(`📅 Month filter changed to: ${newMonth} - Auto-updating all charts...`);
               }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -1336,7 +1341,11 @@ const AdminDashboard: React.FC = () => {
             <label className="text-sm text-gray-600">Day:</label>
             <select
               value={selectedDay}
-              onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+              onChange={(e) => {
+                const newDay = parseInt(e.target.value);
+                setSelectedDay(newDay);
+                console.log(`📅 Day filter changed to: ${newDay === 0 ? 'All Days' : newDay} - Auto-updating all charts...`);
+              }}
               disabled={selectedMonth === 0}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
@@ -1353,12 +1362,19 @@ const AdminDashboard: React.FC = () => {
               setSelectedYear(today.getFullYear());
               setSelectedMonth(today.getMonth() + 1);
               setSelectedDay(today.getDate());
+              console.log(`📅 "Today" button clicked - Auto-updating all charts...`);
             }}
             className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
           >
             <i className="ri-calendar-line mr-1"></i>
             Today
           </button>
+          {(loading || trendsLoading || responseTimeLoading) && (
+            <div className="flex items-center text-sm text-blue-600">
+              <i className="ri-loader-4-line animate-spin mr-1"></i>
+              <span>Updating...</span>
+            </div>
+          )}
         </div>
       </div>
 
