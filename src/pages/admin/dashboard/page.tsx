@@ -219,15 +219,15 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when filter changes (period, limit, or date filters)
+  // Fetch trends data when date filters change
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
-    console.log(`useEffect triggered - Period: ${trendsPeriod}, Limit: ${trendsLimit}, Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}`);
-    // Force refresh trends data when period, limit, or date filters change
+    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}`);
+    // Force refresh trends data when date filters change
     setTrendsLoading(true);
     fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
-  }, [trendsPeriod, trendsLimit, selectedYear, selectedMonth, selectedDay]);
+  }, [selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -503,7 +503,7 @@ const AdminDashboard: React.FC = () => {
     const chartImages = await captureChartImages([
       { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
       ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
+      { ref: trendsChartRef, title: 'Incident Trends Analysis' },
       { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
       { ref: locationChartRef, title: 'Risky Areas by Barangay' },
       { ref: responseTimeChartRef, title: 'Response Time per Incident Type' }
@@ -576,7 +576,7 @@ const AdminDashboard: React.FC = () => {
 
     setExportData(monthlyIncidents);
     setExportColumns(columns);
-    setExportTitle(`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`);
+    setExportTitle('Incident Trends Analysis');
     setExportChartImages(chartImages);
     setShowExportModal(true);
   };
@@ -951,7 +951,7 @@ const AdminDashboard: React.FC = () => {
     const chartImages = await captureChartImages([
       { ref: incidentTypesChartRef, title: 'Most Common Incident Types' },
       ...(hasActiveWelfare ? [{ ref: welfareChartRef, title: 'Welfare Status Overview' }] : []),
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` },
+      { ref: trendsChartRef, title: 'Incident Trends Analysis' },
       { ref: peakHoursChartRef, title: `Peak Hours Analysis - Incident Distribution by Time` },
       { ref: locationChartRef, title: 'Risky Areas by Barangay' },
       { ref: responseTimeChartRef, title: 'Response Time per Incident Type' }
@@ -1492,55 +1492,18 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Period:</label>
-                <select
-                  value={trendsPeriod}
-                  onChange={(e) => setTrendsPeriod(e.target.value as 'days' | 'months')}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="days">Days</option>
-                  <option value="months">Months</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Last:</label>
-                <select
-                  value={trendsLimit}
-                  onChange={(e) => setTrendsLimit(parseInt(e.target.value))}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {trendsPeriod === 'days' && (
-                    <>
-                      <option value={7}>7 days</option>
-                      <option value={14}>14 days</option>
-                      <option value={30}>30 days</option>
-                    </>
-                  )}
-                  {trendsPeriod === 'months' && (
-                    <>
-                      <option value={6}>6 months</option>
-                      <option value={12}>12 months</option>
-                      <option value={18}>18 months</option>
-                      <option value={24}>24 months</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <button
-                onClick={() => {
-                  const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
-                  const dayParam = selectedDay > 0 ? selectedDay : undefined;
-                  fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
-                }}
-                disabled={trendsLoading}
-                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <i className={`ri-refresh-line mr-1 ${trendsLoading ? 'animate-spin' : ''}`}></i>
-                {trendsLoading ? 'Loading...' : 'Refresh'}
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+                const dayParam = selectedDay > 0 ? selectedDay : undefined;
+                fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
+              }}
+              disabled={trendsLoading}
+              className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i className={`ri-refresh-line mr-1 ${trendsLoading ? 'animate-spin' : ''}`}></i>
+              {trendsLoading ? 'Loading...' : 'Refresh'}
+            </button>
           </div>
           {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
@@ -1550,7 +1513,7 @@ const AdminDashboard: React.FC = () => {
                   {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Period: {trendsPeriod} | Limit: {trendsLimit}
+                  Based on selected date filters
                 </p>
               </div>
             </div>
@@ -1561,7 +1524,7 @@ const AdminDashboard: React.FC = () => {
                   date: item.period || item.month || 'Unknown',
                   count: item.total_incidents || 0
                 }))}
-                title={`Incident Trends (Last ${trendsLimit} ${trendsPeriod})`}
+                title="Incident Trends Analysis"
                 color="#10b981"
                 height={350}
                 legendLabel="Total Incidents"
