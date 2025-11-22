@@ -243,10 +243,30 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
-    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}`);
+    
+    // Auto-adjust period and limit based on date filters:
+    // - If month is selected, use daily breakdown
+    // - If only year is selected, use monthly breakdown
+    // - If day is selected, still use daily breakdown
+    let periodToUse: 'days' | 'months' = trendsPeriod;
+    let limitToUse: number = trendsLimit;
+    
+    if (monthParam) {
+      // If month is selected, show daily breakdown for that month
+      periodToUse = 'days';
+      // Calculate days in the selected month
+      const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
+      limitToUse = daysInMonth;
+    } else if (selectedYear) {
+      // If only year is selected, show monthly breakdown for the year
+      periodToUse = 'months';
+      limitToUse = 12;
+    }
+    
+    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
     // Force refresh trends data when date filters change
     setTrendsLoading(true);
-    fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
+    fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
   }, [selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
