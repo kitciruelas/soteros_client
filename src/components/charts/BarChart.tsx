@@ -29,7 +29,6 @@ interface BarChartProps {
   height?: number
   stacked?: boolean
   stackKeys?: string[]
-  xAxisAngle?: number  // Angle for X-axis labels (e.g., -45 for diagonal)
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -88,7 +87,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 }
 
 const BarChart: React.FC<BarChartProps> = React.memo(
-  ({ data, title, dataKey = "count", color = "#3b82f6", height = 300, stacked = false, stackKeys = [], xAxisAngle }) => {
+  ({ data, title, dataKey = "count", color = "#3b82f6", height = 300, stacked = false, stackKeys = [] }) => {
     if (!data || data.length === 0) {
       return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
@@ -141,17 +140,16 @@ const BarChart: React.FC<BarChartProps> = React.memo(
                 top: 10,
                 right: 30,
                 left: 20,
-                bottom: xAxisAngle ? 80 : 5,
+                bottom: 5,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" className="opacity-20" stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"
                 fontSize={12}
-                tick={{ fill: "#6b7280", angle: xAxisAngle || 0 }}
+                tick={{ fill: "#6b7280" }}
                 axisLine={{ stroke: "#e5e7eb" }}
                 tickLine={{ stroke: "#e5e7eb" }}
-                interval={xAxisAngle ? 0 : "preserveStartEnd"}
               />
               <YAxis
                 fontSize={12}

@@ -707,12 +707,12 @@ const AdminDashboard: React.FC = () => {
 
       // Capture the response time chart
       const chartImages = await captureChartImages([
-        { ref: responseTimeChartRef, title: `Response Time per Individual Incident - Last ${responseTimeLimit} ${responseTimePeriod}` }
+        { ref: responseTimeChartRef, title: `Response Time per Individual Incident (Minutes) - Last ${responseTimeLimit} ${responseTimePeriod}` }
       ]);
 
       setExportData(formattedData);
       setExportColumns(columns);
-      setExportTitle(`Response Time per Individual Incident - Last ${responseTimeLimit} ${responseTimePeriod}`);
+      setExportTitle(`Response Time per Individual Incident (Minutes) - Last ${responseTimeLimit} ${responseTimePeriod}`);
       setExportChartImages(chartImages);
       setShowExportModal(true);
     } else {
@@ -1781,7 +1781,12 @@ const AdminDashboard: React.FC = () => {
               <BarChart
                 data={responseTimeData.map(item => ({
                   name: item.incident_type,
-                  count: item.display_value || parseFloat(item.avg_response_time_hours)
+                  count: item.display_value || parseFloat(item.avg_response_time_hours),
+                  incident_count: item.incident_count,
+                  avg_response_time_minutes: item.avg_response_time_minutes,
+                  avg_response_time_hours: parseFloat(item.avg_response_time_hours),
+                  avg_response_time_days: item.avg_response_time_days || 0,
+                  display_unit: item.display_unit || 'hours'
                 }))}
                 title={`Response Time per Incident Type (Average ${responseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
                 dataKey="count"
@@ -1790,43 +1795,26 @@ const AdminDashboard: React.FC = () => {
               />
             </div>
           ) : (
-            // Individual Reports Chart
+            // Individual Reports Chart - Display in minutes
             <div ref={responseTimeChartRef}>
-              {(() => {
-                // Sort by date reported (most recent first) and limit to 50 for better visualization
-                const sortedData = [...individualResponseTimeData].sort((a, b) => {
-                  const dateA = new Date(a.date_reported).getTime();
-                  const dateB = new Date(b.date_reported).getTime();
-                  return dateB - dateA; // Most recent first
-                });
-                
-                const displayLimit = 50;
-                const displayData = sortedData.slice(0, displayLimit);
-                const totalCount = individualResponseTimeData.length;
-                
-                return (
-                  <>
-                    <BarChart
-                      data={displayData.map((item) => ({
-                        name: `#${item.incident_id}`,
-                        count: item.display_value || item.response_time_hours
-                      }))}
-                      title={`Response Time per Individual Incident (${individualResponseTimeData[0]?.display_unit === 'days' ? 'Days' : 'Hours'}) - Last ${responseTimeLimit} ${responseTimePeriod}`}
-                      dataKey="count"
-                      color="#10b981"
-                      height={350}
-                      xAxisAngle={-45}
-                    />
-                    {totalCount > displayLimit && (
-                      <div className="mt-3 text-sm text-gray-500 text-center">
-                        <i className="ri-information-line mr-1"></i>
-                        Showing {displayLimit} most recent incidents out of {totalCount} total. 
-                        Use export feature to view all data.
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+              <BarChart
+                data={individualResponseTimeData.map((item, index) => ({
+                  name: `#${item.incident_id} ${item.incident_type}`,
+                  count: item.response_time_minutes,
+                  incident_id: item.incident_id,
+                  incident_type: item.incident_type,
+                  response_time_minutes: item.response_time_minutes,
+                  response_time_hours: item.response_time_hours,
+                  response_time_days: item.response_time_days || 0,
+                  display_unit: 'minutes',
+                  date_reported: item.date_reported,
+                  status: item.status
+                }))}
+                title={`Response Time per Individual Incident (Minutes) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                dataKey="count"
+                color="#10b981"
+                height={350}
+              />
             </div>
           )}
           
@@ -1839,7 +1827,7 @@ const AdminDashboard: React.FC = () => {
                   <p className="text-indigo-600 text-sm mt-1">
                     {!showIndividualResponseTime 
                       ? "This chart shows the average response time (in hours) for each incident type. Response time is calculated as the time from when an incident is reported to when it is first responded to (status changes from 'pending'). Only incidents that have been responded to in the last 12 months are included."
-                      : "This chart shows the response time for each individual incident report. Each point represents one incident with its actual response time. Response time is calculated as the time from when an incident is reported to when it is first responded to. Only incidents that have been responded to in the last 12 months are included."
+                      : "This chart shows the response time for each individual incident report in minutes. Each bar represents one incident with its actual response time. Response time is calculated as the time from when an incident is reported to when it is first responded to. Only incidents that have been responded to in the last 12 months are included."
                     }
                   </p>
                 </div>
