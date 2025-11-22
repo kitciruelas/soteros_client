@@ -165,7 +165,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const getDays = (year: number, month: number): number[] => {
-    const days: number[] = [0]; // 0 = All Days
+    const days: number[] = [0]; // 0 = All Days - always include this option first
     if (month > 0) {
       // JavaScript Date months are 0-indexed (0=Jan, 11=Dec)
       // Our month values are 1-indexed (1=Jan, 12=Dec)
@@ -177,6 +177,7 @@ const AdminDashboard: React.FC = () => {
         days.push(i);
       }
     }
+    // Always return array with at least [0] for "All Days" option
     return days;
   };
 
@@ -1335,11 +1336,15 @@ const AdminDashboard: React.FC = () => {
               disabled={selectedMonth === 0}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              {getDays(selectedYear, selectedMonth).map(day => (
-                <option key={day} value={day}>
-                  {day === 0 ? 'All Days' : day.toString()}
-                </option>
-              ))}
+              {(() => {
+                const days = getDays(selectedYear, selectedMonth);
+                console.log('[DAY DROPDOWN] Days array:', days);
+                return days.map(day => (
+                  <option key={`day-${day}`} value={day}>
+                    {day === 0 ? 'All Days' : day.toString()}
+                  </option>
+                ));
+              })()}
             </select>
           </div>
           <button
