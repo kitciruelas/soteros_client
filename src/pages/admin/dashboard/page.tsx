@@ -1533,7 +1533,28 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
+              {monthlyIncidents.length > 0 && (
+                <div className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-md">
+                  <i className="ri-information-line mr-1"></i>
+                  Showing <strong>{monthlyIncidents.length}</strong> {selectedMonth > 0 ? 'days' : 'months'}
+                  {selectedMonth > 0 && ` in ${getMonths().find(m => m.value === selectedMonth)?.label || 'selected month'}`}
+                  {selectedMonth > 0 && selectedDay === 0 && (
+                    <span className="ml-1 text-blue-600">(All days should be visible)</span>
+                  )}
+                </div>
+              )}
+            </div>
+            {selectedMonth > 0 && selectedDay === 0 && monthlyIncidents.length > 0 && (
+              <div className="text-xs text-gray-500 mt-1">
+                Expected: {new Date(selectedYear, selectedMonth, 0).getDate()} days | 
+                Actual: {monthlyIncidents.length} data points
+                {monthlyIncidents.length < new Date(selectedYear, selectedMonth, 0).getDate() && (
+                  <span className="text-orange-600 ml-2">⚠ Some days may be missing</span>
+                )}
+              </div>
+            )}
           </div>
           {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
