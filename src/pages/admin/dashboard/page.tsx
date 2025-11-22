@@ -238,45 +238,34 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when date filters change - automatically updates without refresh
+  // Fetch trends data when date filters change
   useEffect(() => {
-    // Only fetch if year is selected (required filter)
-    if (!selectedYear) {
-      console.log('Skipping trends fetch - no year selected');
-      return;
-    }
-
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
     // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown for all days in that month
-    // - If only year is selected, use monthly breakdown for the year
+    // - If month is selected, use daily breakdown
+    // - If only year is selected, use monthly breakdown
     // - If day is selected, still use daily breakdown
-    let periodToUse: 'days' | 'months' = 'months'; // Default to months
-    let limitToUse: number = 12; // Default to 12
+    let periodToUse: 'days' | 'months' = trendsPeriod;
+    let limitToUse: number = trendsLimit;
     
     if (monthParam) {
-      // If month is selected (even with "All Days"), show daily breakdown for that month
+      // If month is selected, show daily breakdown for that month
       periodToUse = 'days';
       // Calculate days in the selected month
-      // Note: monthParam is 1-indexed (1=Jan, 12=Dec), but Date constructor uses 0-indexed
-      // So monthParam (e.g., 9 for September) becomes monthParam in Date (which is October in 0-indexed)
-      // new Date(year, monthParam, 0) gives us the last day of the previous month (September)
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
-      console.log(`Month ${monthParam} (${selectedYear}) has ${daysInMonth} days`);
     } else if (selectedYear) {
       // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
       limitToUse = 12;
     }
     
-    console.log(`🔄 Auto-fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
-    // Automatically fetch trends data when date filters change
-    // Note: fetchTrendsData already sets loading state, no need to set it here
+    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    // Force refresh trends data when date filters change
+    setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
@@ -294,23 +283,16 @@ const AdminDashboard: React.FC = () => {
     }
   }, [responseTimePeriod]);
 
-  // Fetch response time data when filter changes - automatically updates without refresh
+  // Fetch response time data when filter changes
   useEffect(() => {
     const fetchResponseTimeData = async () => {
       setResponseTimeLoading(true);
       const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
       const dayParam = selectedDay > 0 ? selectedDay : undefined;
-      
-      console.log(`Fetching response time data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${responseTimePeriod}, Limit: ${responseTimeLimit}`);
-      
       try {
         const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
-          console.log(`Response time data received: ${responseTimeResponse.responseTimeData.length} items`);
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
-        } else {
-          console.warn('Response time API returned success: false or no data');
-          setResponseTimeData([]);
         }
       } catch (error) {
         console.warn('Response time endpoint not available:', error);
@@ -320,11 +302,7 @@ const AdminDashboard: React.FC = () => {
       try {
         const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
-          console.log(`Individual response time data received: ${individualResponseTimeResponse.incidents.length} items`);
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
-        } else {
-          console.warn('Individual response time API returned success: false or no data');
-          setIndividualResponseTimeData([]);
         }
       } catch (error) {
         console.warn('Individual response time endpoint not available:', error);
@@ -334,7 +312,6 @@ const AdminDashboard: React.FC = () => {
       }
     };
     fetchResponseTimeData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responseTimePeriod, responseTimeLimit, selectedYear, selectedMonth, selectedDay]);
 
   // Helper function to format hour data for peak hours chart
@@ -1032,9 +1009,8 @@ const AdminDashboard: React.FC = () => {
       console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
       const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
       console.log('Trends response:', trendsResponse);
-      console.log('Trends data array length:', trendsResponse.trendsData?.length || 0);
       
-      if (trendsResponse.success && trendsResponse.trendsData && Array.isArray(trendsResponse.trendsData)) {
+      if (trendsResponse.success && trendsResponse.trendsData) {
         // Map the API response to the expected interface format
         const mappedData = trendsResponse.trendsData.map(item => ({
           month: item.period, // Use period as month for compatibility
@@ -1044,14 +1020,9 @@ const AdminDashboard: React.FC = () => {
           high_priority_incidents: item.high_priority_incidents || 0
         }));
         console.log('Mapped data:', mappedData);
-        console.log(`✅ Setting ${mappedData.length} trend data points to state`);
         setMonthlyIncidents(mappedData);
       } else {
-        console.warn('Trends API returned success: false or no data', {
-          success: trendsResponse.success,
-          hasData: !!trendsResponse.trendsData,
-          dataLength: trendsResponse.trendsData?.length || 0
-        });
+        console.warn('Trends API returned success: false or no data');
         setMonthlyIncidents([]);
       }
     } catch (error) {
@@ -1077,8 +1048,8 @@ const AdminDashboard: React.FC = () => {
         adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
-      // Trends data is automatically fetched by the separate useEffect when date filters change
-      // No need to fetch here to avoid duplicate calls
+      // Fetch trends data with current filter settings
+      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1216,8 +1187,27 @@ const AdminDashboard: React.FC = () => {
         setHasActiveWelfare(false);
       }
 
-      // Response time data is automatically fetched by the separate useEffect when date filters change
-      // No need to fetch here to avoid duplicate calls
+      // Try to fetch response time data, but don't fail if it doesn't work
+      try {
+        const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
+        if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
+          setResponseTimeData(responseTimeResponse.responseTimeData || []);
+        }
+      } catch (error) {
+        console.warn('Response time endpoint not available, using fallback data:', error);
+        setResponseTimeData([]);
+      }
+
+      // Try to fetch individual response time data
+      try {
+        const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
+        if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
+          setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
+        }
+      } catch (error) {
+        console.warn('Individual response time endpoint not available, using fallback data:', error);
+        setIndividualResponseTimeData([]);
+      }
 
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -1299,7 +1289,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Date Filters - Auto-updates all charts when changed */}
+      {/* Date Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex items-center space-x-4">
           <label className="text-sm font-medium text-gray-700">Filter by Date:</label>
@@ -1307,11 +1297,7 @@ const AdminDashboard: React.FC = () => {
             <label className="text-sm text-gray-600">Year:</label>
             <select
               value={selectedYear}
-              onChange={(e) => {
-                const newYear = parseInt(e.target.value);
-                setSelectedYear(newYear);
-                console.log(`📅 Year filter changed to: ${newYear} - Auto-updating all charts...`);
-              }}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {getYears().map(year => (
@@ -1328,7 +1314,6 @@ const AdminDashboard: React.FC = () => {
                 setSelectedMonth(newMonth);
                 // Reset day to "All Days" when month changes
                 setSelectedDay(0);
-                console.log(`📅 Month filter changed to: ${newMonth} - Auto-updating all charts...`);
               }}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -1341,11 +1326,7 @@ const AdminDashboard: React.FC = () => {
             <label className="text-sm text-gray-600">Day:</label>
             <select
               value={selectedDay}
-              onChange={(e) => {
-                const newDay = parseInt(e.target.value);
-                setSelectedDay(newDay);
-                console.log(`📅 Day filter changed to: ${newDay === 0 ? 'All Days' : newDay} - Auto-updating all charts...`);
-              }}
+              onChange={(e) => setSelectedDay(parseInt(e.target.value))}
               disabled={selectedMonth === 0}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
@@ -1362,19 +1343,12 @@ const AdminDashboard: React.FC = () => {
               setSelectedYear(today.getFullYear());
               setSelectedMonth(today.getMonth() + 1);
               setSelectedDay(today.getDate());
-              console.log(`📅 "Today" button clicked - Auto-updating all charts...`);
             }}
             className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
           >
             <i className="ri-calendar-line mr-1"></i>
             Today
           </button>
-          {(loading || trendsLoading || responseTimeLoading) && (
-            <div className="flex items-center text-sm text-blue-600">
-              <i className="ri-loader-4-line animate-spin mr-1"></i>
-              <span>Updating...</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1554,22 +1528,14 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
-              {selectedMonth > 0 && selectedDay === 0 && (
-                <div className="text-sm text-gray-600">
-                  <i className="ri-calendar-line mr-1"></i>
-                  Showing all days in {getMonths().find(m => m.value === selectedMonth)?.label} {selectedYear}
-                </div>
-              )}
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
-          {trendsLoading ? (
+          {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-500">
-                  Loading trends data...
+                  {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
                   Based on selected date filters
@@ -1578,12 +1544,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           ) : monthlyIncidents.length > 0 ? (
             <div ref={trendsChartRef}>
-              <div className="mb-2 text-sm text-gray-600">
-                <i className="ri-checkbox-circle-line text-green-500 mr-1"></i>
-                Showing {monthlyIncidents.length} data point{monthlyIncidents.length !== 1 ? 's' : ''} for selected filters
-              </div>
               <LineChart
-                key={`trends-${selectedYear}-${selectedMonth}-${selectedDay}-${monthlyIncidents.length}`}
                 data={monthlyIncidents.map(item => ({
                   date: item.period || item.month || 'Unknown',
                   count: item.total_incidents || 0
