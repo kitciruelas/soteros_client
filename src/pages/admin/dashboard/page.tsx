@@ -278,16 +278,17 @@ const AdminDashboard: React.FC = () => {
     }
     
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+    // dayParam should be undefined when selectedDay is 0 (All Days) - this means show all days in the month
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
     // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown
+    // - If month is selected, use daily breakdown (shows all days in month when dayParam is undefined)
     // - If only year is selected, use monthly breakdown
     let periodToUse: 'days' | 'months' = 'months';
     let limitToUse: number = 12;
     
     if (monthParam) {
-      // If month is selected, show daily breakdown for that month
+      // If month is selected, show daily breakdown for that month (all days when dayParam is undefined)
       periodToUse = 'days';
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
@@ -298,9 +299,10 @@ const AdminDashboard: React.FC = () => {
       limitToUse = 12;
     }
     
-    console.log(`[TRENDS AUTO-UPDATE] Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    console.log(`[TRENDS AUTO-UPDATE] Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
     
     // Automatically fetch trends data when date filters change
+    // When monthParam is set and dayParam is undefined, it will fetch all days in that month
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
   }, [selectedYear, selectedMonth, selectedDay, fetchTrendsData]);
 
