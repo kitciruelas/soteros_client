@@ -1,5 +1,5 @@
 // ...existing code...
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { adminDashboardApi, apiRequest } from '../../../utils/api';
 import BarChart from '../../../components/charts/BarChart';
 import PieChart from '../../../components/charts/PieChart';
@@ -182,6 +182,37 @@ const AdminDashboard: React.FC = () => {
 
   // Date filters: Year is required, Month and Day are optional (0 = All, not applied)
 
+  // Fetch trends data function - wrapped in useCallback for stability
+  const fetchTrendsData = useCallback(async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
+    try {
+      setTrendsLoading(true);
+      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
+      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
+      console.log('Trends response:', trendsResponse);
+      
+      if (trendsResponse.success && trendsResponse.trendsData) {
+        // Map the API response to the expected interface format
+        const mappedData = trendsResponse.trendsData.map(item => ({
+          month: item.period, // Use period as month for compatibility
+          period: item.period,
+          total_incidents: item.total_incidents || 0,
+          resolved_incidents: item.resolved_incidents || 0,
+          high_priority_incidents: item.high_priority_incidents || 0
+        }));
+        console.log('Mapped data:', mappedData);
+        setMonthlyIncidents(mappedData);
+      } else {
+        console.warn('Trends API returned success: false or no data');
+        setMonthlyIncidents([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch trends data:', error);
+      setMonthlyIncidents([]);
+    } finally {
+      setTrendsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       await fetchDashboardStats();
@@ -238,7 +269,7 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when date filters change
+  // Fetch trends data automatically when date filters change
   useEffect(() => {
     // Skip if year is not selected yet
     if (!selectedYear) {
@@ -266,11 +297,11 @@ const AdminDashboard: React.FC = () => {
       limitToUse = 12;
     }
     
-    console.log(`[TRENDS AUTO-UPDATE] Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    console.log(`[TRENDS AUTO-UPDATE] Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
     
-    // Force refresh trends data when date filters change
+    // Automatically fetch trends data when date filters change
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
-  }, [selectedYear, selectedMonth, selectedDay]);
+  }, [selectedYear, selectedMonth, selectedDay, fetchTrendsData]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -1005,36 +1036,6 @@ const AdminDashboard: React.FC = () => {
     setExportTitle('Complete Dashboard Data Export');
     setExportChartImages(chartImages);
     setShowExportModal(true);
-  };
-
-  const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
-    try {
-      setTrendsLoading(true);
-      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
-      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
-      console.log('Trends response:', trendsResponse);
-      
-      if (trendsResponse.success && trendsResponse.trendsData) {
-        // Map the API response to the expected interface format
-        const mappedData = trendsResponse.trendsData.map(item => ({
-          month: item.period, // Use period as month for compatibility
-          period: item.period,
-          total_incidents: item.total_incidents || 0,
-          resolved_incidents: item.resolved_incidents || 0,
-          high_priority_incidents: item.high_priority_incidents || 0
-        }));
-        console.log('Mapped data:', mappedData);
-        setMonthlyIncidents(mappedData);
-      } else {
-        console.warn('Trends API returned success: false or no data');
-        setMonthlyIncidents([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch trends data:', error);
-      setMonthlyIncidents([]);
-    } finally {
-      setTrendsLoading(false);
-    }
   };
 
   const fetchDashboardStats = async () => {
