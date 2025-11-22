@@ -244,18 +244,22 @@ const AdminDashboard: React.FC = () => {
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
     // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown
-    // - If only year is selected, use monthly breakdown
+    // - If month is selected, use daily breakdown for all days in that month
+    // - If only year is selected, use monthly breakdown for the year
     // - If day is selected, still use daily breakdown
     let periodToUse: 'days' | 'months' = 'months'; // Default to months
     let limitToUse: number = 12; // Default to 12
     
     if (monthParam) {
-      // If month is selected, show daily breakdown for that month
+      // If month is selected (even with "All Days"), show daily breakdown for that month
       periodToUse = 'days';
       // Calculate days in the selected month
+      // Note: monthParam is 1-indexed (1=Jan, 12=Dec), but Date constructor uses 0-indexed
+      // So monthParam (e.g., 9 for September) becomes monthParam in Date (which is October in 0-indexed)
+      // new Date(year, monthParam, 0) gives us the last day of the previous month (September)
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
+      console.log(`Month ${monthParam} (${selectedYear}) has ${daysInMonth} days`);
     } else if (selectedYear) {
       // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
@@ -1010,8 +1014,9 @@ const AdminDashboard: React.FC = () => {
       console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
       const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
       console.log('Trends response:', trendsResponse);
+      console.log('Trends data array length:', trendsResponse.trendsData?.length || 0);
       
-      if (trendsResponse.success && trendsResponse.trendsData) {
+      if (trendsResponse.success && trendsResponse.trendsData && Array.isArray(trendsResponse.trendsData)) {
         // Map the API response to the expected interface format
         const mappedData = trendsResponse.trendsData.map(item => ({
           month: item.period, // Use period as month for compatibility
@@ -1021,9 +1026,14 @@ const AdminDashboard: React.FC = () => {
           high_priority_incidents: item.high_priority_incidents || 0
         }));
         console.log('Mapped data:', mappedData);
+        console.log(`Setting ${mappedData.length} trend data points`);
         setMonthlyIncidents(mappedData);
       } else {
-        console.warn('Trends API returned success: false or no data');
+        console.warn('Trends API returned success: false or no data', {
+          success: trendsResponse.success,
+          hasData: !!trendsResponse.trendsData,
+          dataLength: trendsResponse.trendsData?.length || 0
+        });
         setMonthlyIncidents([]);
       }
     } catch (error) {
@@ -1531,12 +1541,12 @@ const AdminDashboard: React.FC = () => {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
-          {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
+          {trendsLoading ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-500">
-                  {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
+                  Loading trends data...
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
                   Based on selected date filters
