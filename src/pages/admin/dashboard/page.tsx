@@ -1799,12 +1799,19 @@ const AdminDashboard: React.FC = () => {
             <div ref={responseTimeChartRef}>
               <BarChart
                 data={individualResponseTimeData.map((item, index) => {
-                  // Format response time for tooltip: minutes if < 60, hours if >= 60
-                  const responseTimeDisplay = item.response_time_minutes < 60
-                    ? `${item.response_time_minutes} Minutes`
-                    : item.response_time_hours >= 24
-                      ? `${item.response_time_days || Math.floor(item.response_time_hours / 24)} Days`
-                      : `${item.response_time_hours.toFixed(1)} Hours`;
+                  // Format response time for tooltip based on actual result:
+                  // - Minutes if < 60 minutes
+                  // - Hours if >= 60 minutes but < 24 hours
+                  // - Days if >= 24 hours
+                  let responseTimeDisplay = '';
+                  if (item.response_time_minutes < 60) {
+                    responseTimeDisplay = `${item.response_time_minutes} Minutes`;
+                  } else if (item.response_time_hours >= 24) {
+                    const days = item.response_time_days || Math.floor(item.response_time_hours / 24);
+                    responseTimeDisplay = `${days} ${days === 1 ? 'Day' : 'Days'}`;
+                  } else {
+                    responseTimeDisplay = `${item.response_time_hours.toFixed(1)} ${item.response_time_hours === 1 ? 'Hour' : 'Hours'}`;
+                  }
                   
                   return {
                     name: `#${item.incident_id} ${item.incident_type}`,
@@ -1815,7 +1822,7 @@ const AdminDashboard: React.FC = () => {
                     response_time_hours: item.response_time_hours,
                     response_time_days: item.response_time_days || 0,
                     response_time_display: responseTimeDisplay,
-                    display_unit: item.response_time_minutes < 60 ? 'minutes' : 'hours',
+                    display_unit: item.response_time_minutes < 60 ? 'minutes' : (item.response_time_hours >= 24 ? 'days' : 'hours'),
                     date_reported: item.date_reported,
                     status: item.status
                   };
