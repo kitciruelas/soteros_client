@@ -1554,7 +1554,15 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
+              {selectedMonth > 0 && selectedDay === 0 && (
+                <div className="text-sm text-gray-600">
+                  <i className="ri-calendar-line mr-1"></i>
+                  Showing all days in {getMonths().find(m => m.value === selectedMonth)?.label} {selectedYear}
+                </div>
+              )}
+            </div>
           </div>
           {trendsLoading ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
@@ -1570,6 +1578,10 @@ const AdminDashboard: React.FC = () => {
             </div>
           ) : monthlyIncidents.length > 0 ? (
             <div ref={trendsChartRef}>
+              <div className="mb-2 text-sm text-gray-600">
+                <i className="ri-checkbox-circle-line text-green-500 mr-1"></i>
+                Showing {monthlyIncidents.length} data point{monthlyIncidents.length !== 1 ? 's' : ''} for selected filters
+              </div>
               <LineChart
                 key={`trends-${selectedYear}-${selectedMonth}-${selectedDay}-${monthlyIncidents.length}`}
                 data={monthlyIncidents.map(item => ({
