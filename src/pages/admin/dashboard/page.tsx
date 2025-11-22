@@ -240,6 +240,12 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch trends data when date filters change - automatically updates without refresh
   useEffect(() => {
+    // Only fetch if year is selected (required filter)
+    if (!selectedYear) {
+      console.log('Skipping trends fetch - no year selected');
+      return;
+    }
+
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
@@ -266,9 +272,9 @@ const AdminDashboard: React.FC = () => {
       limitToUse = 12;
     }
     
-    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    console.log(`🔄 Auto-fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
     // Automatically fetch trends data when date filters change
-    setTrendsLoading(true);
+    // Note: fetchTrendsData already sets loading state, no need to set it here
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, selectedMonth, selectedDay]);
@@ -1038,7 +1044,7 @@ const AdminDashboard: React.FC = () => {
           high_priority_incidents: item.high_priority_incidents || 0
         }));
         console.log('Mapped data:', mappedData);
-        console.log(`Setting ${mappedData.length} trend data points`);
+        console.log(`✅ Setting ${mappedData.length} trend data points to state`);
         setMonthlyIncidents(mappedData);
       } else {
         console.warn('Trends API returned success: false or no data', {
@@ -1549,6 +1555,7 @@ const AdminDashboard: React.FC = () => {
           ) : monthlyIncidents.length > 0 ? (
             <div ref={trendsChartRef}>
               <LineChart
+                key={`trends-${selectedYear}-${selectedMonth}-${selectedDay}-${monthlyIncidents.length}`}
                 data={monthlyIncidents.map(item => ({
                   date: item.period || item.month || 'Unknown',
                   count: item.total_incidents || 0
