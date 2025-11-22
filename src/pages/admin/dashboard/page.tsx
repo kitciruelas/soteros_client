@@ -238,32 +238,42 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when date filters change
+  // Fetch trends data when date filters change - FULLY AUTOMATIC
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
-    // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown
-    // - If only year is selected, use monthly breakdown
-    // - If day is selected, still use daily breakdown
-    let periodToUse: 'days' | 'months' = trendsPeriod;
-    let limitToUse: number = trendsLimit;
+    // Fully automatic period and limit based on date filters (no manual settings needed):
+    // - If month is selected, automatically use daily breakdown for that month
+    // - If only year is selected, automatically use monthly breakdown for the year
+    // - If day is selected, automatically use daily breakdown (shows single day)
+    let periodToUse: 'days' | 'months' = 'months'; // Default
+    let limitToUse: number = 12; // Default
     
-    if (monthParam) {
-      // If month is selected, show daily breakdown for that month
-      periodToUse = 'days';
-      // Calculate days in the selected month
-      const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
-      limitToUse = daysInMonth;
-    } else if (selectedYear) {
-      // If only year is selected, show monthly breakdown for the year
-      periodToUse = 'months';
-      limitToUse = 12;
+    if (selectedYear) {
+      if (dayParam && monthParam) {
+        // If both day and month are selected, automatically show daily breakdown (single day)
+        periodToUse = 'days';
+        limitToUse = 1; // Single day
+      } else if (monthParam) {
+        // If month is selected, automatically show daily breakdown for that month
+        periodToUse = 'days';
+        // Automatically calculate days in the selected month
+        const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
+        limitToUse = daysInMonth;
+      } else {
+        // If only year is selected, automatically show monthly breakdown for the year
+        periodToUse = 'months';
+        limitToUse = 12;
+      }
+    } else {
+      // No date filter - use default period/limit (fallback)
+      periodToUse = trendsPeriod;
+      limitToUse = trendsLimit;
     }
     
-    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
-    // Force refresh trends data when date filters change
+    console.log(`Auto-fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    // Automatically refresh trends data when date filters change
     setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
   }, [selectedYear, selectedMonth, selectedDay]);
