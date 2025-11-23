@@ -1778,32 +1778,7 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </select>
               </div>
-              <button
-                onClick={async () => {
-                  setResponseTimeLoading(true);
-                  const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
-                  const dayParam = selectedDay > 0 ? selectedDay : undefined;
-                  try {
-                    const responseTimeResponse = await adminDashboardApi.getResponseTimeByType(responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
-                    if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
-                      setResponseTimeData(responseTimeResponse.responseTimeData || []);
-                    }
-                    const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
-                    if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
-                      setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
-                    }
-                  } catch (error) {
-                    console.warn('Error refreshing response time data:', error);
-                  } finally {
-                    setResponseTimeLoading(false);
-                  }
-                }}
-                disabled={responseTimeLoading}
-                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <i className={`ri-refresh-line mr-1 ${responseTimeLoading ? 'animate-spin' : ''}`}></i>
-                {responseTimeLoading ? 'Loading...' : 'Refresh'}
-              </button>
+       
             </div>
           </div>
           
