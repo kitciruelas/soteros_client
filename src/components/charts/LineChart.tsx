@@ -99,9 +99,11 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
           <p className="text-sm font-medium text-gray-900 mb-1">{formattedDate}</p>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-sm text-gray-600">
-              {data?.display_unit === 'days' ? 'Days:' : 'Hours:'}
-            </span>
+            {data?.display_unit && (
+              <span className="text-sm text-gray-600">
+                {data.display_unit === 'days' ? 'Days:' : 'Hours:'}
+              </span>
+            )}
             <span className="text-sm font-semibold text-gray-900">{value.toLocaleString()}</span>
           </div>
           {/* Display Count and Minutes for response time chart (average by type) */}
