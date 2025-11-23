@@ -140,10 +140,11 @@ const AdminDashboard: React.FC = () => {
   const getYears = (): number[] => {
     const years: number[] = [];
     const currentYear = new Date().getFullYear();
-    for (let i = currentYear; i >= currentYear - 5; i--) {
+    const startYear = 2024;
+    for (let i = startYear; i <= currentYear; i++) {
       years.push(i);
     }
-    return years;
+    return years.reverse(); // Show most recent year first
   };
 
   const getMonths = (): Array<{ value: number; label: string }> => {
@@ -1484,64 +1485,66 @@ const AdminDashboard: React.FC = () => {
                 <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showExportDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="py-2">
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                  <div className="py-1.5">
                     <button
                       onClick={exportAllData}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center transition-colors border-b border-gray-100"
                     >
-                      <i className="ri-download-cloud-line mr-3 text-green-600"></i>
+                      <i className="ri-download-cloud-line mr-3 text-lg text-green-600"></i>
                       <span className="font-semibold">Export All Data</span>
                     </button>
-                    <div className="px-2 py-1 text-xs text-gray-500 mb-2">Individual Exports:</div>
+                    <div className="px-4 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-50">
+                      Individual Exports
+                    </div>
                     <button
                       onClick={exportDashboardStats}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center transition-colors"
                     >
-                      <i className="ri-bar-chart-line mr-3 text-blue-500"></i>
-                      Dashboard Statistics
+                      <i className="ri-bar-chart-line mr-3 text-lg text-blue-500"></i>
+                      <span>Dashboard Statistics</span>
                     </button>
                     <button
                       onClick={exportIncidentTypes}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 flex items-center transition-colors"
                     >
-                      <i className="ri-pie-chart-line mr-3 text-red-500"></i>
-                      Incident Types
+                      <i className="ri-pie-chart-line mr-3 text-lg text-red-500"></i>
+                      <span>Incident Types</span>
                     </button>
                     <button
                       onClick={exportWelfareData}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center transition-colors"
                     >
-                      <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
-                      Welfare Distribution
+                      <i className="ri-pie-chart-2-line mr-3 text-lg text-orange-500"></i>
+                      <span>Welfare Distribution</span>
                     </button>
                     <button
                       onClick={exportTrendsData}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center transition-colors"
                     >
-                      <i className="ri-line-chart-line mr-3 text-green-500"></i>
-                      Trends Data
+                      <i className="ri-line-chart-line mr-3 text-lg text-green-500"></i>
+                      <span>Trends Data</span>
                     </button>
                     <button
                       onClick={exportPeakHoursData}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 flex items-center transition-colors"
                     >
-                      <i className="ri-time-line mr-3 text-yellow-500"></i>
-                      Peak Hours Analysis
+                      <i className="ri-time-line mr-3 text-lg text-yellow-500"></i>
+                      <span>Peak Hours Analysis</span>
                     </button>
                     <button
                       onClick={exportLocationData}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors"
                     >
-                      <i className="ri-map-pin-line mr-3 text-purple-500"></i>
-                      Location Data
+                      <i className="ri-map-pin-line mr-3 text-lg text-purple-500"></i>
+                      <span>Location Data</span>
                     </button>
                     <button
                       onClick={exportResponseTimeData}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center transition-colors"
                     >
-                      <i className="ri-timer-line mr-3 text-indigo-500"></i>
-                      Response Time Analysis
+                      <i className="ri-timer-line mr-3 text-lg text-indigo-500"></i>
+                      <span>Response Time Analysis</span>
                     </button>
                   </div>
                 </div>
