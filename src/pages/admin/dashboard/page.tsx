@@ -1694,7 +1694,7 @@ const AdminDashboard: React.FC = () => {
                   count: item.total_incidents || 0
                 }))}
                 title="Incident Trends Analysis"
-                color="#10b981"
+                color="#dc2626"
                 height={350}
                 legendLabel="Total Incidents"
               />
