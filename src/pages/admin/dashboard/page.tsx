@@ -208,15 +208,6 @@ const AdminDashboard: React.FC = () => {
     };
   }, [showExportDropdown]);
 
-  // Reset limit when period changes to ensure valid combinations
-  useEffect(() => {
-    if (trendsPeriod === 'days' && trendsLimit > 30) {
-      setTrendsLimit(7); // Default to 7 days for better performance
-    } else if (trendsPeriod === 'months' && trendsLimit > 24) {
-      setTrendsLimit(12); // Default to 12 months
-    }
-  }, [trendsPeriod]);
-
   // Reset day to "All Days" when month changes or validate day range
   useEffect(() => {
     if (selectedMonth > 0 && selectedDay > 0) {
@@ -238,35 +229,6 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data when date filters change
-  useEffect(() => {
-    const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
-    const dayParam = selectedDay > 0 ? selectedDay : undefined;
-    
-    // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown
-    // - If only year is selected, use monthly breakdown
-    // - If day is selected, still use daily breakdown
-    let periodToUse: 'days' | 'months' = trendsPeriod;
-    let limitToUse: number = trendsLimit;
-    
-    if (monthParam) {
-      // If month is selected, show daily breakdown for that month
-      periodToUse = 'days';
-      // Calculate days in the selected month
-      const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
-      limitToUse = daysInMonth;
-    } else if (selectedYear) {
-      // If only year is selected, show monthly breakdown for the year
-      periodToUse = 'months';
-      limitToUse = 12;
-    }
-    
-    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
-    // Force refresh trends data when date filters change
-    setTrendsLoading(true);
-    fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
-  }, [selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -610,7 +572,7 @@ const AdminDashboard: React.FC = () => {
 
     // Capture the trends chart
     const chartImages = await captureChartImages([
-      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
+      { ref: trendsChartRef, title: 'Incident Trends Analysis' }
     ]);
 
     setExportData(monthlyIncidents);
@@ -1048,8 +1010,22 @@ const AdminDashboard: React.FC = () => {
         adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
-      // Fetch trends data with current filter settings
-      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
+      // Fetch trends data with auto-adjusted period and limit based on date filters
+      let periodToUse: 'days' | 'months' = 'months';
+      let limitToUse: number = 12;
+      
+      if (monthParam) {
+        // If month is selected, show daily breakdown for that month
+        periodToUse = 'days';
+        const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
+        limitToUse = daysInMonth;
+      } else if (selectedYear) {
+        // If only year is selected, show monthly breakdown for the year
+        periodToUse = 'months';
+        limitToUse = 12;
+      }
+      
+      await fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1524,7 +1500,7 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Monthly Trends Line Chart with Filter */}
+      {/* Monthly Trends Line Chart */}
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-4">
