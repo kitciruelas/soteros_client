@@ -287,21 +287,24 @@ const AdminDashboard: React.FC = () => {
   // Fetch trends data automatically when date filters change (NO NEED TO REFRESH)
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+    // If day is 0 (All Days), pass undefined so server shows all days in the month
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
     // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown for that month
+    // - If month is selected, use daily breakdown for that month (shows all days 1-30/31)
     // - If only year is selected, use monthly breakdown for the year
     let periodToUse: 'days' | 'months' = 'months';
     let limitToUse: number = 12;
     
     if (monthParam) {
       // If month is selected, show daily breakdown for that month
+      // When dayParam is undefined (All Days), server will show ALL days in the month
       periodToUse = 'days';
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
-      console.log(`Month selected (${monthParam}) - Using daily breakdown with ${daysInMonth} days for ${selectedYear}-${monthParam}`);
+      const dayFilterText = dayParam ? `Day ${dayParam}` : 'All Days';
+      console.log(`Month selected (${monthParam}) - Using daily breakdown with ${daysInMonth} days for ${selectedYear}-${monthParam}, Filter: ${dayFilterText}`);
     } else if (selectedYear) {
       // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
@@ -309,7 +312,7 @@ const AdminDashboard: React.FC = () => {
       console.log(`Only year selected (${selectedYear}) - Using monthly breakdown`);
     }
     
-    console.log(`[AUTO-UPDATE] Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    console.log(`[AUTO-UPDATE] Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
     // Automatically refresh trends data when date filters change - NO MANUAL REFRESH NEEDED
     setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
@@ -1547,13 +1550,11 @@ const AdminDashboard: React.FC = () => {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
-          {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
+          {trendsLoading ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">
-                  {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
-                </p>
+                <p className="text-gray-500">Loading trends data...</p>
                 <p className="text-sm text-gray-400 mt-1">
                   Based on selected date filters
                 </p>
