@@ -117,6 +117,9 @@ const AdminDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1); // Current month (1-12)
   const [selectedDay, setSelectedDay] = useState<number>(0); // 0 = All (optional)
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [showDayDropdown, setShowDayDropdown] = useState(false);
   
   // Export functionality
   const [showExportModal, setShowExportModal] = useState(false);
@@ -191,23 +194,32 @@ const AdminDashboard: React.FC = () => {
     loadData();
   }, []);
 
-  // Close export dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (showExportDropdown && !target.closest('.export-dropdown-container')) {
         setShowExportDropdown(false);
       }
+      if (showYearDropdown && !target.closest('.year-dropdown-container')) {
+        setShowYearDropdown(false);
+      }
+      if (showMonthDropdown && !target.closest('.month-dropdown-container')) {
+        setShowMonthDropdown(false);
+      }
+      if (showDayDropdown && !target.closest('.day-dropdown-container')) {
+        setShowDayDropdown(false);
+      }
     };
 
-    if (showExportDropdown) {
+    if (showExportDropdown || showYearDropdown || showMonthDropdown || showDayDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showExportDropdown]);
+  }, [showExportDropdown, showYearDropdown, showMonthDropdown, showDayDropdown]);
 
   // Reset limit when period changes to ensure valid combinations
   useEffect(() => {
@@ -1415,58 +1427,136 @@ const AdminDashboard: React.FC = () => {
               <i className="ri-calendar-2-line mr-2 text-blue-600"></i>
               Filter by Date:
             </label>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Year:</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px]"
-              >
-                {getYears().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Month:</label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => {
-                  const newMonth = parseInt(e.target.value);
-                  setSelectedMonth(newMonth);
-                  // Reset day to "All Days" when month changes
-                  setSelectedDay(0);
+            
+            {/* Year Dropdown */}
+            <div className="relative year-dropdown-container">
+              <label className="text-sm text-gray-600 whitespace-nowrap mr-2">Year:</label>
+              <button
+                onClick={() => {
+                  setShowYearDropdown(!showYearDropdown);
+                  setShowMonthDropdown(false);
+                  setShowDayDropdown(false);
                 }}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[120px]"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px] text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
               >
-                {getMonths().map(month => (
-                  <option key={month.value} value={month.value}>{month.label}</option>
-                ))}
-              </select>
+                <span>{selectedYear}</span>
+                <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showYearDropdown ? 'rotate-180' : ''}`}></i>
+              </button>
+              {showYearDropdown && (
+                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-60 overflow-y-auto">
+                  <div className="py-1">
+                    {getYears().map(year => (
+                      <button
+                        key={year}
+                        onClick={() => {
+                          setSelectedYear(year);
+                          setShowYearDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                          selectedYear === year
+                            ? 'bg-blue-50 text-blue-700 font-semibold'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Day:</label>
-              <select
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+
+            {/* Month Dropdown */}
+            <div className="relative month-dropdown-container">
+              <label className="text-sm text-gray-600 whitespace-nowrap mr-2">Month:</label>
+              <button
+                onClick={() => {
+                  setShowMonthDropdown(!showMonthDropdown);
+                  setShowYearDropdown(false);
+                  setShowDayDropdown(false);
+                }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[140px] text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <span>{getMonths().find(m => m.value === selectedMonth)?.label || 'All Months'}</span>
+                <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showMonthDropdown ? 'rotate-180' : ''}`}></i>
+              </button>
+              {showMonthDropdown && (
+                <div className="absolute left-0 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-60 overflow-y-auto">
+                  <div className="py-1">
+                    {getMonths().map(month => (
+                      <button
+                        key={month.value}
+                        onClick={() => {
+                          setSelectedMonth(month.value);
+                          setSelectedDay(0);
+                          setShowMonthDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                          selectedMonth === month.value
+                            ? 'bg-blue-50 text-blue-700 font-semibold'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {month.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Day Dropdown */}
+            <div className="relative day-dropdown-container">
+              <label className="text-sm text-gray-600 whitespace-nowrap mr-2">Day:</label>
+              <button
+                onClick={() => {
+                  if (selectedMonth !== 0) {
+                    setShowDayDropdown(!showDayDropdown);
+                    setShowYearDropdown(false);
+                    setShowMonthDropdown(false);
+                  }
+                }}
                 disabled={selectedMonth === 0}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 min-w-[100px]"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px] text-left flex items-center justify-between hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-gray-100"
               >
-                {getDays(selectedYear, selectedMonth).map(day => (
-                  <option key={day} value={day}>
-                    {day === 0 ? 'All Days' : day.toString()}
-                  </option>
-                ))}
-              </select>
+                <span>{selectedDay === 0 ? 'All Days' : selectedDay.toString()}</span>
+                <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showDayDropdown ? 'rotate-180' : ''}`}></i>
+              </button>
+              {showDayDropdown && selectedMonth !== 0 && (
+                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-60 overflow-y-auto">
+                  <div className="py-1">
+                    {getDays(selectedYear, selectedMonth).map(day => (
+                      <button
+                        key={day}
+                        onClick={() => {
+                          setSelectedDay(day);
+                          setShowDayDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                          selectedDay === day
+                            ? 'bg-blue-50 text-blue-700 font-semibold'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {day === 0 ? 'All Days' : day.toString()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+
             <button
               onClick={() => {
                 const today = new Date();
                 setSelectedYear(today.getFullYear());
                 setSelectedMonth(today.getMonth() + 1);
                 setSelectedDay(today.getDate());
+                setShowYearDropdown(false);
+                setShowMonthDropdown(false);
+                setShowDayDropdown(false);
               }}
-              className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
+              className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
             >
               <i className="ri-calendar-line mr-1.5"></i>
               Today
@@ -1485,7 +1575,7 @@ const AdminDashboard: React.FC = () => {
                 <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showExportDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="py-2">
                     <button
                       onClick={exportAllData}
