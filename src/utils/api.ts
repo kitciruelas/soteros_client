@@ -704,13 +704,8 @@ export const adminDashboardApi = {
   getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
     let url = `/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`;
     if (year) url += `&year=${year}`;
-    if (month && month > 0) {
-      url += `&month=${month}`;
-      console.log(`[API] Month parameter added: ${month} (expecting daily data)`);
-    }
-    if (day && day > 0) url += `&day=${day}`;
-    console.log(`[API] getMonthlyTrends URL: ${url}`);
-    console.log(`[API] Parameters - Period: ${period}, Year: ${year}, Month: ${month}, Day: ${day}`);
+    if (month) url += `&month=${month}`;
+    if (day) url += `&day=${day}`;
     return apiRequest<{
       success: boolean;
       trendsData: Array<{

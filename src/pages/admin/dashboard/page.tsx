@@ -1,5 +1,5 @@
 // ...existing code...
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { adminDashboardApi, apiRequest } from '../../../utils/api';
 import BarChart from '../../../components/charts/BarChart';
 import PieChart from '../../../components/charts/PieChart';
@@ -208,6 +208,15 @@ const AdminDashboard: React.FC = () => {
     };
   }, [showExportDropdown]);
 
+  // Reset limit when period changes to ensure valid combinations
+  useEffect(() => {
+    if (trendsPeriod === 'days' && trendsLimit > 30) {
+      setTrendsLimit(7); // Default to 7 days for better performance
+    } else if (trendsPeriod === 'months' && trendsLimit > 24) {
+      setTrendsLimit(12); // Default to 12 months
+    }
+  }, [trendsPeriod]);
+
   // Reset day to "All Days" when month changes or validate day range
   useEffect(() => {
     if (selectedMonth > 0 && selectedDay > 0) {
@@ -223,118 +232,41 @@ const AdminDashboard: React.FC = () => {
     }
   }, [selectedMonth, selectedYear]);
 
-  // Define fetchTrendsData function with useCallback to ensure stability
-  const fetchTrendsData = useCallback(async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
-    try {
-      setTrendsLoading(true);
-      
-      // When date filters are used, calculate appropriate limit
-      let limitToUse = limit;
-      if (year && month) {
-        // If month is selected, use days in that month as limit
-        const daysInMonth = new Date(year, month, 0).getDate();
-        limitToUse = daysInMonth;
-        console.log(`Month filter active: ${month}/${year}, expecting ${daysInMonth} daily data points`);
-      } else if (year && !month) {
-        // If only year is selected, use 12 months
-        limitToUse = 12;
-        console.log(`Year filter only: ${year}, expecting 12 monthly data points`);
-      }
-      
-      console.log(`API Call - Period: ${period}, Limit: ${limitToUse}, Year: ${year}, Month: ${month}, Day: ${day}`);
-      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limitToUse, year, month, day);
-      console.log('Trends API Response:', {
-        success: trendsResponse.success,
-        dataCount: trendsResponse.trendsData?.length || 0,
-        firstFewItems: trendsResponse.trendsData?.slice(0, 5),
-        period: trendsResponse.period,
-        note: trendsResponse.note
-      });
-      
-      if (trendsResponse.success && trendsResponse.trendsData) {
-        // Map the API response to the expected interface format
-        const mappedData = trendsResponse.trendsData.map(item => ({
-          month: item.period, // Use period as month for compatibility
-          period: item.period,
-          total_incidents: item.total_incidents || 0,
-          resolved_incidents: item.resolved_incidents || 0,
-          high_priority_incidents: item.high_priority_incidents || 0
-        }));
-        console.log('Mapped trends data:', mappedData);
-        console.log(`Total data points received: ${mappedData.length}`);
-        console.log('Sample periods:', mappedData.slice(0, 5).map(d => d.period));
-        
-        // Check if we're getting monthly format instead of daily when month is selected
-        if (month && mappedData.length > 0) {
-          const firstPeriod = mappedData[0].period;
-          const isMonthlyFormat = /^[A-Za-z]{3}\s+\d{4}$/.test(firstPeriod) || /^\d{4}-\d{2}$/.test(firstPeriod);
-          const isDailyFormat = /\d{1,2}/.test(firstPeriod) && firstPeriod.includes(',');
-          
-          if (isMonthlyFormat && !isDailyFormat) {
-            console.error(`❌ ERROR: Month filter is active (${month}), but server returned monthly data format instead of daily!`);
-            console.error(`Expected: Daily format like "Sep 1, 2025" or "Sep 2, 2025"`);
-            console.error(`Got: Monthly format like "${firstPeriod}"`);
-            console.error(`This indicates the server is grouping by month instead of by day.`);
-          } else if (isDailyFormat) {
-            console.log(`✅ Correct: Server returned daily data format`);
-          }
-        }
-        
-        if (month && mappedData.length < 10) {
-          console.warn(`⚠️ Expected daily data for month ${month}, but only got ${mappedData.length} data points. Check server grouping logic.`);
-        }
-        setMonthlyIncidents(mappedData);
-      } else {
-        console.warn('Trends API returned success: false or no data');
-        setMonthlyIncidents([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch trends data:', error);
-      setMonthlyIncidents([]);
-    } finally {
-      setTrendsLoading(false);
-    }
-  }, []);
-
   // Fetch all dashboard data when date filters change
   useEffect(() => {
     console.log(`Date filters changed - Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Fetch trends data automatically when date filters change (NO NEED TO REFRESH)
+  // Fetch trends data when date filters change
   useEffect(() => {
     const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
-    // If day is 0 (All Days), pass undefined so server shows all days in the month
     const dayParam = selectedDay > 0 ? selectedDay : undefined;
     
     // Auto-adjust period and limit based on date filters:
-    // - If month is selected, use daily breakdown for that month (shows all days 1-30/31)
-    // - If only year is selected, use monthly breakdown for the year
-    let periodToUse: 'days' | 'months' = 'months';
-    let limitToUse: number = 12;
+    // - If month is selected, use daily breakdown
+    // - If only year is selected, use monthly breakdown
+    // - If day is selected, still use daily breakdown
+    let periodToUse: 'days' | 'months' = trendsPeriod;
+    let limitToUse: number = trendsLimit;
     
     if (monthParam) {
       // If month is selected, show daily breakdown for that month
-      // When dayParam is undefined (All Days), server will show ALL days in the month
       periodToUse = 'days';
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
-      const dayFilterText = dayParam ? `Day ${dayParam}` : 'All Days';
-      console.log(`Month selected (${monthParam}) - Using daily breakdown with ${daysInMonth} days for ${selectedYear}-${monthParam}, Filter: ${dayFilterText}`);
     } else if (selectedYear) {
       // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
       limitToUse = 12;
-      console.log(`Only year selected (${selectedYear}) - Using monthly breakdown`);
     }
     
-    console.log(`[AUTO-UPDATE] Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
-    // Automatically refresh trends data when date filters change - NO MANUAL REFRESH NEEDED
+    console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+    // Force refresh trends data when date filters change
     setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
-  }, [selectedYear, selectedMonth, selectedDay, fetchTrendsData]);
+  }, [selectedYear, selectedMonth, selectedDay]);
 
   // Reset response time limit when period changes
   useEffect(() => {
@@ -678,7 +610,7 @@ const AdminDashboard: React.FC = () => {
 
     // Capture the trends chart
     const chartImages = await captureChartImages([
-      { ref: trendsChartRef, title: 'Incident Trends Analysis' }
+      { ref: trendsChartRef, title: `Incident Trends (Last ${trendsLimit} ${trendsPeriod})` }
     ]);
 
     setExportData(monthlyIncidents);
@@ -1071,6 +1003,36 @@ const AdminDashboard: React.FC = () => {
     setShowExportModal(true);
   };
 
+  const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
+    try {
+      setTrendsLoading(true);
+      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
+      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
+      console.log('Trends response:', trendsResponse);
+      
+      if (trendsResponse.success && trendsResponse.trendsData) {
+        // Map the API response to the expected interface format
+        const mappedData = trendsResponse.trendsData.map(item => ({
+          month: item.period, // Use period as month for compatibility
+          period: item.period,
+          total_incidents: item.total_incidents || 0,
+          resolved_incidents: item.resolved_incidents || 0,
+          high_priority_incidents: item.high_priority_incidents || 0
+        }));
+        console.log('Mapped data:', mappedData);
+        setMonthlyIncidents(mappedData);
+      } else {
+        console.warn('Trends API returned success: false or no data');
+        setMonthlyIncidents([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch trends data:', error);
+      setMonthlyIncidents([]);
+    } finally {
+      setTrendsLoading(false);
+    }
+  };
+
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
@@ -1086,8 +1048,8 @@ const AdminDashboard: React.FC = () => {
         adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
-      // Note: Trends data is fetched separately via useEffect when date filters change
-      // This prevents duplicate calls and ensures accurate data based on current filters
+      // Fetch trends data with current filter settings
+      await fetchTrendsData(trendsPeriod, trendsLimit, selectedYear, monthParam, dayParam);
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
@@ -1562,17 +1524,19 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Monthly Trends Line Chart */}
+      {/* Monthly Trends Line Chart with Filter */}
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
           </div>
-          {trendsLoading ? (
+          {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading trends data...</p>
+                <p className="text-gray-500">
+                  {trendsLoading ? 'Loading trends data...' : 'Loading chart data...'}
+                </p>
                 <p className="text-sm text-gray-400 mt-1">
                   Based on selected date filters
                 </p>
