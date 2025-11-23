@@ -1527,8 +1527,33 @@ const AdminDashboard: React.FC = () => {
       {/* Monthly Trends Line Chart with Filter */}
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Incident Trends Analysis</h3>
+            <button
+              onClick={() => {
+                const monthParam = selectedMonth > 0 ? selectedMonth : undefined;
+                const dayParam = selectedDay > 0 ? selectedDay : undefined;
+                let periodToUse: 'days' | 'months' = 'months';
+                let limitToUse: number = 12;
+                
+                if (monthParam) {
+                  periodToUse = 'days';
+                  const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
+                  limitToUse = daysInMonth;
+                } else if (selectedYear) {
+                  periodToUse = 'months';
+                  limitToUse = 12;
+                }
+                
+                setTrendsLoading(true);
+                fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
+              }}
+              disabled={trendsLoading}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              <i className={`ri-refresh-line mr-1.5 ${trendsLoading ? 'animate-spin' : ''}`}></i>
+              {trendsLoading ? 'Loading...' : 'Refresh'}
+            </button>
           </div>
           {trendsLoading || (monthlyIncidents.length === 0 && !trendsLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
