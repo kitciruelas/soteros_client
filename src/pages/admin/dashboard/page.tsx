@@ -115,7 +115,7 @@ const AdminDashboard: React.FC = () => {
   // Date filter states
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number>(0); // 0 = All (optional)
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1); // Current month (1-12)
   const [selectedDay, setSelectedDay] = useState<number>(0); // 0 = All (optional)
   
   // Export functionality
