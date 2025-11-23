@@ -1485,67 +1485,85 @@ const AdminDashboard: React.FC = () => {
                 <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showExportDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
-                  <div className="py-1.5">
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="py-2">
                     <button
                       onClick={exportAllData}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center transition-colors border-b border-gray-100"
+                      className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:text-green-700 flex items-center transition-all duration-200 border-b border-gray-100 group"
                     >
-                      <i className="ri-download-cloud-line mr-3 text-lg text-green-600"></i>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors mr-3">
+                        <i className="ri-download-cloud-line text-lg text-green-600"></i>
+                      </div>
                       <span className="font-semibold">Export All Data</span>
                     </button>
-                    <div className="px-4 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-50">
+                    <div className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gradient-to-r from-gray-50 to-gray-100 border-y border-gray-100">
                       Individual Exports
                     </div>
-                    <button
-                      onClick={exportDashboardStats}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-bar-chart-line mr-3 text-lg text-blue-500"></i>
-                      <span>Dashboard Statistics</span>
-                    </button>
-                    <button
-                      onClick={exportIncidentTypes}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-pie-chart-line mr-3 text-lg text-red-500"></i>
-                      <span>Incident Types</span>
-                    </button>
-                    <button
-                      onClick={exportWelfareData}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-pie-chart-2-line mr-3 text-lg text-orange-500"></i>
-                      <span>Welfare Distribution</span>
-                    </button>
-                    <button
-                      onClick={exportTrendsData}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-line-chart-line mr-3 text-lg text-green-500"></i>
-                      <span>Trends Data</span>
-                    </button>
-                    <button
-                      onClick={exportPeakHoursData}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-time-line mr-3 text-lg text-yellow-500"></i>
-                      <span>Peak Hours Analysis</span>
-                    </button>
-                    <button
-                      onClick={exportLocationData}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-map-pin-line mr-3 text-lg text-purple-500"></i>
-                      <span>Location Data</span>
-                    </button>
-                    <button
-                      onClick={exportResponseTimeData}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center transition-colors"
-                    >
-                      <i className="ri-timer-line mr-3 text-lg text-indigo-500"></i>
-                      <span>Response Time Analysis</span>
-                    </button>
+                    <div className="py-1">
+                      <button
+                        onClick={exportDashboardStats}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-blue-700 flex items-center transition-all duration-200 group"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors mr-3">
+                          <i className="ri-bar-chart-line text-base text-blue-500"></i>
+                        </div>
+                        <span>Dashboard Statistics</span>
+                      </button>
+                      <button
+                        onClick={exportIncidentTypes}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-700 flex items-center transition-all duration-200 group"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors mr-3">
+                          <i className="ri-pie-chart-line text-base text-red-500"></i>
+                        </div>
+                        <span>Incident Types</span>
+                      </button>
+                      <button
+                        onClick={exportWelfareData}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-700 flex items-center transition-all duration-200 group"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-orange-100 group-hover:bg-orange-200 transition-colors mr-3">
+                          <i className="ri-pie-chart-2-line text-base text-orange-500"></i>
+                        </div>
+                        <span>Welfare Distribution</span>
+                      </button>
+                      <button
+                        onClick={exportTrendsData}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:text-green-700 flex items-center transition-all duration-200 group"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors mr-3">
+                          <i className="ri-line-chart-line text-base text-green-500"></i>
+                        </div>
+                        <span>Trends Data</span>
+                      </button>
+                      <button
+                        onClick={exportPeakHoursData}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-yellow-100 hover:text-yellow-700 flex items-center transition-all duration-200 group"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-yellow-100 group-hover:bg-yellow-200 transition-colors mr-3">
+                          <i className="ri-time-line text-base text-yellow-500"></i>
+                        </div>
+                        <span>Peak Hours Analysis</span>
+                      </button>
+                      <button
+                        onClick={exportLocationData}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 flex items-center transition-all duration-200 group"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-purple-100 group-hover:bg-purple-200 transition-colors mr-3">
+                          <i className="ri-map-pin-line text-base text-purple-500"></i>
+                        </div>
+                        <span>Location Data</span>
+                      </button>
+                      <button
+                        onClick={exportResponseTimeData}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-indigo-100 hover:text-indigo-700 flex items-center transition-all duration-200 group rounded-b-lg"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors mr-3">
+                          <i className="ri-timer-line text-base text-indigo-500"></i>
+                        </div>
+                        <span>Response Time Analysis</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
