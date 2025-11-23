@@ -1310,19 +1310,21 @@ const AdminDashboard: React.FC = () => {
     isIncident?: boolean; // For incidents, decrease is good (green), increase is bad (red)
   }> = ({ title, value, icon, color, trend, isIncident = false }) => {
     // Parse trend to determine if it's positive or negative
-    let trendColor = 'text-green-600';
+    let trendColor = 'text-gray-600';
     let trendIcon = 'ri-arrow-up-line';
     
     if (trend) {
-      const isPositive = trend.startsWith('+');
+      const isPositive = trend.startsWith('+') || (trend.includes('%') && !trend.startsWith('-'));
       const isNegative = trend.startsWith('-');
       
       if (isIncident) {
         // For incidents: decrease (negative) = good (green), increase (positive) = bad (red)
         if (isNegative) {
+          // Decrease in incidents is good - show green
           trendColor = 'text-green-600';
           trendIcon = 'ri-arrow-down-line';
         } else if (isPositive) {
+          // Increase in incidents is bad - show red
           trendColor = 'text-red-600';
           trendIcon = 'ri-arrow-up-line';
         }
