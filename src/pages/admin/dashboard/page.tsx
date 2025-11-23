@@ -1409,64 +1409,69 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Date Filters */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center space-x-4 flex-wrap gap-2">
-            <label className="text-sm font-medium text-gray-700">Filter by Date:</label>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600">Year:</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {getYears().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600">Month:</label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => {
-                  const newMonth = parseInt(e.target.value);
-                  setSelectedMonth(newMonth);
-                  // Reset day to "All Days" when month changes
-                  setSelectedDay(0);
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <label className="text-sm font-semibold text-gray-700 whitespace-nowrap flex items-center">
+              <i className="ri-calendar-2-line mr-2 text-blue-600"></i>
+              Filter by Date:
+            </label>
+            <div className="flex flex-wrap items-center gap-3 flex-1">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">Year:</label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px]"
+                >
+                  {getYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">Month:</label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => {
+                    const newMonth = parseInt(e.target.value);
+                    setSelectedMonth(newMonth);
+                    // Reset day to "All Days" when month changes
+                    setSelectedDay(0);
+                  }}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[120px]"
+                >
+                  {getMonths().map(month => (
+                    <option key={month.value} value={month.value}>{month.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">Day:</label>
+                <select
+                  value={selectedDay}
+                  onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+                  disabled={selectedMonth === 0}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 min-w-[100px]"
+                >
+                  {getDays(selectedYear, selectedMonth).map(day => (
+                    <option key={day} value={day}>
+                      {day === 0 ? 'All Days' : day.toString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => {
+                  const today = new Date();
+                  setSelectedYear(today.getFullYear());
+                  setSelectedMonth(today.getMonth() + 1);
+                  setSelectedDay(today.getDate());
                 }}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
               >
-                {getMonths().map(month => (
-                  <option key={month.value} value={month.value}>{month.label}</option>
-                ))}
-              </select>
+                <i className="ri-calendar-line mr-1.5"></i>
+                Today
+              </button>
             </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600">Day:</label>
-              <select
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                disabled={selectedMonth === 0}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                {getDays(selectedYear, selectedMonth).map(day => (
-                  <option key={day} value={day}>
-                    {day === 0 ? 'All Days' : day.toString()}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={() => {
-                const today = new Date();
-                setSelectedYear(today.getFullYear());
-                setSelectedMonth(today.getMonth() + 1);
-                setSelectedDay(today.getDate());
-              }}
-              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
-            >
-              <i className="ri-calendar-line mr-1"></i>
-              Today
-            </button>
           </div>
         </div>
 
