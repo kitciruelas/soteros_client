@@ -22,9 +22,10 @@ interface LineChartProps {
   height?: number
   legendLabel?: string
   showLegend?: boolean
+  isIncident?: boolean // For incidents, increase is bad (red), decrease is good (green)
 }
 
-const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "#3b82f6", height = 300, legendLabel, showLegend = true }) => {
+const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "#3b82f6", height = 300, legendLabel, showLegend = true, isIncident = false }) => {
   const formatDate = (dateString: string) => {
     // Check if dateString is valid
     if (!dateString || typeof dateString !== 'string') {
@@ -204,15 +205,15 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
         <div className="flex items-center gap-1 text-sm">
           {trend === "up" && (
             <>
-              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-4 h-4 ${isIncident ? 'text-red-500' : 'text-green-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              <span className="text-green-600 font-medium">Trending up</span>
+              <span className={`font-medium ${isIncident ? 'text-red-600' : 'text-green-600'}`}>Trending up</span>
             </>
           )}
           {trend === "down" && (
             <>
-              <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-4 h-4 ${isIncident ? 'text-green-500' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -220,7 +221,7 @@ const LineChart: React.FC<LineChartProps> = React.memo(({ data, title, color = "
                   d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
                 />
               </svg>
-              <span className="text-red-600 font-medium">Trending down</span>
+              <span className={`font-medium ${isIncident ? 'text-green-600' : 'text-red-600'}`}>Trending down</span>
             </>
           )}
           {trend === "stable" && (

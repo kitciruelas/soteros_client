@@ -1310,21 +1310,19 @@ const AdminDashboard: React.FC = () => {
     isIncident?: boolean; // For incidents, decrease is good (green), increase is bad (red)
   }> = ({ title, value, icon, color, trend, isIncident = false }) => {
     // Parse trend to determine if it's positive or negative
-    let trendColor = 'text-gray-600';
+    let trendColor = 'text-green-600';
     let trendIcon = 'ri-arrow-up-line';
     
     if (trend) {
-      const isPositive = trend.startsWith('+') || (trend.includes('%') && !trend.startsWith('-'));
+      const isPositive = trend.startsWith('+');
       const isNegative = trend.startsWith('-');
       
       if (isIncident) {
         // For incidents: decrease (negative) = good (green), increase (positive) = bad (red)
         if (isNegative) {
-          // Decrease in incidents is good - show green
           trendColor = 'text-green-600';
           trendIcon = 'ri-arrow-down-line';
         } else if (isPositive) {
-          // Increase in incidents is bad - show red
           trendColor = 'text-red-600';
           trendIcon = 'ri-arrow-up-line';
         }
@@ -1694,9 +1692,21 @@ const AdminDashboard: React.FC = () => {
                   count: item.total_incidents || 0
                 }))}
                 title="Incident Trends Analysis"
-                color="#dc2626"
+                color={(() => {
+                  // Calculate trend: if incidents are increasing (bad), use red; if decreasing (good), use green
+                  if (monthlyIncidents.length >= 2) {
+                    const firstCount = monthlyIncidents[0].total_incidents || 0;
+                    const lastCount = monthlyIncidents[monthlyIncidents.length - 1].total_incidents || 0;
+                    // If trending up (increasing), it's bad - use red
+                    // If trending down (decreasing), it's good - use green
+                    return lastCount > firstCount ? '#EF4444' : '#10B981';
+                  }
+                  // Default to green if not enough data points
+                  return '#10B981';
+                })()}
                 height={350}
                 legendLabel="Total Incidents"
+                isIncident={true}
               />
             </div>
           ) : (
