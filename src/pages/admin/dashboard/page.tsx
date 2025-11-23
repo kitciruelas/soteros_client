@@ -1443,7 +1443,7 @@ const AdminDashboard: React.FC = () => {
                 <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showYearDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showYearDropdown && (
-                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-60 overflow-y-auto">
+                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-40 overflow-y-auto thin-scrollbar">
                   <div className="py-1">
                     {getYears().map(year => (
                       <button
@@ -1481,7 +1481,7 @@ const AdminDashboard: React.FC = () => {
                 <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showMonthDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showMonthDropdown && (
-                <div className="absolute left-0 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-60 overflow-y-auto">
+                <div className="absolute left-0 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-40 overflow-y-auto thin-scrollbar">
                   <div className="py-1">
                     {getMonths().map(month => (
                       <button
@@ -1523,7 +1523,7 @@ const AdminDashboard: React.FC = () => {
                 <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showDayDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showDayDropdown && selectedMonth !== 0 && (
-                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-60 overflow-y-auto">
+                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-40 overflow-y-auto thin-scrollbar">
                   <div className="py-1">
                     {getDays(selectedYear, selectedMonth).map(day => (
                       <button
