@@ -1,26 +1,26 @@
 // Suppress all console logs in production/frontend
-if (typeof window !== 'undefined') {
-  // Override all console methods to suppress logs
-  const noop = () => {}
-  console.log = noop
-  console.info = noop
-  console.debug = noop
-  console.warn = noop
-  console.error = noop
-  console.table = noop
-  console.group = noop
-  console.groupEnd = noop
-  console.groupCollapsed = noop
-  console.time = noop
-  console.timeEnd = noop
-  console.trace = noop
-  console.dir = noop
-  console.dirxml = noop
-  console.assert = noop
-  console.count = noop
-  console.countReset = noop
-  console.clear = noop
-}
+// if (typeof window !== 'undefined') {
+//   // Override all console methods to suppress logs
+//   const noop = () => {}
+//   console.log = noop
+//   console.info = noop
+//   console.debug = noop
+//   console.warn = noop
+//   console.error = noop
+//   console.table = noop
+//   console.group = noop
+//   console.groupEnd = noop
+//   console.groupCollapsed = noop
+//   console.time = noop
+//   console.timeEnd = noop
+//   console.trace = noop
+//   console.dir = noop
+//   console.dirxml = noop
+//   console.assert = noop
+//   console.count = noop
+//   console.countReset = noop
+//   console.clear = noop
+// }
 
 import React, { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
