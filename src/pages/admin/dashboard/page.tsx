@@ -1838,47 +1838,6 @@ const AdminDashboard: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <select
-                  value={responseTimePeriod}
-                  onChange={(e) => setResponseTimePeriod(e.target.value as 'days' | 'months')}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="days">Days</option>
-                  <option value="months">Months</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <select
-                  value={responseTimeLimit}
-                  onChange={(e) => {
-                    const newLimit = parseInt(e.target.value);
-                    setResponseTimeLimit(newLimit);
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {responseTimePeriod === 'days' ? (
-                    <>
-                      <option value={7}>7 days</option>
-                      <option value={14}>14 days</option>
-                      <option value={30}>30 days</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value={6}>6 months</option>
-                      <option value={12}>12 months</option>
-                      <option value={18}>18 months</option>
-                      <option value={24}>24 months</option>
-                    </>
-                  )}
-                </select>
-              </div>
-       
-            </div>
-          </div>
-          
           {responseTimeLoading || (responseTimeData.length === 0 && individualResponseTimeData.length === 0 && !responseTimeLoading) ? (
             <div className="flex items-center justify-center h-[350px] bg-gray-50 rounded-lg">
               <div className="text-center">
