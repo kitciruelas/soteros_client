@@ -246,10 +246,12 @@ const AdminDashboard: React.FC = () => {
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
+      console.log(`Month selected (${monthParam}) - Using daily breakdown with ${daysInMonth} days for ${selectedYear}-${monthParam}`);
     } else if (selectedYear) {
       // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
       limitToUse = 12;
+      console.log(`Only year selected (${selectedYear}) - Using monthly breakdown`);
     }
     
     console.log(`Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam}, Period: ${periodToUse}, Limit: ${limitToUse}`);
@@ -1003,14 +1005,22 @@ const AdminDashboard: React.FC = () => {
         // If month is selected, use days in that month as limit
         const daysInMonth = new Date(year, month, 0).getDate();
         limitToUse = daysInMonth;
+        console.log(`Month filter active: ${month}/${year}, expecting ${daysInMonth} daily data points`);
       } else if (year && !month) {
         // If only year is selected, use 12 months
         limitToUse = 12;
+        console.log(`Year filter only: ${year}, expecting 12 monthly data points`);
       }
       
-      console.log(`Fetching trends data - Period: ${period}, Limit: ${limitToUse}, Year: ${year}, Month: ${month}, Day: ${day}`);
+      console.log(`API Call - Period: ${period}, Limit: ${limitToUse}, Year: ${year}, Month: ${month}, Day: ${day}`);
       const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limitToUse, year, month, day);
-      console.log('Trends response:', trendsResponse);
+      console.log('Trends API Response:', {
+        success: trendsResponse.success,
+        dataCount: trendsResponse.trendsData?.length || 0,
+        firstFewItems: trendsResponse.trendsData?.slice(0, 5),
+        period: trendsResponse.period,
+        note: trendsResponse.note
+      });
       
       if (trendsResponse.success && trendsResponse.trendsData) {
         // Map the API response to the expected interface format
@@ -1022,7 +1032,10 @@ const AdminDashboard: React.FC = () => {
           high_priority_incidents: item.high_priority_incidents || 0
         }));
         console.log('Mapped trends data:', mappedData);
-        console.log(`Total data points: ${mappedData.length}`);
+        console.log(`Total data points received: ${mappedData.length}`);
+        if (month && mappedData.length < 10) {
+          console.warn(`⚠️ Expected daily data for month ${month}, but only got ${mappedData.length} data points. Check server grouping logic.`);
+        }
         setMonthlyIncidents(mappedData);
       } else {
         console.warn('Trends API returned success: false or no data');

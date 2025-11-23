@@ -704,8 +704,9 @@ export const adminDashboardApi = {
   getMonthlyTrends: async (period: 'days' | 'weeks' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
     let url = `/admin/dashboard/monthly-trends?period=${period}&limit=${limit}`;
     if (year) url += `&year=${year}`;
-    if (month) url += `&month=${month}`;
-    if (day) url += `&day=${day}`;
+    if (month && month > 0) url += `&month=${month}`;
+    if (day && day > 0) url += `&day=${day}`;
+    console.log(`[API] getMonthlyTrends URL: ${url}`);
     return apiRequest<{
       success: boolean;
       trendsData: Array<{
