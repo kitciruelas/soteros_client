@@ -1405,159 +1405,157 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Date Filters and Page Header Actions - 2 Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Date Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      {/* Date Filters and Page Header Actions */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-wrap items-center gap-4 justify-between">
+          {/* Date Filters */}
+          <div className="flex flex-wrap items-center gap-3">
             <label className="text-sm font-semibold text-gray-700 whitespace-nowrap flex items-center">
               <i className="ri-calendar-2-line mr-2 text-blue-600"></i>
               Filter by Date:
             </label>
-            <div className="flex flex-wrap items-center gap-3 flex-1">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 whitespace-nowrap">Year:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px]"
-                >
-                  {getYears().map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 whitespace-nowrap">Month:</label>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => {
-                    const newMonth = parseInt(e.target.value);
-                    setSelectedMonth(newMonth);
-                    // Reset day to "All Days" when month changes
-                    setSelectedDay(0);
-                  }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[120px]"
-                >
-                  {getMonths().map(month => (
-                    <option key={month.value} value={month.value}>{month.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 whitespace-nowrap">Day:</label>
-                <select
-                  value={selectedDay}
-                  onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                  disabled={selectedMonth === 0}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 min-w-[100px]"
-                >
-                  {getDays(selectedYear, selectedMonth).map(day => (
-                    <option key={day} value={day}>
-                      {day === 0 ? 'All Days' : day.toString()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                onClick={() => {
-                  const today = new Date();
-                  setSelectedYear(today.getFullYear());
-                  setSelectedMonth(today.getMonth() + 1);
-                  setSelectedDay(today.getDate());
-                }}
-                className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Year:</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px]"
               >
-                <i className="ri-calendar-line mr-1.5"></i>
-                Today
-              </button>
+                {getYears().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
             </div>
-          </div>
-        </div>
-
-        {/* Page Header Actions */}
-        <div className="flex items-center justify-end space-x-3">
-        <div className="relative export-dropdown-container">
-            <button 
-              onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Month:</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => {
+                  const newMonth = parseInt(e.target.value);
+                  setSelectedMonth(newMonth);
+                  // Reset day to "All Days" when month changes
+                  setSelectedDay(0);
+                }}
+                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[120px]"
+              >
+                {getMonths().map(month => (
+                  <option key={month.value} value={month.value}>{month.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Day:</label>
+              <select
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+                disabled={selectedMonth === 0}
+                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 min-w-[100px]"
+              >
+                {getDays(selectedYear, selectedMonth).map(day => (
+                  <option key={day} value={day}>
+                    {day === 0 ? 'All Days' : day.toString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                const today = new Date();
+                setSelectedYear(today.getFullYear());
+                setSelectedMonth(today.getMonth() + 1);
+                setSelectedDay(today.getDate());
+              }}
+              className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
             >
-              <i className="ri-download-line mr-2"></i>
-              Export Data
-              <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
+              <i className="ri-calendar-line mr-1.5"></i>
+              Today
             </button>
-            {showExportDropdown && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="py-2">
-                  <button
-                    onClick={exportAllData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1"
-                  >
-                    <i className="ri-download-cloud-line mr-3 text-green-600"></i>
-                    <span className="font-semibold">Export All Data</span>
-                  </button>
-                  <div className="px-2 py-1 text-xs text-gray-500 mb-2">Individual Exports:</div>
-                  <button
-                    onClick={exportDashboardStats}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-bar-chart-line mr-3 text-blue-500"></i>
-                    Dashboard Statistics
-                  </button>
-                  <button
-                    onClick={exportIncidentTypes}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-pie-chart-line mr-3 text-red-500"></i>
-                    Incident Types
-                  </button>
-                  <button
-                    onClick={exportWelfareData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
-                    Welfare Distribution
-                  </button>
-                  <button
-                    onClick={exportTrendsData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-line-chart-line mr-3 text-green-500"></i>
-                    Trends Data
-                  </button>
-                  <button
-                    onClick={exportPeakHoursData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-time-line mr-3 text-yellow-500"></i>
-                    Peak Hours Analysis
-                  </button>
-                  <button
-                    onClick={exportLocationData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-map-pin-line mr-3 text-purple-500"></i>
-                    Location Data
-                  </button>
-                  <button
-                    onClick={exportResponseTimeData}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <i className="ri-timer-line mr-3 text-indigo-500"></i>
-                    Response Time Analysis
-                  </button>
+          </div>
+
+          {/* Page Header Actions */}
+          <div className="flex items-center space-x-3">
+            <div className="relative export-dropdown-container">
+              <button 
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+              >
+                <i className="ri-download-line mr-2"></i>
+                Export Data
+                <i className={`ri-arrow-down-s-line ml-1 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`}></i>
+              </button>
+              {showExportDropdown && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="py-2">
+                    <button
+                      onClick={exportAllData}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center border-b border-gray-200 mb-1"
+                    >
+                      <i className="ri-download-cloud-line mr-3 text-green-600"></i>
+                      <span className="font-semibold">Export All Data</span>
+                    </button>
+                    <div className="px-2 py-1 text-xs text-gray-500 mb-2">Individual Exports:</div>
+                    <button
+                      onClick={exportDashboardStats}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-bar-chart-line mr-3 text-blue-500"></i>
+                      Dashboard Statistics
+                    </button>
+                    <button
+                      onClick={exportIncidentTypes}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-pie-chart-line mr-3 text-red-500"></i>
+                      Incident Types
+                    </button>
+                    <button
+                      onClick={exportWelfareData}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-pie-chart-2-line mr-3 text-orange-500"></i>
+                      Welfare Distribution
+                    </button>
+                    <button
+                      onClick={exportTrendsData}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-line-chart-line mr-3 text-green-500"></i>
+                      Trends Data
+                    </button>
+                    <button
+                      onClick={exportPeakHoursData}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-time-line mr-3 text-yellow-500"></i>
+                      Peak Hours Analysis
+                    </button>
+                    <button
+                      onClick={exportLocationData}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-map-pin-line mr-3 text-purple-500"></i>
+                      Location Data
+                    </button>
+                    <button
+                      onClick={exportResponseTimeData}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <i className="ri-timer-line mr-3 text-indigo-500"></i>
+                      Response Time Analysis
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-        </div>
-        <button
-          onClick={fetchDashboardStats}
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <i className={`ri-refresh-line mr-2 ${loading ? 'animate-spin' : ''}`}></i>
-          Refresh Data
-        </button>
+              )}
+            </div>
+            <button
+              onClick={fetchDashboardStats}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i className={`ri-refresh-line mr-2 ${loading ? 'animate-spin' : ''}`}></i>
+              Refresh Data
+            </button>
+          </div>
         </div>
       </div>
 
