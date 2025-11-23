@@ -996,8 +996,20 @@ const AdminDashboard: React.FC = () => {
   const fetchTrendsData = async (period: 'days' | 'months' = 'months', limit: number = 12, year?: number, month?: number, day?: number) => {
     try {
       setTrendsLoading(true);
-      console.log(`Fetching trends data for period: ${period}, limit: ${limit}, year: ${year}, month: ${month}, day: ${day}`);
-      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limit, year, month, day);
+      
+      // When date filters are used, calculate appropriate limit
+      let limitToUse = limit;
+      if (year && month) {
+        // If month is selected, use days in that month as limit
+        const daysInMonth = new Date(year, month, 0).getDate();
+        limitToUse = daysInMonth;
+      } else if (year && !month) {
+        // If only year is selected, use 12 months
+        limitToUse = 12;
+      }
+      
+      console.log(`Fetching trends data - Period: ${period}, Limit: ${limitToUse}, Year: ${year}, Month: ${month}, Day: ${day}`);
+      const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limitToUse, year, month, day);
       console.log('Trends response:', trendsResponse);
       
       if (trendsResponse.success && trendsResponse.trendsData) {
@@ -1009,7 +1021,8 @@ const AdminDashboard: React.FC = () => {
           resolved_incidents: item.resolved_incidents || 0,
           high_priority_incidents: item.high_priority_incidents || 0
         }));
-        console.log('Mapped data:', mappedData);
+        console.log('Mapped trends data:', mappedData);
+        console.log(`Total data points: ${mappedData.length}`);
         setMonthlyIncidents(mappedData);
       } else {
         console.warn('Trends API returned success: false or no data');
@@ -1038,22 +1051,8 @@ const AdminDashboard: React.FC = () => {
         adminDashboardApi.getAnalytics(selectedYear, monthParam, dayParam)
       ]);
 
-      // Fetch trends data with auto-adjusted period and limit based on date filters
-      let periodToUse: 'days' | 'months' = 'months';
-      let limitToUse: number = 12;
-      
-      if (monthParam) {
-        // If month is selected, show daily breakdown for that month
-        periodToUse = 'days';
-        const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
-        limitToUse = daysInMonth;
-      } else if (selectedYear) {
-        // If only year is selected, show monthly breakdown for the year
-        periodToUse = 'months';
-        limitToUse = 12;
-      }
-      
-      await fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
+      // Note: Trends data is fetched separately via useEffect when date filters change
+      // This prevents duplicate calls and ensures accurate data based on current filters
 
       // Try to fetch location data, but don't fail if it doesn't work
       let locationResponse = null;
