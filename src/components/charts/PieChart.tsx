@@ -125,17 +125,6 @@ const PieChart: React.FC<PieChartProps> = React.memo(
             </RechartsPieChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>
-              Categories: <span className="font-medium text-gray-900">{data.length}</span>
-            </span>
-            <span>
-              Average: <span className="font-medium text-gray-900">{(total / data.length).toLocaleString()}</span>
-            </span>
-          </div>
-        </div>
       </div>
     )
   },
