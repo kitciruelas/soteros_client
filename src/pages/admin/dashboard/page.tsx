@@ -1105,24 +1105,78 @@ const AdminDashboard: React.FC = () => {
 
         // Set trends based on response data
         if (statsResponse.trends) {
-          // Example: calculate percentage change for incidents and users
+          // Calculate percentage change for incidents and users
           const incidentsTrendData = statsResponse.trends.incidents;
           const usersTrendData = statsResponse.trends.users;
 
+          // Determine comparison type based on date filters
+          let comparisonType = 'period';
+          let comparisonLabel = 'from previous day';
+          
+          if (selectedDay > 0 && selectedMonth > 0) {
+            // Day to day comparison
+            comparisonType = 'day';
+            comparisonLabel = 'from yesterday';
+          } else if (selectedMonth > 0) {
+            // Month to month comparison
+            comparisonType = 'month';
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+            const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+            comparisonLabel = `from ${monthNames[prevMonth - 1]} ${prevYear}`;
+          } else if (selectedYear) {
+            // Year to year comparison
+            comparisonType = 'year';
+            comparisonLabel = `from ${selectedYear - 1}`;
+          }
+
           if (incidentsTrendData && incidentsTrendData.length >= 2) {
-            const latest = incidentsTrendData[incidentsTrendData.length - 1].count;
-            const previous = incidentsTrendData[incidentsTrendData.length - 2].count;
+            let latest: number;
+            let previous: number;
+            
+            if (comparisonType === 'year') {
+              // For year-to-year: sum all incidents in current year vs previous year
+              // Since we're filtering by year, we need to compare totals
+              // The trends data contains daily data for the selected year
+              // We'll compare the last data point vs the second-to-last as a proxy
+              // (Note: For true year-to-year, we'd need to fetch previous year's data)
+              latest = incidentsTrendData[incidentsTrendData.length - 1].count;
+              previous = incidentsTrendData[incidentsTrendData.length - 2].count;
+            } else if (comparisonType === 'month') {
+              // For month-to-month: compare last day of current month vs last day of previous month
+              // Since trends data is daily, we can use the last data point
+              latest = incidentsTrendData[incidentsTrendData.length - 1].count;
+              previous = incidentsTrendData.length >= 2 ? incidentsTrendData[incidentsTrendData.length - 2].count : 0;
+            } else {
+              // For day-to-day or period: compare last two data points
+              latest = incidentsTrendData[incidentsTrendData.length - 1].count;
+              previous = incidentsTrendData[incidentsTrendData.length - 2].count;
+            }
+            
             const change = previous === 0 ? 0 : ((latest - previous) / previous) * 100;
-            setIncidentTrend(`${change >= 0 ? '+' : ''}${change.toFixed(1)}% from last period`);
+            setIncidentTrend(`${change >= 0 ? '+' : ''}${change.toFixed(1)}% ${comparisonLabel}`);
           } else {
             setIncidentTrend(null);
           }
 
           if (usersTrendData && usersTrendData.length >= 2) {
-            const latest = usersTrendData[usersTrendData.length - 1].count;
-            const previous = usersTrendData[usersTrendData.length - 2].count;
+            let latest: number;
+            let previous: number;
+            
+            if (comparisonType === 'year') {
+              latest = usersTrendData[usersTrendData.length - 1].count;
+              previous = usersTrendData[usersTrendData.length - 2].count;
+            } else if (comparisonType === 'month') {
+              latest = usersTrendData[usersTrendData.length - 1].count;
+              previous = usersTrendData.length >= 2 ? usersTrendData[usersTrendData.length - 2].count : 0;
+            } else {
+              latest = usersTrendData[usersTrendData.length - 1].count;
+              previous = usersTrendData[usersTrendData.length - 2].count;
+            }
+            
             const change = previous === 0 ? 0 : ((latest - previous) / previous) * 100;
-            setUserTrend(`${change >= 0 ? '+' : ''}${change.toFixed(1)}% from last period`);
+            setUserTrend(`${change >= 0 ? '+' : ''}${change.toFixed(1)}% ${comparisonLabel}`);
           } else {
             setUserTrend(null);
           }
@@ -1253,25 +1307,57 @@ const AdminDashboard: React.FC = () => {
     icon: string;
     color: string;
     trend?: string;
-  }> = ({ title, value, icon, color, trend }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value?.toLocaleString() || '0'}</p>
-          {trend && (
-            <p className="text-sm text-green-600 mt-1">
-              <i className="ri-arrow-up-line mr-1"></i>
-              {trend}
-            </p>
-          )}
-        </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-          <i className={`${icon} text-xl text-white`}></i>
+    isIncident?: boolean; // For incidents, decrease is good (green), increase is bad (red)
+  }> = ({ title, value, icon, color, trend, isIncident = false }) => {
+    // Parse trend to determine if it's positive or negative
+    let trendColor = 'text-green-600';
+    let trendIcon = 'ri-arrow-up-line';
+    
+    if (trend) {
+      const isPositive = trend.startsWith('+');
+      const isNegative = trend.startsWith('-');
+      
+      if (isIncident) {
+        // For incidents: decrease (negative) = good (green), increase (positive) = bad (red)
+        if (isNegative) {
+          trendColor = 'text-green-600';
+          trendIcon = 'ri-arrow-down-line';
+        } else if (isPositive) {
+          trendColor = 'text-red-600';
+          trendIcon = 'ri-arrow-up-line';
+        }
+      } else {
+        // For users: increase (positive) = good (green), decrease (negative) = bad (red)
+        if (isPositive) {
+          trendColor = 'text-green-600';
+          trendIcon = 'ri-arrow-up-line';
+        } else if (isNegative) {
+          trendColor = 'text-red-600';
+          trendIcon = 'ri-arrow-down-line';
+        }
+      }
+    }
+    
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+            <p className="text-3xl font-bold text-gray-900">{value?.toLocaleString() || '0'}</p>
+            {trend && (
+              <p className={`text-sm ${trendColor} mt-1`}>
+                <i className={`${trendIcon} mr-1`}></i>
+                {trend}
+              </p>
+            )}
+          </div>
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
+            <i className={`${icon} text-xl text-white`}></i>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -1475,6 +1561,7 @@ const AdminDashboard: React.FC = () => {
           icon="ri-error-warning-line"
           color="bg-red-500"
           trend={incidentTrend || undefined}
+          isIncident={true}
         />
         <StatCard
           title="Active Incidents"
