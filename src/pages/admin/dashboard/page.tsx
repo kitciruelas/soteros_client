@@ -262,6 +262,24 @@ const AdminDashboard: React.FC = () => {
         }));
         console.log('Mapped trends data:', mappedData);
         console.log(`Total data points received: ${mappedData.length}`);
+        console.log('Sample periods:', mappedData.slice(0, 5).map(d => d.period));
+        
+        // Check if we're getting monthly format instead of daily when month is selected
+        if (month && mappedData.length > 0) {
+          const firstPeriod = mappedData[0].period;
+          const isMonthlyFormat = /^[A-Za-z]{3}\s+\d{4}$/.test(firstPeriod) || /^\d{4}-\d{2}$/.test(firstPeriod);
+          const isDailyFormat = /\d{1,2}/.test(firstPeriod) && firstPeriod.includes(',');
+          
+          if (isMonthlyFormat && !isDailyFormat) {
+            console.error(`❌ ERROR: Month filter is active (${month}), but server returned monthly data format instead of daily!`);
+            console.error(`Expected: Daily format like "Sep 1, 2025" or "Sep 2, 2025"`);
+            console.error(`Got: Monthly format like "${firstPeriod}"`);
+            console.error(`This indicates the server is grouping by month instead of by day.`);
+          } else if (isDailyFormat) {
+            console.log(`✅ Correct: Server returned daily data format`);
+          }
+        }
+        
         if (month && mappedData.length < 10) {
           console.warn(`⚠️ Expected daily data for month ${month}, but only got ${mappedData.length} data points. Check server grouping logic.`);
         }
