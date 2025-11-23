@@ -1841,7 +1841,6 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Period:</label>
                 <select
                   value={responseTimePeriod}
                   onChange={(e) => setResponseTimePeriod(e.target.value as 'days' | 'months')}
@@ -1852,7 +1851,6 @@ const AdminDashboard: React.FC = () => {
                 </select>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Last:</label>
                 <select
                   value={responseTimeLimit}
                   onChange={(e) => {
@@ -1887,9 +1885,6 @@ const AdminDashboard: React.FC = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-500">
                   {responseTimeLoading ? 'Loading response time data...' : 'Loading chart data...'}
-                </p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Period: {responseTimePeriod} | Last: {responseTimeLimit}
                 </p>
               </div>
             </div>
