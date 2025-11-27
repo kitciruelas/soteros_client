@@ -464,7 +464,7 @@ export class ExportUtils {
       doc.setFont("helvetica", "normal")
       doc.setFontSize(9)
       
-      columns.forEach((col, index) => {
+      for (const col of columns) {
         const label = col.label
         const value = (singleRecord as any)[col.key]
         const formattedValue = col.format ? col.format(value, singleRecord) : String(value || "")
@@ -514,7 +514,7 @@ export class ExportUtils {
         doc.line(margin, currentY + maxHeight + 2, pageWidth - margin, currentY + maxHeight + 2)
         
         currentY += maxHeight + 8
-      })
+      }
       
       // Skip total records section for single record
     } else {
