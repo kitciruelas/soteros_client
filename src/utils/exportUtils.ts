@@ -453,7 +453,72 @@ export class ExportUtils {
       }
     }
 
-    // ===== ENHANCED TABLE LOGIC =====
+    // ===== SINGLE RECORD FORMAT (NOT TABLE) =====
+    if (data.length === 1) {
+      // Display single record as a simple list format (not table)
+      currentY += 15
+      const singleRecord = data[0]
+      const labelWidth = 80 // Width for labels
+      const valueWidth = pageWidth - margin - labelWidth - margin // Remaining width for values
+      
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      
+      columns.forEach((col, index) => {
+        const label = col.label
+        const value = (singleRecord as any)[col.key]
+        const formattedValue = col.format ? col.format(value, singleRecord) : String(value || "")
+        
+        // Check if we need a new page
+        const footerSpace = 20
+        const availablePageHeight = pageHeight - margin - footerSpace
+        if (currentY + 10 > availablePageHeight) {
+          await drawPageFooter(pageNumber)
+          doc.addPage(orientationParam as 'p' | 'l')
+          pageNumber++
+          await drawPageHeader()
+          currentY = headerHeight + 15
+        }
+        
+        // Label (bold)
+        doc.setFont("helvetica", "bold")
+        doc.setTextColor(55, 65, 81)
+        const labelLines = doc.splitTextToSize(label, labelWidth - 10)
+        if (Array.isArray(labelLines)) {
+          labelLines.forEach((line, lineIndex) => {
+            doc.text(line, margin, currentY + lineIndex * 5)
+          })
+        } else {
+          doc.text(label, margin, currentY)
+        }
+        
+        // Value (normal)
+        doc.setFont("helvetica", "normal")
+        doc.setTextColor(17, 24, 39)
+        const valueLines = doc.splitTextToSize(formattedValue, valueWidth - 10)
+        const labelHeight = Array.isArray(labelLines) ? labelLines.length * 5 : 5
+        const valueHeight = Array.isArray(valueLines) ? valueLines.length * 5 : 5
+        const maxHeight = Math.max(labelHeight, valueHeight)
+        
+        if (Array.isArray(valueLines)) {
+          valueLines.forEach((line, lineIndex) => {
+            doc.text(line, margin + labelWidth, currentY + lineIndex * 5)
+          })
+        } else {
+          doc.text(formattedValue, margin + labelWidth, currentY)
+        }
+        
+        // Add separator line
+        doc.setDrawColor(229, 231, 235)
+        doc.setLineWidth(0.2)
+        doc.line(margin, currentY + maxHeight + 2, pageWidth - margin, currentY + maxHeight + 2)
+        
+        currentY += maxHeight + 8
+      })
+      
+      // Skip total records section for single record
+    } else {
+      // ===== ENHANCED TABLE LOGIC (FOR MULTIPLE RECORDS) =====
     const headers = columns.map((col) => col.label)
     const rows = data.map((item) =>
       columns.map((col) => {
@@ -734,7 +799,8 @@ export class ExportUtils {
       }
     }
 
-    if (!hideTotalRecords) {
+      // Only show total records for multiple records (not for single record)
+      if (!hideTotalRecords) {
       // Check if total records section fits on current page
       const totalRecordsHeight = 15
       const spacingBeforeTotal = 10
@@ -779,6 +845,7 @@ export class ExportUtils {
         doc.setFontSize(8)
       }
       doc.text(totalText, pageWidth / 2, currentY + 10, { align: "center", maxWidth: availableWidth - 10 })
+      }
     }
 
     // Draw footer with logo on last page
