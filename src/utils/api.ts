@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend-q2yihjhchq-et.a.run.app/api');
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
 
 // Ensure we always use the full URL in production
 const getApiBaseUrl = () => {
@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
   }
   
   // In production, always use the full URL
-  return 'https://soteros-backend-q2yihjhchq-et.a.run.app/api';
+  return 'https://soteros-backend.onrender.com/api';
 };
 
 const FINAL_API_BASE_URL = getApiBaseUrl();

@@ -66,7 +66,7 @@ const getFileUrl = (fileAttachment: string | null) => {
   
   // Otherwise, it's a local file path - construct the backend URL
   const apiUrl = import.meta.env.VITE_API_URL;
-  let baseUrl = 'https://soteros-backend-q2yihjhchq-et.a.run.app';
+  let baseUrl = 'https://soteros-backend.onrender.com';
   
   if (apiUrl) {
     baseUrl = apiUrl.replace(/\/api\/?$/, '');
