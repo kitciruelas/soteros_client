@@ -456,37 +456,69 @@ export class ExportUtils {
     // ===== SINGLE RECORD FORMAT (NOT TABLE) =====
     if (data.length === 1) {
       // Display single record as a simple list format (not table)
-      currentY += 15
+      // Optimize for single page - calculate total height needed first
       const singleRecord = data[0]
       const labelWidth = 80 // Width for labels
       const valueWidth = pageWidth - margin - labelWidth - margin // Remaining width for values
+      const footerSpace = 20
+      const availablePageHeight = pageHeight - margin - footerSpace
       
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(9)
+      // Pre-calculate all field heights to determine if we need to compress
+      const fieldHeights: number[] = []
+      let totalEstimatedHeight = 0
       
       for (const col of columns) {
         const label = col.label
         const value = (singleRecord as any)[col.key]
         const formattedValue = col.format ? col.format(value, singleRecord) : String(value || "")
         
-        // Check if we need a new page
-        const footerSpace = 20
-        const availablePageHeight = pageHeight - margin - footerSpace
-        if (currentY + 10 > availablePageHeight) {
-          await drawPageFooter(pageNumber)
-          doc.addPage(orientationParam as 'p' | 'l')
-          pageNumber++
-          await drawPageHeader()
-          currentY = headerHeight + 15
+        doc.setFontSize(9)
+        const labelLines = doc.splitTextToSize(label, labelWidth - 10)
+        const valueLines = doc.splitTextToSize(formattedValue, valueWidth - 10)
+        const labelHeight = Array.isArray(labelLines) ? labelLines.length * 4 : 4
+        const valueHeight = Array.isArray(valueLines) ? valueLines.length * 4 : 4
+        const maxHeight = Math.max(labelHeight, valueHeight)
+        fieldHeights.push(maxHeight)
+        totalEstimatedHeight += maxHeight + 6 // 6mm spacing between fields
+      }
+      
+      // Determine if we need to compress layout
+      const spaceAfterHeader = availablePageHeight - currentY
+      const needsCompression = totalEstimatedHeight > spaceAfterHeader
+      
+      // Adjust font size and spacing if needed
+      const baseFontSize = needsCompression ? 8 : 9
+      const lineHeight = needsCompression ? 3.5 : 4
+      const fieldSpacing = needsCompression ? 5 : 6
+      const separatorSpacing = needsCompression ? 1 : 2
+      
+      currentY += needsCompression ? 8 : 15
+      
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(baseFontSize)
+      
+      for (let colIndex = 0; colIndex < columns.length; colIndex++) {
+        const col = columns[colIndex]
+        const label = col.label
+        const value = (singleRecord as any)[col.key]
+        const formattedValue = col.format ? col.format(value, singleRecord) : String(value || "")
+        
+        // NO PAGE BREAKS for single record - must fit on one page
+        // If we're running out of space, reduce spacing further
+        const remainingSpace = availablePageHeight - currentY
+        if (remainingSpace < 10 && colIndex < columns.length - 1) {
+          // Reduce spacing for remaining fields
+          currentY -= 1
         }
         
         // Label (bold)
         doc.setFont("helvetica", "bold")
+        doc.setFontSize(baseFontSize)
         doc.setTextColor(55, 65, 81)
         const labelLines = doc.splitTextToSize(label, labelWidth - 10)
         if (Array.isArray(labelLines)) {
           labelLines.forEach((line, lineIndex) => {
-            doc.text(line, margin, currentY + lineIndex * 5)
+            doc.text(line, margin, currentY + lineIndex * lineHeight)
           })
         } else {
           doc.text(label, margin, currentY)
@@ -494,26 +526,29 @@ export class ExportUtils {
         
         // Value (normal)
         doc.setFont("helvetica", "normal")
+        doc.setFontSize(baseFontSize)
         doc.setTextColor(17, 24, 39)
         const valueLines = doc.splitTextToSize(formattedValue, valueWidth - 10)
-        const labelHeight = Array.isArray(labelLines) ? labelLines.length * 5 : 5
-        const valueHeight = Array.isArray(valueLines) ? valueLines.length * 5 : 5
+        const labelHeight = Array.isArray(labelLines) ? labelLines.length * lineHeight : lineHeight
+        const valueHeight = Array.isArray(valueLines) ? valueLines.length * lineHeight : lineHeight
         const maxHeight = Math.max(labelHeight, valueHeight)
         
         if (Array.isArray(valueLines)) {
           valueLines.forEach((line, lineIndex) => {
-            doc.text(line, margin + labelWidth, currentY + lineIndex * 5)
+            doc.text(line, margin + labelWidth, currentY + lineIndex * lineHeight)
           })
         } else {
           doc.text(formattedValue, margin + labelWidth, currentY)
         }
         
-        // Add separator line
-        doc.setDrawColor(229, 231, 235)
-        doc.setLineWidth(0.2)
-        doc.line(margin, currentY + maxHeight + 2, pageWidth - margin, currentY + maxHeight + 2)
+        // Add separator line (skip last field to save space)
+        if (colIndex < columns.length - 1) {
+          doc.setDrawColor(229, 231, 235)
+          doc.setLineWidth(0.2)
+          doc.line(margin, currentY + maxHeight + separatorSpacing, pageWidth - margin, currentY + maxHeight + separatorSpacing)
+        }
         
-        currentY += maxHeight + 8
+        currentY += maxHeight + fieldSpacing
       }
       
       // Skip total records section for single record
