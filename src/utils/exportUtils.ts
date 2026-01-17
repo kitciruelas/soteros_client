@@ -359,12 +359,28 @@ export class ExportUtils {
       const pageNumberY = signatureName ? pageHeight - 12 : pageHeight - 5
       doc.text(footerText, pageWidth / 2, pageNumberY, { align: "center" })
       
-      // Add signature name at the bottom if provided
+      // Add signature name at the bottom right if provided
       if (signatureName) {
+        const rightMargin = margin
+        const signatureStartX = pageWidth - rightMargin - 60 // Width of signature area
+        const signatureY = pageHeight - 15
+        
+        // Draw line above signature
+        doc.setDrawColor(0, 0, 0)
+        doc.setLineWidth(0.2)
+        doc.line(signatureStartX, signatureY, pageWidth - rightMargin, signatureY)
+        
+        // Add name below the line
         doc.setFontSize(9)
         doc.setTextColor(17, 24, 39)
-        doc.setFont("helvetica", "bold")
-        doc.text(signatureName, pageWidth / 2, pageHeight - 6, { align: "center" })
+        doc.setFont("helvetica", "normal")
+        doc.text(signatureName, pageWidth - rightMargin, signatureY + 5, { align: "right" })
+        
+        // Add "Admin" label below the name
+        doc.setFontSize(8)
+        doc.setTextColor(107, 114, 128)
+        doc.setFont("helvetica", "normal")
+        doc.text("Admin", pageWidth - rightMargin, signatureY + 9, { align: "right" })
       }
     }
 
