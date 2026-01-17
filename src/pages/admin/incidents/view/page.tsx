@@ -6,6 +6,7 @@ import type { ExportColumn } from '../../../../utils/exportUtils';
 import { useToast } from '../../../../components/base/Toast';
 import IncidentMapModal from '../../../../components/IncidentMapModal';
 import websocketService, { type NotificationData } from '../../../../services/websocketService';
+import { getAuthState } from '../../../../utils/auth';
 
 interface Incident {
   id: number;
@@ -134,6 +135,7 @@ const ViewIncidents: React.FC = () => {
   const [validationNotes, setValidationNotes] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingIncident, setIsExportingIncident] = useState(false);
   const [showExportPreview, setShowExportPreview] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [newIncidentIds, setNewIncidentIds] = useState<Set<number>>(new Set());
@@ -990,6 +992,10 @@ const ViewIncidents: React.FC = () => {
 
     setIsExporting(true);
     try {
+      // Get admin name from auth state
+      const authState = getAuthState();
+      const adminName = authState?.userData?.name || '';
+
       // Build dynamic title based on filters
       let title = 'Incidents Report';
       const filterParts = [];
@@ -1010,7 +1016,8 @@ const ViewIncidents: React.FC = () => {
         filename: 'incidents_report',
         title,
         includeTimestamp: true,
-        orientation: 'landscape' as const
+        orientation: 'landscape' as const,
+        signatureName: adminName || undefined
       };
 
       await ExportUtils.exportToPDF(filteredIncidents, incidentExportColumns, options);
@@ -1025,12 +1032,18 @@ const ViewIncidents: React.FC = () => {
   const handleExportIncident = async () => {
     if (!selectedIncident) return;
 
+    setIsExportingIncident(true);
     try {
+      // Get admin name from auth state
+      const authState = getAuthState();
+      const adminName = authState?.userData?.name || '';
+
       const options = {
         filename: `incident_${selectedIncident.id}_report`,
         title: `Incident Report - #${selectedIncident.id}`,
         includeTimestamp: true,
-        orientation: 'landscape' as const
+        orientation: 'landscape' as const,
+        signatureName: adminName || undefined
       };
 
       await ExportUtils.exportToPDF([selectedIncident], incidentExportColumns, options);
@@ -1038,6 +1051,8 @@ const ViewIncidents: React.FC = () => {
     } catch (error) {
       console.error('Export failed:', error);
       showToast({ type: 'error', message: 'Failed to export incident' });
+    } finally {
+      setIsExportingIncident(false);
     }
   };
 
@@ -1843,10 +1858,24 @@ const ViewIncidents: React.FC = () => {
               <div className="flex gap-2">
                 <button 
                   onClick={handleExportIncident}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                  disabled={isExportingIncident}
+                  className={`px-4 py-2 rounded-lg transition-colors shadow-sm flex items-center ${
+                    isExportingIncident
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
                 >
-                  <i className="ri-download-line mr-2"></i>
-                  Export
+                  {isExportingIncident ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-download-line mr-2"></i>
+                      Export
+                    </>
+                  )}
                 </button>
                 <button 
                   onClick={() => setShowMapModal(true)}

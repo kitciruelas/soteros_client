@@ -356,15 +356,15 @@ export class ExportUtils {
         : `Page ${currentPageNumber}`
       
       // Adjust position based on whether signature name is present
-      const pageNumberY = signatureName ? pageHeight - 10 : pageHeight - 5
+      const pageNumberY = signatureName ? pageHeight - 12 : pageHeight - 5
       doc.text(footerText, pageWidth / 2, pageNumberY, { align: "center" })
       
       // Add signature name at the bottom if provided
       if (signatureName) {
-        doc.setFontSize(8)
+        doc.setFontSize(9)
         doc.setTextColor(17, 24, 39)
-        doc.setFont("helvetica", "normal")
-        doc.text(signatureName, pageWidth / 2, pageHeight - 3, { align: "center" })
+        doc.setFont("helvetica", "bold")
+        doc.text(signatureName, pageWidth / 2, pageHeight - 6, { align: "center" })
       }
     }
 
