@@ -362,25 +362,28 @@ export class ExportUtils {
       // Add signature name at the bottom right if provided
       if (signatureName) {
         const rightMargin = margin
-        const signatureStartX = pageWidth - rightMargin - 60 // Width of signature area
+        const signatureWidth = 60 // Width of signature line
+        const signatureCenterX = pageWidth - rightMargin - (signatureWidth / 2)
         const signatureY = pageHeight - 15
+        const signatureStartX = pageWidth - rightMargin - signatureWidth
+        const signatureEndX = pageWidth - rightMargin
         
-        // Draw line above signature
+        // Draw line above signature (centered relative to right margin)
         doc.setDrawColor(0, 0, 0)
         doc.setLineWidth(0.2)
-        doc.line(signatureStartX, signatureY, pageWidth - rightMargin, signatureY)
+        doc.line(signatureStartX, signatureY, signatureEndX, signatureY)
         
-        // Add name below the line
+        // Add name below the line (centered on the line)
         doc.setFontSize(9)
         doc.setTextColor(17, 24, 39)
         doc.setFont("helvetica", "normal")
-        doc.text(signatureName, pageWidth - rightMargin, signatureY + 5, { align: "right" })
+        doc.text(signatureName, signatureCenterX, signatureY + 5, { align: "center" })
         
-        // Add "Admin" label below the name
+        // Add "Admin" label below the name (centered)
         doc.setFontSize(8)
         doc.setTextColor(107, 114, 128)
         doc.setFont("helvetica", "normal")
-        doc.text("Admin", pageWidth - rightMargin, signatureY + 9, { align: "right" })
+        doc.text("Admin", signatureCenterX, signatureY + 9, { align: "center" })
       }
     }
 
