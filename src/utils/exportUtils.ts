@@ -29,6 +29,7 @@ export interface ExportOptions {
   orientation?: 'portrait' | 'landscape'
   chartImages?: ChartImage[] // Array of chart images to include in PDF
   hideTotalRecords?: boolean // Hide "Total Records:" line in exports
+  signatureName?: string // Name to display at the bottom of the report (like a signature)
 }
 
 export class ExportUtils {
@@ -79,6 +80,7 @@ export class ExportUtils {
       orientation = 'portrait',
       chartImages,
       hideTotalRecords = false,
+      signatureName,
     } = options
 
     // Use specific logos if provided, otherwise fall back to logoUrl for both sides
@@ -352,7 +354,18 @@ export class ExportUtils {
       const footerText = totalPages 
         ? `Page ${currentPageNumber} of ${totalPages}`
         : `Page ${currentPageNumber}`
-      doc.text(footerText, pageWidth / 2, pageHeight - 5, { align: "center" })
+      
+      // Adjust position based on whether signature name is present
+      const pageNumberY = signatureName ? pageHeight - 10 : pageHeight - 5
+      doc.text(footerText, pageWidth / 2, pageNumberY, { align: "center" })
+      
+      // Add signature name at the bottom if provided
+      if (signatureName) {
+        doc.setFontSize(8)
+        doc.setTextColor(17, 24, 39)
+        doc.setFont("helvetica", "normal")
+        doc.text(signatureName, pageWidth / 2, pageHeight - 3, { align: "center" })
+      }
     }
 
     await drawPageHeader()
