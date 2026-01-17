@@ -1992,7 +1992,7 @@ const AdminDashboard: React.FC = () => {
                     status: item.status
                   };
                 })}
-                title={`Response Time per Individual Incident (Minutes) - Last ${responseTimeLimit} ${responseTimePeriod}`}
+                title={`Response Time per Individual Incident (Minutes)`}
                 dataKey="count"
                 color="#10b981"
                 height={350}
