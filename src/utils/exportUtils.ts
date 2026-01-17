@@ -359,8 +359,8 @@ export class ExportUtils {
       const pageNumberY = signatureName ? pageHeight - 12 : pageHeight - 5
       doc.text(footerText, pageWidth / 2, pageNumberY, { align: "center" })
       
-      // Add signature name at the bottom right if provided
-      if (signatureName) {
+      // Add signature name at the bottom right if provided (only on last page)
+      if (signatureName && totalPages && currentPageNumber === totalPages) {
         const rightMargin = margin
         const signatureWidth = 60 // Width of signature line
         const signatureCenterX = pageWidth - rightMargin - (signatureWidth / 2)
@@ -915,8 +915,11 @@ export class ExportUtils {
       }
     }
 
-    // Draw footer with logo on last page
-    await drawPageFooter(pageNumber)
+    // Get total number of pages before drawing final footer
+    const totalPages = doc.getNumberOfPages()
+
+    // Draw footer with logo on last page (pass totalPages so signature only shows on last page)
+    await drawPageFooter(pageNumber, totalPages)
 
     doc.save(`${filename}${includeTimestamp ? `_${this.getTimestamp()}` : ""}.pdf`)
   }
