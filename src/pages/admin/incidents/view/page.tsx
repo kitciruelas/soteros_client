@@ -1021,6 +1021,26 @@ const ViewIncidents: React.FC = () => {
     }
   };
 
+  // Handle export single incident from modal
+  const handleExportIncident = async () => {
+    if (!selectedIncident) return;
+
+    try {
+      const options = {
+        filename: `incident_${selectedIncident.id}_report`,
+        title: `Incident Report - #${selectedIncident.id}`,
+        includeTimestamp: true,
+        orientation: 'landscape' as const
+      };
+
+      await ExportUtils.exportToPDF([selectedIncident], incidentExportColumns, options);
+      showToast({ type: 'success', message: 'Incident exported successfully' });
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast({ type: 'error', message: 'Failed to export incident' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1820,13 +1840,22 @@ const ViewIncidents: React.FC = () => {
                 <i className="ri-close-line mr-2"></i>
                 Close
               </button>
-              <button 
-                onClick={() => setShowMapModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                <i className="ri-map-pin-line mr-2"></i>
-                View on Map
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleExportIncident}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                >
+                  <i className="ri-download-line mr-2"></i>
+                  Export
+                </button>
+                <button 
+                  onClick={() => setShowMapModal(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  <i className="ri-map-pin-line mr-2"></i>
+                  View on Map
+                </button>
+              </div>
             </div>
           </div>
         </div>
