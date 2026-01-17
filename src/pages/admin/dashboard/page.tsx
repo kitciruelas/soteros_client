@@ -1505,62 +1505,64 @@ const AdminDashboard: React.FC = () => {
               )}
             </div>
 
-            {/* Day Dropdown */}
-            <div className="relative day-dropdown-container">
-              <label className="text-sm text-gray-600 whitespace-nowrap mr-2">Day:</label>
+            {/* Day Dropdown and Today Button - Grouped together */}
+            <div className="flex items-center gap-2">
+              <div className="relative day-dropdown-container">
+                <label className="text-sm text-gray-600 whitespace-nowrap mr-2">Day:</label>
+                <button
+                  onClick={() => {
+                    if (selectedMonth !== 0) {
+                      setShowDayDropdown(!showDayDropdown);
+                      setShowYearDropdown(false);
+                      setShowMonthDropdown(false);
+                    }
+                  }}
+                  disabled={selectedMonth === 0}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px] text-left flex items-center justify-between hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-gray-100"
+                >
+                  <span>{selectedDay === 0 ? 'All Days' : selectedDay.toString()}</span>
+                  <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showDayDropdown ? 'rotate-180' : ''}`}></i>
+                </button>
+                {showDayDropdown && selectedMonth !== 0 && (
+                  <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-40 overflow-y-auto thin-scrollbar">
+                    <div className="py-1">
+                      {getDays(selectedYear, selectedMonth).map(day => (
+                        <button
+                          key={day}
+                          onClick={() => {
+                            setSelectedDay(day);
+                            setShowDayDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                            selectedDay === day
+                              ? 'bg-blue-50 text-blue-700 font-semibold'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {day === 0 ? 'All Days' : day.toString()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => {
-                  if (selectedMonth !== 0) {
-                    setShowDayDropdown(!showDayDropdown);
-                    setShowYearDropdown(false);
-                    setShowMonthDropdown(false);
-                  }
+                  const today = new Date();
+                  setSelectedYear(today.getFullYear());
+                  setSelectedMonth(today.getMonth() + 1);
+                  setSelectedDay(today.getDate());
+                  setShowYearDropdown(false);
+                  setShowMonthDropdown(false);
+                  setShowDayDropdown(false);
                 }}
-                disabled={selectedMonth === 0}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[100px] text-left flex items-center justify-between hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-gray-100"
+                className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
               >
-                <span>{selectedDay === 0 ? 'All Days' : selectedDay.toString()}</span>
-                <i className={`ri-arrow-down-s-line ml-2 transition-transform duration-200 ${showDayDropdown ? 'rotate-180' : ''}`}></i>
+                <i className="ri-calendar-line mr-1.5"></i>
+                Today
               </button>
-              {showDayDropdown && selectedMonth !== 0 && (
-                <div className="absolute left-0 mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-40 overflow-y-auto thin-scrollbar">
-                  <div className="py-1">
-                    {getDays(selectedYear, selectedMonth).map(day => (
-                      <button
-                        key={day}
-                        onClick={() => {
-                          setSelectedDay(day);
-                          setShowDayDropdown(false);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                          selectedDay === day
-                            ? 'bg-blue-50 text-blue-700 font-semibold'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {day === 0 ? 'All Days' : day.toString()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-
-            <button
-              onClick={() => {
-                const today = new Date();
-                setSelectedYear(today.getFullYear());
-                setSelectedMonth(today.getMonth() + 1);
-                setSelectedDay(today.getDate());
-                setShowYearDropdown(false);
-                setShowMonthDropdown(false);
-                setShowDayDropdown(false);
-              }}
-              className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm hover:bg-blue-100 transition-colors border border-blue-200 flex items-center whitespace-nowrap"
-            >
-              <i className="ri-calendar-line mr-1.5"></i>
-              Today
-            </button>
           </div>
 
           {/* Page Header Actions */}
