@@ -7,7 +7,6 @@ import { useToast } from '../../../../components/base/Toast';
 import IncidentMapModal from '../../../../components/IncidentMapModal';
 import websocketService, { type NotificationData } from '../../../../services/websocketService';
 import { getAuthState } from '../../../../utils/auth';
-import { apiFormRequest } from '../../../../utils/api';
 
 interface Incident {
   id: number;
@@ -141,19 +140,6 @@ const ViewIncidents: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [newIncidentIds, setNewIncidentIds] = useState<Set<number>>(new Set());
   const wsHandlersSetup = useRef(false);
-  
-  // Add Incident Modal State
-  const [showAddIncidentModal, setShowAddIncidentModal] = useState(false);
-  const [isSubmittingIncident, setIsSubmittingIncident] = useState(false);
-  const [addIncidentForm, setAddIncidentForm] = useState({
-    incidentType: '',
-    description: '',
-    location: '',
-    latitude: '',
-    longitude: '',
-    priorityLevel: 'critical',
-    safetyStatus: 'unknown',
-  });
 
 
   // Helper function to check if assignment button should be disabled
@@ -487,80 +473,6 @@ const ViewIncidents: React.FC = () => {
     return match ? match[1].trim() : '';
   };
 
-  // Handle Add Incident
-  const handleAddIncident = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validation
-    if (!addIncidentForm.incidentType || !addIncidentForm.location) {
-      showToast({
-        type: 'error',
-        message: 'Please fill in all required fields (Incident Type and Location)'
-      });
-      return;
-    }
-
-    if (!addIncidentForm.latitude || !addIncidentForm.longitude) {
-      showToast({
-        type: 'error',
-        message: 'Please provide valid coordinates (latitude and longitude)'
-      });
-      return;
-    }
-
-    setIsSubmittingIncident(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('incidentType', addIncidentForm.incidentType.trim());
-      formData.append('description', addIncidentForm.description.trim() || 'No description provided');
-      formData.append('location', addIncidentForm.location.trim());
-      formData.append('latitude', addIncidentForm.latitude);
-      formData.append('longitude', addIncidentForm.longitude);
-      formData.append('priorityLevel', addIncidentForm.priorityLevel);
-      formData.append('safetyStatus', addIncidentForm.safetyStatus);
-
-      const authState = getAuthState();
-      const response = await apiFormRequest('/incidents/report', formData, {
-        ...(authState?.userData?.token ? { headers: { 'Authorization': `Bearer ${authState.userData.token}` } } : {})
-      });
-
-      console.log('Incident created successfully:', response);
-      
-      showToast({
-        type: 'success',
-        message: 'Incident created successfully!'
-      });
-
-      // Reset form
-      setAddIncidentForm({
-        incidentType: '',
-        description: '',
-        location: '',
-        latitude: '',
-        longitude: '',
-        priorityLevel: 'critical',
-        safetyStatus: 'unknown',
-      });
-
-      // Close modal
-      setShowAddIncidentModal(false);
-
-      // Refresh incidents list
-      setTimeout(() => {
-        fetchIncidents();
-      }, 500);
-
-    } catch (error: any) {
-      console.error('Error creating incident:', error);
-      showToast({
-        type: 'error',
-        message: error.message || 'Failed to create incident. Please try again.'
-      });
-    } finally {
-      setIsSubmittingIncident(false);
-    }
-  };
 
   const handleAssignTeam = async (incidentId: number, teamId: number | null) => {
     try {
@@ -1161,14 +1073,6 @@ const ViewIncidents: React.FC = () => {
           <p className="text-gray-600 mt-1">Monitor and manage reported incidents</p>
         </div>
         <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowAddIncidentModal(true)}
-            className="px-4 py-2 rounded-lg transition-colors flex items-center bg-red-600 text-white hover:bg-red-700"
-            title="Add new incident"
-          >
-            <i className="ri-add-line mr-2"></i>
-            Add Incident
-          </button>
           {newIncidentIds.size > 0 && (
             <button
               onClick={markAllIncidentsAsRead}
@@ -2683,199 +2587,6 @@ const ViewIncidents: React.FC = () => {
         onClose={() => setShowMapModal(false)}
         incident={selectedIncident}
       />
-
-      {/* Add Incident Modal */}
-      {showAddIncidentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                <i className="ri-add-line mr-2 text-red-600"></i>
-                Add New Incident
-              </h2>
-              <button
-                onClick={() => {
-                  setShowAddIncidentModal(false);
-                  setAddIncidentForm({
-                    incidentType: '',
-                    description: '',
-                    location: '',
-                    latitude: '',
-                    longitude: '',
-                    priorityLevel: 'critical',
-                    safetyStatus: 'unknown',
-                  });
-                }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <i className="ri-close-line text-2xl"></i>
-              </button>
-            </div>
-
-            <form onSubmit={handleAddIncident} className="p-6 space-y-6">
-              {/* Incident Type */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Incident Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={addIncidentForm.incidentType}
-                  onChange={(e) => setAddIncidentForm({ ...addIncidentForm, incidentType: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  required
-                >
-                  <option value="">Select incident type...</option>
-                  <option value="fire">🔥 Fire Emergency</option>
-                  <option value="medical">🚑 Medical Emergency</option>
-                  <option value="security">🔒 Security Incident</option>
-                  <option value="accident">💥 Transport Accident</option>
-                  <option value="other">⚠️ Other Emergency</option>
-                </select>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Location <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={addIncidentForm.location}
-                  onChange={(e) => setAddIncidentForm({ ...addIncidentForm, location: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="Enter location description"
-                  required
-                />
-              </div>
-
-              {/* Coordinates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Latitude <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={addIncidentForm.latitude}
-                    onChange={(e) => setAddIncidentForm({ ...addIncidentForm, latitude: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                    placeholder="e.g., 13.8043"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Longitude <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={addIncidentForm.longitude}
-                    onChange={(e) => setAddIncidentForm({ ...addIncidentForm, longitude: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                    placeholder="e.g., 121.2855"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Priority Level */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Priority Level <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={addIncidentForm.priorityLevel}
-                  onChange={(e) => setAddIncidentForm({ ...addIncidentForm, priorityLevel: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  required
-                >
-                  <option value="critical">🔴 Critical</option>
-                  <option value="high">🟠 High</option>
-                  <option value="medium">🟡 Medium</option>
-                  <option value="low">🟢 Low</option>
-                </select>
-              </div>
-
-              {/* Safety Status */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Safety Status <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={addIncidentForm.safetyStatus}
-                  onChange={(e) => setAddIncidentForm({ ...addIncidentForm, safetyStatus: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  required
-                >
-                  <option value="safe">🟢 Safe</option>
-                  <option value="at_risk">🟡 At Risk</option>
-                  <option value="injured">🔴 Injured</option>
-                  <option value="unknown">⚪ Unknown</option>
-                </select>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description <span className="text-gray-500 text-xs">(Optional)</span>
-                </label>
-                <textarea
-                  value={addIncidentForm.description}
-                  onChange={(e) => setAddIncidentForm({ ...addIncidentForm, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
-                  rows={4}
-                  placeholder="Provide detailed information about the incident..."
-                />
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddIncidentModal(false);
-                    setAddIncidentForm({
-                      incidentType: '',
-                      description: '',
-                      location: '',
-                      latitude: '',
-                      longitude: '',
-                      priorityLevel: 'critical',
-                      safetyStatus: 'unknown',
-                    });
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingIncident}
-                  className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
-                    isSubmittingIncident
-                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                  }`}
-                >
-                  {isSubmittingIncident ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <i className="ri-add-line mr-2"></i>
-                      Create Incident
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
 
