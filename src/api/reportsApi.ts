@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://soteros-backend.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://soterosbackend-production.up.railway.app';
 
 export interface GenerateReportParams {
   title: string;

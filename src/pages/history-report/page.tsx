@@ -234,7 +234,7 @@ export default function HistoryReportPage() {
 
       try {
         console.log("🔍 Checking backend health...")
-        const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+        const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soterosbackend-production.up.railway.app/api');
         const healthCheck = await fetch(`${apiBaseUrl}/health`, {
           signal: healthController.signal,
         })
@@ -257,7 +257,7 @@ export default function HistoryReportPage() {
       console.log(`🔍 Fetching incidents for user ID: ${userId}`)
       
       // Get the correct API base URL
-      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soterosbackend-production.up.railway.app/api');
       const apiUrl = `${apiBaseUrl}/incidents/user/${userId}`;
       
       console.log(`🔍 API URL: ${apiUrl}`)
@@ -585,7 +585,7 @@ export default function HistoryReportPage() {
 
         // Fallback to backend proxy
         try {
-          const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soteros-backend.onrender.com/api');
+          const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soterosbackend-production.up.railway.app/api');
           const proxyResponse = await fetch(`${apiBaseUrl}/geocode?lat=${lat}&lon=${lng}`, {
             signal: AbortSignal.timeout(10000),
           })

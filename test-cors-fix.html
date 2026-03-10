@@ -44,7 +44,7 @@
             addResult('🔍 Testing testimonials endpoint...', 'info');
             
             try {
-                const response = await fetch('https://soteros-backend.onrender.com/api/public/testimonials?limit=3');
+                const response = await fetch('https://soterosbackend-production.up.railway.app/api/public/testimonials?limit=3');
                 const data = await response.json();
                 
                 if (response.ok) {
@@ -61,7 +61,7 @@
             addResult('🔍 Testing stats endpoint...', 'info');
             
             try {
-                const response = await fetch('https://soteros-backend.onrender.com/api/public/stats');
+                const response = await fetch('https://soterosbackend-production.up.railway.app/api/public/stats');
                 const data = await response.json();
                 
                 if (response.ok) {
@@ -78,7 +78,7 @@
             addResult('🔍 Testing CORS test endpoint...', 'info');
             
             try {
-                const response = await fetch('https://soteros-backend.onrender.com/api/cors-test');
+                const response = await fetch('https://soterosbackend-production.up.railway.app/api/cors-test');
                 const data = await response.json();
                 
                 if (response.ok) {
