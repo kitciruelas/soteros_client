@@ -54,7 +54,6 @@ const StaffIncidentDetails: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 Fetching incident details for staff:', id);
 
       const response = await incidentsApi.getIncidentById(Number(id));
 
@@ -78,7 +77,6 @@ const StaffIncidentDetails: React.FC = () => {
         setError(response.message || 'Incident not found');
       }
     } catch (err: any) {
-      console.error('Error fetching incident:', err);
       // Handle permission errors from backend (403)
       if (err?.status === 403 || err?.message?.includes('permission')) {
         setError(err.message || 'You do not have permission to view this incident');
@@ -134,8 +132,8 @@ const StaffIncidentDetails: React.FC = () => {
           return locationName;
         }
       }
-    } catch (error) {
-      console.error('Error geocoding coordinates:', error);
+    } catch {
+      // Geocoding failed, use fallback
     } finally {
       setGeocodingInProgress(false);
     }

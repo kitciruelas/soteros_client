@@ -63,8 +63,6 @@ export default function ResetPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      console.log('Reset password data:', { email: emailFromState, otp: otpFromState });
-
       const apiUrl = import.meta.env.VITE_API_URL || 'https://soterosbackend-production.up.railway.app/api';
       const response = await fetch(`${apiUrl}/auth/reset-password`, {
         method: 'POST',
@@ -95,7 +93,6 @@ export default function ResetPasswordPage() {
       }
 
     } catch (error) {
-      console.error('Reset password failed:', error);
       showToast({
         type: 'error',
         title: 'Password Reset Failed',

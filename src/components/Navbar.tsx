@@ -228,9 +228,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           return cleaned;
         });
       }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-      // Set empty notifications on error to prevent UI issues
+    } catch {
       setNotifications([]);
     }
   };
@@ -248,9 +246,7 @@ const Navbar: React.FC<NavbarProps> = () => {
     try {
       await notificationsApi.markAsRead(notificationId);
       setReadNotifications(prev => new Set([...prev, notificationId]));
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-      // Still update local state even if API call fails
+    } catch {
       setReadNotifications(prev => new Set([...prev, notificationId]));
     }
   };
@@ -261,9 +257,7 @@ const Navbar: React.FC<NavbarProps> = () => {
       await notificationsApi.markAllAsRead();
       const allIds = notifications.map(notif => notif.id);
       setReadNotifications(new Set(allIds));
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
-      // Still update local state even if API call fails
+    } catch {
       const allIds = notifications.map(notif => notif.id);
       setReadNotifications(new Set(allIds));
     }
@@ -303,8 +297,6 @@ const Navbar: React.FC<NavbarProps> = () => {
 
   // Handle new notification and show pop-up
   const handleNewNotification = useCallback((notification: any) => {
-    console.log('📬 New notification received:', notification);
-    
     // Determine priority based on severity
     const priority = notification.severity === 'emergency' ? 'high' : 
                      notification.severity === 'warning' ? 'medium' : 'low';
@@ -334,8 +326,8 @@ const Navbar: React.FC<NavbarProps> = () => {
         // Auto-close after 5 seconds for low priority, 10 seconds for high priority
         const autoCloseTime = notification.severity === 'emergency' ? 10000 : 5000;
         setTimeout(() => browserNotif.close(), autoCloseTime);
-      } catch (error) {
-        console.log('Could not show browser notification:', error);
+      } catch {
+        // Browser notification failed
       }
     }
 
@@ -343,11 +335,9 @@ const Navbar: React.FC<NavbarProps> = () => {
     if (notificationSound) {
       try {
         notificationSound.currentTime = 0;
-        notificationSound.play().catch(err => {
-          console.log('Could not play notification sound:', err);
-        });
-      } catch (error) {
-        console.log('Error playing notification sound:', error);
+        notificationSound.play().catch(() => {});
+      } catch {
+        // Sound play failed
       }
     } else {
       // Fallback: Use Web Audio API for a simple beep
@@ -372,8 +362,8 @@ const Navbar: React.FC<NavbarProps> = () => {
         
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.2);
-      } catch (error) {
-        console.log('Could not create audio context:', error);
+      } catch {
+        // Audio context failed
       }
     }
   }, [notificationSound]);
@@ -472,9 +462,7 @@ const Navbar: React.FC<NavbarProps> = () => {
     // Use React Router navigate for other pages
     try {
       navigate(path, { replace: false })
-    } catch (error) {
-      console.error("Navigation error:", error)
-      // Fallback to window.location if navigate fails
+    } catch {
       window.location.href = path
     }
   }
@@ -496,9 +484,7 @@ const Navbar: React.FC<NavbarProps> = () => {
       await userAuthApi.logout()
       clearAuthData()
       navigate("/")
-    } catch (error) {
-      console.error("Logout error:", error)
-      // Even if API call fails, clear local auth data
+    } catch {
       clearAuthData()
       navigate("/")
     } finally {

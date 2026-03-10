@@ -178,8 +178,6 @@ const ViewIncidents: React.FC = () => {
       
       // Handler for new incident notifications
       const handleNewIncidentRealTime = (incidentData: NotificationData) => {
-        console.log('🚨 Real-time new incident received in ViewIncidents:', incidentData);
-        
         const incidentId = Number(incidentData.id || incidentData.incident_id);
         if (!isNaN(incidentId)) {
           // Add to new incidents set
@@ -205,8 +203,6 @@ const ViewIncidents: React.FC = () => {
       
       // Handler for incident updates
       const handleIncidentUpdateRealTime = (incidentData: NotificationData) => {
-        console.log('🔄 Real-time incident update received in ViewIncidents:', incidentData);
-        
         const incidentId = Number(incidentData.id || incidentData.incident_id);
         if (!isNaN(incidentId)) {
           // Refresh incidents list to get updated data
@@ -237,10 +233,8 @@ const ViewIncidents: React.FC = () => {
           }
         }
       });
-      
-      console.log('✅ WebSocket listeners set up for ViewIncidents page');
     }
-    
+
     // Cleanup function
     return () => {
       // Note: We don't remove listeners here because WebSocket service is shared
@@ -264,8 +258,6 @@ const ViewIncidents: React.FC = () => {
         limit: 100 // Get all unread incident notifications
       });
 
-      console.log('📢 Fetching new incident notifications:', response);
-      
       if (response?.success && response?.notifications) {
         // Extract incident IDs from unread notifications
         const incidentIds = new Set<number>();
@@ -278,13 +270,9 @@ const ViewIncidents: React.FC = () => {
             }
           }
         });
-        console.log('✅ New incident IDs found:', Array.from(incidentIds));
         setNewIncidentIds(incidentIds);
-      } else {
-        console.log('⚠️ No new incident notifications or invalid response:', response);
       }
-    } catch (error) {
-      console.error('❌ Error fetching new incident notifications:', error);
+    } catch {
       // Don't fail silently - set empty set
       setNewIncidentIds(new Set());
     }
@@ -311,8 +299,8 @@ const ViewIncidents: React.FC = () => {
         for (const notif of incidentNotifications) {
           try {
             await adminNotificationsApi.markAsRead(notif.id);
-          } catch (error) {
-            console.error('Error marking notification as read:', error);
+          } catch {
+            // Mark as read failed for this notification
           }
         }
         
@@ -331,8 +319,7 @@ const ViewIncidents: React.FC = () => {
         // Refresh notifications
         fetchNewIncidentNotifications();
       }
-    } catch (error) {
-      console.error('Error marking incident as read:', error);
+    } catch {
       showToast({ 
         type: 'error', 
         message: 'Failed to mark incident as read' 
@@ -356,8 +343,7 @@ const ViewIncidents: React.FC = () => {
       
       // Refresh notifications
       fetchNewIncidentNotifications();
-    } catch (error) {
-      console.error('Error marking all incidents as read:', error);
+    } catch {
       showToast({ 
         type: 'error', 
         message: 'Failed to mark all incidents as read' 
@@ -430,8 +416,7 @@ const ViewIncidents: React.FC = () => {
       setIncidents(mapped);
       // Refresh new incident notifications when incidents are refetched
       fetchNewIncidentNotifications();
-    } catch (error) {
-      console.error('Error fetching incidents:', error);
+    } catch {
       setError('Failed to load incidents. Please try again.');
     } finally {
       setLoading(false);
@@ -444,8 +429,8 @@ const ViewIncidents: React.FC = () => {
       if (res?.teams) {
         setTeams(res.teams);
       }
-    } catch (error) {
-      console.error('Error fetching teams:', error);
+    } catch {
+      // Fetch teams failed
     }
   };
 
@@ -462,8 +447,8 @@ const ViewIncidents: React.FC = () => {
           setStaff(res.users);
         }
       }
-    } catch (error) {
-      console.error('Error fetching staff:', error);
+    } catch {
+      // Fetch staff failed
     }
   };
 
@@ -520,8 +505,6 @@ const ViewIncidents: React.FC = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Error assigning team to incident:', error);
-
       // Check if it's a backend validation error
       if (error instanceof Error && error.message.includes('Cannot assign team with no active members')) {
         setEmailStatus({
@@ -590,7 +573,6 @@ const ViewIncidents: React.FC = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Error assigning multiple teams to incident:', error);
 
       // Check if it's a backend validation error
       if (error instanceof Error && error.message.includes('Cannot assign teams with no active members')) {
@@ -636,8 +618,7 @@ const ViewIncidents: React.FC = () => {
         if (!response.success) {
           throw new Error(response.message || 'Failed to update validation');
         }
-      } catch (apiError) {
-        console.error('API call failed, using local validation as fallback:', apiError);
+      } catch {
         // Fallback: Update local state only (for testing purposes)
         // In production, you would want to show an error message here
         // For now, we'll continue with local state update
@@ -687,7 +668,6 @@ const ViewIncidents: React.FC = () => {
       }, 3000);
       
     } catch (error) {
-      console.error('Error validating incident:', error);
 
       setEmailStatus({
         sent: false,
@@ -747,7 +727,6 @@ const ViewIncidents: React.FC = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Error assigning staff to incident:', error);
       setEmailStatus({
         sent: false,
         details: { error: error instanceof Error ? error.message : 'Unknown error' }
@@ -1021,8 +1000,7 @@ const ViewIncidents: React.FC = () => {
       };
 
       await ExportUtils.exportToPDF(filteredIncidents, incidentExportColumns, options);
-    } catch (error) {
-      console.error('Export failed:', error);
+    } catch {
     } finally {
       setIsExporting(false);
     }
@@ -1048,8 +1026,7 @@ const ViewIncidents: React.FC = () => {
 
       await ExportUtils.exportToPDF([selectedIncident], incidentExportColumns, options);
       showToast({ type: 'success', message: 'Incident exported successfully' });
-    } catch (error) {
-      console.error('Export failed:', error);
+    } catch {
       showToast({ type: 'error', message: 'Failed to export incident' });
     } finally {
       setIsExportingIncident(false);

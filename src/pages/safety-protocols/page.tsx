@@ -92,16 +92,10 @@ const SafetyProtocolsPage: React.FC = () => {
   // Track current slide for each protocol card in grid view
   const [cardSlides, setCardSlides] = useState<Record<number, number>>({});
 
-  // Debug: Log file URL handling on mount
-  useEffect(() => {
-    console.log('🖼️ Safety Protocols - File URL handler ready (supports Cloudinary & local)');
-  }, []);
-
   // Reset slide when opening modal or changing protocol
   useEffect(() => {
     if (isModalOpen && selectedProtocol) {
       setCurrentSlide(0);
-      console.log('🔄 Modal opened, reset slide to 0');
     }
   }, [isModalOpen, selectedProtocol]);
 
@@ -117,10 +111,6 @@ const SafetyProtocolsPage: React.FC = () => {
       }
 
       if (currentSlide >= attachments.length) {
-        console.warn('⚠️ currentSlide out of bounds, resetting to 0', {
-          currentSlide,
-          totalFiles: attachments.length
-        });
         setCurrentSlide(0);
       }
     }
@@ -200,13 +190,11 @@ const SafetyProtocolsPage: React.FC = () => {
         if (Array.isArray(rows)) {
           setProtocols(rows as unknown as SafetyProtocol[]);
         } else {
-          console.error('Expected array but got:', rows);
           setProtocols([]);
         }
         setIsLoading(false);
       })
-      .catch(error => {
-        console.error('Error fetching safety protocols:', error);
+      .catch(() => {
         setProtocols([]);
         setIsLoading(false);
       });
@@ -612,14 +600,6 @@ const SafetyProtocolsPage: React.FC = () => {
                       }));
                     };
 
-                    // Debug: Log URLs being displayed
-                    console.log('📂 Protocol attachments:', {
-                      protocolId: protocol.protocol_id,
-                      count: attachments.length,
-                      currentSlide: currentCardSlide,
-                      urls: attachments
-                    });
-
                     return (
                       <div className="mb-4">
                         {viewMode === 'grid' ? (
@@ -629,7 +609,6 @@ const SafetyProtocolsPage: React.FC = () => {
                               // Only show current slide
                               if (fileIndex !== currentCardSlide) return null;
 
-                              console.log(`🖼️ Rendering image ${fileIndex + 1}:`, fileUrl);
                               const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
                               const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
 
@@ -855,23 +834,14 @@ const SafetyProtocolsPage: React.FC = () => {
                 }
 
                 const nextSlide = () => {
-                  setCurrentSlide((prev) => {
-                    const next = (prev + 1) % attachments.length;
-                    console.log('➡️ Next slide:', prev, '→', next);
-                    return next;
-                  });
+                  setCurrentSlide((prev) => (prev + 1) % attachments.length);
                 };
 
                 const prevSlide = () => {
-                  setCurrentSlide((prev) => {
-                    const previous = (prev - 1 + attachments.length) % attachments.length;
-                    console.log('⬅️ Previous slide:', prev, '→', previous);
-                    return previous;
-                  });
+                  setCurrentSlide((prev) => (prev - 1 + attachments.length) % attachments.length);
                 };
 
                 const goToSlide = (index: number) => {
-                  console.log('🎯 Jump to slide:', index);
                   setCurrentSlide(index);
                 };
 
@@ -897,14 +867,6 @@ const SafetyProtocolsPage: React.FC = () => {
                         
                         // Only show current slide
                         if (fileIndex !== safeCurrentSlide) return null;
-
-                        console.log('🎬 Rendering slide:', {
-                          fileIndex,
-                          safeCurrentSlide,
-                          currentSlide,
-                          totalFiles: attachments.length,
-                          fileUrl
-                        });
 
                         const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
                         const isImage = fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);

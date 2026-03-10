@@ -256,23 +256,12 @@ const AdminDashboard: React.FC = () => {
         // If month is selected, use days in that month as limit
         const daysInMonth = new Date(year, month, 0).getDate();
         limitToUse = daysInMonth;
-        console.log(`Month filter active: ${month}/${year}, expecting ${daysInMonth} daily data points`);
       } else if (year && !month) {
-        // If only year is selected, use 12 months
         limitToUse = 12;
-        console.log(`Year filter only: ${year}, expecting 12 monthly data points`);
       }
-      
-      console.log(`API Call - Period: ${period}, Limit: ${limitToUse}, Year: ${year}, Month: ${month}, Day: ${day}`);
+
       const trendsResponse = await adminDashboardApi.getMonthlyTrends(period, limitToUse, year, month, day);
-      console.log('Trends API Response:', {
-        success: trendsResponse.success,
-        dataCount: trendsResponse.trendsData?.length || 0,
-        firstFewItems: trendsResponse.trendsData?.slice(0, 5),
-        period: trendsResponse.period,
-        note: trendsResponse.note
-      });
-      
+
       if (trendsResponse.success && trendsResponse.trendsData) {
         // Map the API response to the expected interface format
         const mappedData = trendsResponse.trendsData.map(item => ({
@@ -282,18 +271,11 @@ const AdminDashboard: React.FC = () => {
           resolved_incidents: item.resolved_incidents || 0,
           high_priority_incidents: item.high_priority_incidents || 0
         }));
-        console.log('Mapped trends data:', mappedData);
-        console.log(`Total data points received: ${mappedData.length}`);
-        if (month && mappedData.length < 10) {
-          console.warn(`⚠️ Expected daily data for month ${month}, but only got ${mappedData.length} data points. Check server grouping logic.`);
-        }
         setMonthlyIncidents(mappedData);
       } else {
-        console.warn('Trends API returned success: false or no data');
         setMonthlyIncidents([]);
       }
-    } catch (error) {
-      console.error('Failed to fetch trends data:', error);
+    } catch {
       setMonthlyIncidents([]);
     } finally {
       setTrendsLoading(false);
@@ -302,7 +284,6 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch all dashboard data when date filters change
   useEffect(() => {
-    console.log(`[DASHBOARD] Date filters changed - Year: ${selectedYear}, Month: ${selectedMonth}, Day: ${selectedDay}`);
     fetchDashboardStats();
   }, [selectedYear, selectedMonth, selectedDay]);
 
@@ -325,16 +306,11 @@ const AdminDashboard: React.FC = () => {
       // Calculate days in the selected month
       const daysInMonth = new Date(selectedYear, monthParam, 0).getDate();
       limitToUse = daysInMonth;
-      const dayFilterText = dayParam ? `Day ${dayParam}` : 'All Days';
-      console.log(`[TRENDS AUTO-UPDATE] Month selected (${monthParam}) - Using daily breakdown with ${daysInMonth} days for ${selectedYear}-${monthParam}, Filter: ${dayFilterText}`);
     } else if (selectedYear) {
-      // If only year is selected, show monthly breakdown for the year
       periodToUse = 'months';
       limitToUse = 12;
-      console.log(`[TRENDS AUTO-UPDATE] Only year selected (${selectedYear}) - Using monthly breakdown`);
     }
-    
-    console.log(`[TRENDS AUTO-UPDATE] Fetching trends data - Year: ${selectedYear}, Month: ${monthParam}, Day: ${dayParam || 'All Days'}, Period: ${periodToUse}, Limit: ${limitToUse}`);
+
     // Automatically refresh trends data when date filters change - NO MANUAL REFRESH NEEDED
     setTrendsLoading(true);
     fetchTrendsData(periodToUse, limitToUse, selectedYear, monthParam, dayParam);
@@ -366,8 +342,7 @@ const AdminDashboard: React.FC = () => {
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
-      } catch (error) {
-        console.warn('Response time endpoint not available:', error);
+      } catch {
         setResponseTimeData([]);
       }
 
@@ -376,8 +351,7 @@ const AdminDashboard: React.FC = () => {
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
-      } catch (error) {
-        console.warn('Individual response time endpoint not available:', error);
+      } catch {
         setIndividualResponseTimeData([]);
       } finally {
         setResponseTimeLoading(false);
@@ -1097,8 +1071,7 @@ const AdminDashboard: React.FC = () => {
       let locationResponse = null;
       try {
         locationResponse = await adminDashboardApi.getLocationIncidents(selectedYear, monthParam, dayParam);
-      } catch (error) {
-        console.warn('Location incidents endpoint not available, using fallback data:', error);
+      } catch {
         // Set empty data as fallback
         locationResponse = { success: true, locationIncidents: [] };
       }
@@ -1244,8 +1217,7 @@ const AdminDashboard: React.FC = () => {
         if (dayParam) welfareParams.append('day', dayParam.toString());
         const welfareUrl = welfareParams.toString() ? `/admin/welfare/stats?${welfareParams.toString()}` : '/admin/welfare/stats';
         const welfareResponse = await apiRequest(welfareUrl);
-        console.log('Welfare response:', welfareResponse);
-        
+
         if (welfareResponse.success && welfareResponse.stats) {
           // Check if there are active welfare settings OR if there's any welfare data
           const hasActive = welfareResponse.stats.activeSettings > 0;
@@ -1264,22 +1236,14 @@ const AdminDashboard: React.FC = () => {
               notSubmitted: welfareResponse.stats.notSubmitted || 0,
               uniqueUsers: welfareResponse.stats.uniqueUsers || 0
             });
-            console.log('Welfare stats set:', {
-              safeReports: welfareResponse.stats.safeReports || 0,
-              needsHelpReports: welfareResponse.stats.needsHelpReports || 0,
-              notSubmitted: welfareResponse.stats.notSubmitted || 0
-            });
           } else {
             setWelfareStats(null);
-            console.log('Welfare not shown - no active settings and no data');
           }
         } else {
-          console.warn('Welfare response missing success or stats:', welfareResponse);
           setWelfareStats(null);
           setHasActiveWelfare(false);
         }
-      } catch (error) {
-        console.warn('Welfare stats endpoint not available, using fallback data:', error);
+      } catch {
         setWelfareStats(null);
         setHasActiveWelfare(false);
       }
@@ -1290,24 +1254,20 @@ const AdminDashboard: React.FC = () => {
         if (responseTimeResponse.success && responseTimeResponse.responseTimeData) {
           setResponseTimeData(responseTimeResponse.responseTimeData || []);
         }
-      } catch (error) {
-        console.warn('Response time endpoint not available, using fallback data:', error);
+      } catch {
         setResponseTimeData([]);
       }
 
-      // Try to fetch individual response time data
       try {
         const individualResponseTimeResponse = await adminDashboardApi.getResponseTimeIndividual(200, responseTimePeriod, responseTimeLimit, selectedYear, monthParam, dayParam);
         if (individualResponseTimeResponse.success && individualResponseTimeResponse.incidents) {
           setIndividualResponseTimeData(individualResponseTimeResponse.incidents || []);
         }
-      } catch (error) {
-        console.warn('Individual response time endpoint not available, using fallback data:', error);
+      } catch {
         setIndividualResponseTimeData([]);
       }
 
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch dashboard statistics');
     } finally {
       setLoading(false);
@@ -1851,7 +1811,6 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         {(() => {
           // Debug: Log the actual data structure
-          console.log('Location incidents data:', locationIncidents);
 
           // Get all possible incident type keys from the data
           const allKeys: string[] = [];
@@ -1863,7 +1822,6 @@ const AdminDashboard: React.FC = () => {
             });
           });
 
-          console.log('Available incident type keys:', allKeys);
 
           // Create color array based on incident type order
           const incidentTypeColors: { [key: string]: string } = {
@@ -2042,7 +2000,6 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Data exported to CSV successfully!', type: 'success' });
             setShowExportModal(false);
           } catch (error) {
-            console.error('Export error:', error);
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}
@@ -2056,7 +2013,6 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Data exported to Excel successfully!', type: 'success' });
             setShowExportModal(false);
           } catch (error) {
-            console.error('Export error:', error);
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}
@@ -2072,7 +2028,6 @@ const AdminDashboard: React.FC = () => {
             showToast({ message: 'Data exported to PDF successfully!', type: 'success' });
             setShowExportModal(false);
           } catch (error) {
-            console.error('Export error:', error);
             showToast({ message: 'Failed to export data. Please try again.', type: 'error' });
           }
         }}

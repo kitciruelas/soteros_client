@@ -39,7 +39,6 @@ export default function ForgotPasswordPage() {
 
     try {
       const formData = getValues()
-      console.log("Forgot password data:", formData)
 
       const apiUrl = import.meta.env.VITE_API_URL || 'https://soterosbackend-production.up.railway.app/api';
       const response = await fetch(`${apiUrl}/auth/forgot-password`, {
@@ -70,7 +69,6 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || "Failed to send verification code")
       }
     } catch (error) {
-      console.error("Reset password failed:", error)
       showToast({
         type: "error",
         title: "Failed to Send Code",
@@ -112,7 +110,6 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || "Failed to resend verification code")
       }
     } catch (error) {
-      console.error("Resend email failed:", error)
       showToast({
         type: "error",
         title: "Failed to Resend Code",

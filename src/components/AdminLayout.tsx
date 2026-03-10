@@ -39,8 +39,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         second: '2-digit',
         hour12: true
       });
-    } catch (error) {
-      console.error('Error formatting date:', error);
+    } catch {
       return '';
     }
   };
@@ -118,8 +117,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // Handle new admin notifications from the unified API - actually display the notification
   const displayAdminNotification = React.useCallback((notificationData: any) => {
-    console.log('📬 Displaying admin notification:', notificationData);
-    
     // Increment new notification counter
     setNewNotificationCount(prev => prev + 1);
     
@@ -164,8 +161,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         // Auto-close after 5 seconds for low priority, 10 seconds for high/critical
         const autoCloseTime = (priority === 'critical' || priority === 'high') ? 10000 : 5000;
         setTimeout(() => browserNotif.close(), autoCloseTime);
-      } catch (error) {
-        console.log('Could not show browser notification:', error);
+      } catch {
+        // Browser notification failed
       }
     }
 
@@ -173,11 +170,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     if (notificationSound) {
       try {
         notificationSound.currentTime = 0;
-        notificationSound.play().catch(err => {
-          console.log('Could not play notification sound:', err);
-        });
-      } catch (error) {
-        console.log('Error playing notification sound:', error);
+        notificationSound.play().catch(() => {});
+      } catch {
+        // Sound play failed
       }
     } else {
       // Fallback: Use Web Audio API for a simple beep
@@ -203,8 +198,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.2);
-      } catch (error) {
-        console.log('Could not create audio context:', error);
+      } catch {
+        // Audio context failed
       }
     }
   }, [notificationSound]);
@@ -286,8 +281,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             }
           }
         }
-      } catch (error) {
-        console.error('Error polling for notifications:', error);
+      } catch {
+        // Poll failed
       }
     }, 30000); // Poll every 30 seconds
     
@@ -298,14 +293,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   useEffect(() => {
     const initializeWebSocket = async () => {
       const authState = getAuthState();
-      console.log('🔍 Initial WebSocket Auth Check:', {
-        isAuthenticated: authState.isAuthenticated,
-        userType: authState.userType,
-        hasToken: !!(authState as any).token,
-        tokenLength: (authState as any).token?.length || 0,
-        wsInitialized: wsInitialized.current
-      });
-      
+
       // Get token from localStorage directly if not in userData
       const token = (authState as any).token || localStorage.getItem('adminToken');
       
@@ -329,19 +317,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           websocketService.on('welfare_updated', handleWelfareUpdate);
           // Add handler for general admin notifications
           websocketService.on('new_admin_notification', handleNewAdminNotification);
-          
-          console.log('WebSocket connected for real-time notifications');
-        } catch (error) {
-          console.error('Failed to connect WebSocket:', error);
+        } catch {
           setWsConnectionStatus('disconnected');
         }
       } else {
-        console.log('❌ WebSocket initialization skipped:', {
-          reason: !authState.isAuthenticated ? 'Not authenticated' :
-                  authState.userType !== 'admin' ? 'Not admin user' :
-                  !token ? 'No token' :
-                  wsInitialized.current ? 'Already initialized' : 'Unknown reason'
-        });
         setWsConnectionStatus('disconnected');
       }
     };
@@ -353,7 +332,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const retryConnection = () => {
       setTimeout(() => {
         if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
-          console.log('🔄 Retrying WebSocket connection...');
           initializeWebSocket();
         }
       }, 3000); // Retry after 3 seconds
@@ -364,7 +342,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     // Periodic connection health check (less frequent)
     const healthCheckInterval = setInterval(() => {
       if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
-        console.log('🔄 Periodic WebSocket health check - attempting reconnection...');
         initializeWebSocket();
       }
     }, 30000); // Check every 30 seconds (less aggressive)
@@ -388,7 +365,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Listen for WebSocket disconnection events and auto-reconnect
   useEffect(() => {
     const handleWebSocketDisconnect = () => {
-      console.log('🔄 WebSocket disconnected, attempting auto-reconnect...');
       setWsConnectionStatus('disconnected');
       wsInitialized.current = false;
       
@@ -398,17 +374,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         const token = (authState as any).token || localStorage.getItem('adminToken');
         
         if (authState.isAuthenticated && authState.userType === 'admin' && token) {
-          console.log('🔄 Auto-reconnecting WebSocket...');
           setWsConnectionStatus('connecting');
           websocketService.connect(token)
-            .then(() => {
-              setWsConnectionStatus('connected');
-              console.log('✅ WebSocket auto-reconnected successfully');
-            })
-            .catch((error) => {
-              console.error('❌ WebSocket auto-reconnection failed:', error);
-              setWsConnectionStatus('disconnected');
-            });
+            .then(() => setWsConnectionStatus('connected'))
+            .catch(() => setWsConnectionStatus('disconnected'));
         }
       }, 2000);
     };
@@ -416,30 +385,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     // Handle tab visibility changes to maintain WebSocket connection
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('👁️ Tab became visible, checking WebSocket connection...');
         // Only reconnect if WebSocket is actually disconnected, not just because tab was hidden
         if (wsConnectionStatus === 'disconnected' && !wsInitialized.current) {
           const authState = getAuthState();
           const token = (authState as any).token || localStorage.getItem('adminToken');
           
           if (authState.isAuthenticated && authState.userType === 'admin' && token) {
-            console.log('🔄 Reconnecting WebSocket after tab became visible (connection was lost)...');
             setWsConnectionStatus('connecting');
             websocketService.connect(token)
-              .then(() => {
-                setWsConnectionStatus('connected');
-                console.log('✅ WebSocket reconnected after tab became visible');
-              })
-              .catch((error) => {
-                console.error('❌ WebSocket reconnection failed after tab became visible:', error);
-                setWsConnectionStatus('disconnected');
-              });
+              .then(() => setWsConnectionStatus('connected'))
+              .catch(() => setWsConnectionStatus('disconnected'));
           }
-        } else if (wsConnectionStatus === 'connected') {
-          console.log('👁️ Tab became visible - WebSocket still connected, no need to reconnect');
         }
-      } else {
-        console.log('👁️ Tab became hidden - WebSocket will continue running in background');
       }
     };
 
@@ -455,8 +412,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const handleLogout = async () => {
     try {
       await adminAuthApi.logout();
-    } catch (error) {
-      console.error('Logout API error:', error);
+    } catch {
+      // Logout API failed, still clear auth and redirect
     } finally {
       clearAuthData();
       websocketService.disconnect();
@@ -466,8 +423,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // WebSocket event handlers for real-time notifications
   const handleNewIncident = (incidentData: NotificationData) => {
-    console.log('🚨 New incident received via WebSocket:', incidentData);
-    
     // Increment new notification counter
     setNewNotificationCount(prev => prev + 1);
     
@@ -491,7 +446,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     });
 
     // Queue floating notification - it will be processed one at a time
-    console.log('🎯 Queuing floating notification for incident');
     const incidentId = incidentData.id || (incidentData as any).incident_id;
     const notificationData = {
       id: incidentId,
@@ -513,8 +467,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   const handleNewWelfareReport = (welfareData: NotificationData) => {
-    console.log('❤️ New welfare report received via WebSocket:', welfareData);
-    
     // Increment new notification counter
     setNewNotificationCount(prev => prev + 1);
     
@@ -544,7 +496,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     });
 
     // Queue floating notification - it will be processed one at a time
-    console.log('🎯 Queuing floating notification for welfare');
     const notificationData = {
       id: welfareData.report_id || welfareData.id,
       type: 'welfare',
@@ -563,8 +514,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   const handleIncidentUpdate = (incidentData: NotificationData) => {
-    console.log('Incident updated via WebSocket:', incidentData);
-    
     // Update existing incident in notifications list
     setNotifications(prev => 
       prev.map(notif => 
@@ -576,8 +525,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   const handleWelfareUpdate = (welfareData: NotificationData) => {
-    console.log('Welfare report updated via WebSocket:', welfareData);
-    
     // Update existing welfare report in welfare reports list
     setWelfareReports(prev => 
       prev.map(report => 
@@ -678,10 +625,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           return updated;
         });
       }
-    } catch (error) {
-      console.error('Failed to fetch admin notifications:', error);
+    } catch {
       // Fallback to old method if new API fails
-      console.log('Falling back to legacy notification fetching...');
       try {
         const [incidentsResponse, welfareResponse] = await Promise.allSettled([
           incidentsApi.getIncidents(),
@@ -708,8 +653,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           }));
           setWelfareReports(latestWelfareReports);
         }
-      } catch (fallbackError) {
-        console.error('Fallback notification fetch also failed:', fallbackError);
+      } catch {
+        // Fallback fetch failed
       }
     } finally {
       setIsLoadingNotifications(false);
@@ -744,9 +689,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     // Also mark as read in the database
     try {
       await adminNotificationsApi.markAsRead(Number(originalId));
-      console.log('✅ Notification marked as read in database');
-    } catch (error) {
-      console.error('❌ Failed to mark notification as read in database:', error);
+    } catch {
       // Keep local state updated even if API call fails
     }
   };
@@ -759,11 +702,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     // Also mark all as read in the database
     try {
       await adminNotificationsApi.markAllAsRead();
-      console.log('✅ All notifications marked as read in database');
-      // Refetch notifications to sync with database state
       await fetchNotifications();
-    } catch (error) {
-      console.error('❌ Failed to mark all notifications as read in database:', error);
+    } catch {
       // Keep local state updated even if API call fails
     }
   };
@@ -867,46 +807,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Manual WebSocket reconnection function
   const reconnectWebSocket = async () => {
     const authState = getAuthState();
-    
-    // Debug localStorage contents
-    console.log('🔍 LocalStorage Debug:', {
-      userInfo: localStorage.getItem('userInfo'),
-      admin: localStorage.getItem('admin'),
-      adminToken: localStorage.getItem('adminToken'),
-      user: localStorage.getItem('user'),
-      token: localStorage.getItem('token'),
-      userToken: localStorage.getItem('userToken'),
-      staff: localStorage.getItem('staff'),
-      staffToken: localStorage.getItem('staffToken')
-    });
-    
-    // Get token from localStorage directly if not in userData
     const token = (authState as any).token || localStorage.getItem('adminToken');
-    
-    console.log('🔍 Auth State Debug:', {
-      isAuthenticated: authState.isAuthenticated,
-      userType: authState.userType,
-      hasTokenInUserData: !!(authState as any).token,
-      hasTokenInLocalStorage: !!localStorage.getItem('adminToken'),
-      finalToken: !!token,
-      tokenLength: token?.length || 0,
-      tokenPreview: token?.substring(0, 20) + '...' || 'No token'
-    });
-    
+
     if (authState.isAuthenticated && authState.userType === 'admin' && token) {
-      console.log('🔄 Manually reconnecting WebSocket...');
       setWsConnectionStatus('connecting');
       try {
         await websocketService.connect(token);
         setWsConnectionStatus('connected');
-        console.log('✅ WebSocket reconnected successfully');
-      } catch (error) {
-        console.error('❌ WebSocket reconnection failed:', error);
+      } catch {
         setWsConnectionStatus('disconnected');
       }
-    } else {
-      console.error('❌ Cannot reconnect: No valid auth token');
-      console.error('❌ Auth state details:', authState);
     }
   };
 

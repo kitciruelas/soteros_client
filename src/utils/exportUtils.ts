@@ -175,8 +175,8 @@ export class ExportUtils {
 
             await loadImagePromise
           }
-        } catch (error) {
-          console.warn("Failed to add logo to PDF:", error)
+        } catch {
+          // Logo failed to load, skip
         }
       }
 
@@ -344,8 +344,8 @@ export class ExportUtils {
 
           await loadImagePromise
         }
-      } catch (error) {
-        console.warn("Failed to add footer logo:", error)
+      } catch {
+        // Footer logo failed to load, skip
       }
 
       // Footer text (below logo)
@@ -478,8 +478,7 @@ export class ExportUtils {
           if (currentY > chartAvailableHeight) {
             currentY = chartAvailableHeight
           }
-        } catch (error) {
-          console.error('Error adding chart image to PDF:', error)
+        } catch {
           currentY += 10
         }
       }
@@ -1163,8 +1162,7 @@ export class ExportUtils {
         allowTaint: false,
       })
       return canvas.toDataURL('image/png', 1.0)
-    } catch (error) {
-      console.error('Error converting chart to image:', error)
+    } catch {
       return null
     }
   }

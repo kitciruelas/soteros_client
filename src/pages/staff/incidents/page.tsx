@@ -81,10 +81,6 @@ const StaffIncidentsPage: React.FC = () => {
   const currentStaffId = authState.userData?.id || authState.userData?.staff_id || authState.userData?.user_id
   const currentStaffTeamId = authState.userData?.assigned_team_id
 
-  console.log("🔐 Auth state:", authState)
-  console.log("👤 Current staff ID:", currentStaffId)
-  console.log("👥 Current staff team ID:", currentStaffTeamId)
-
   useEffect(() => {
     // Only fetch if we have both staff ID and authentication
     if (currentStaffId && authState.isAuthenticated) {
@@ -92,9 +88,9 @@ const StaffIncidentsPage: React.FC = () => {
       fetchTeams()
       fetchAvailableStaff()
     } else if (!authState.isAuthenticated) {
-      console.warn('⚠️ User is not authenticated - skipping data fetch');
+      // Skip when not authenticated
     } else if (!currentStaffId) {
-      console.warn('⚠️ No staff ID available - skipping data fetch');
+      // Skip when no staff ID
     }
   }, [currentStaffId, authState.isAuthenticated])
 
@@ -150,8 +146,7 @@ const StaffIncidentsPage: React.FC = () => {
         durationMs: 3000
       })
       setShowExportModal(false)
-    } catch (error) {
-      console.error("PDF export failed:", error)
+    } catch {
       showToast({
         type: "error",
         title: "Export Failed",
@@ -174,8 +169,7 @@ const StaffIncidentsPage: React.FC = () => {
         durationMs: 3000
       })
       setShowExportModal(false)
-    } catch (error) {
-      console.error("CSV export failed:", error)
+    } catch {
       showToast({
         type: "error",
         title: "Export Failed",
@@ -198,8 +192,7 @@ const StaffIncidentsPage: React.FC = () => {
         durationMs: 3000
       })
       setShowExportModal(false)
-    } catch (error) {
-      console.error("Excel export failed:", error)
+    } catch {
       showToast({
         type: "error",
         title: "Export Failed",
@@ -214,23 +207,17 @@ const StaffIncidentsPage: React.FC = () => {
       // Check authentication before making request
       const currentAuthState = getAuthState()
       if (!currentAuthState.isAuthenticated) {
-        console.error("❌ User is not authenticated - cannot fetch incidents")
         return
       }
 
-      console.log("🔍 Fetching incidents for staff ID:", currentStaffId)
 
       // Use the new staff-specific endpoint
       if (!currentStaffId) {
-        console.error("❌ No staff ID available")
         return
       }
       const response = await incidentsApi.getStaffIncidents(Number(currentStaffId))
 
       if (response.success && response.incidents) {
-        console.log("📋 Staff incidents response:", response)
-        console.log("👤 Staff info:", response.staffInfo)
-        console.log("📊 Assignment stats:", response.assignmentStats)
 
         // Geocode locations for each incident
         const incidentsWithLocations = await Promise.all(
@@ -242,7 +229,6 @@ const StaffIncidentsPage: React.FC = () => {
                 resolvedLocation: locationName,
               }
             } catch (error) {
-              console.error("Error geocoding incident location:", error)
               return {
                 ...incident,
                 resolvedLocation: `${Number(incident.latitude).toFixed(4)}, ${Number(incident.longitude).toFixed(4)}`,
@@ -255,12 +241,10 @@ const StaffIncidentsPage: React.FC = () => {
 
         // Update team ID from the response if available
         if (response.staffInfo?.teamId && !currentStaffTeamId) {
-          console.log("🔄 Updating team ID from response:", response.staffInfo.teamId)
           // Note: In a real app, you might want to update the auth state here
         }
       }
     } catch (error) {
-      console.error("Error fetching staff incidents:", error)
     }
   }
 
@@ -271,7 +255,6 @@ const StaffIncidentsPage: React.FC = () => {
         setTeams(response.teams)
       }
     } catch (error) {
-      console.error("Error fetching teams:", error)
     }
   }
 
@@ -282,7 +265,6 @@ const StaffIncidentsPage: React.FC = () => {
         setAvailableStaff(response.data.users)
       }
     } catch (error) {
-      console.error("Error fetching available staff:", error)
     }
   }
 
@@ -320,17 +302,12 @@ const StaffIncidentsPage: React.FC = () => {
       )
 
       if (!response.ok) {
-        console.error('Geocoding API error:', {
-          status: response.status,
-          statusText: response.statusText
-        });
         throw new Error(`Geocoding failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
-        console.error('Geocoding API error:', data.message);
         throw new Error(data.message || 'Geocoding failed');
       }
 
@@ -343,8 +320,8 @@ const StaffIncidentsPage: React.FC = () => {
       }));
 
       return locationName;
-    } catch (error) {
-      console.error("Error geocoding coordinates:", error)
+    } catch {
+      // Geocoding failed, use fallback
     } finally {
       // Clear geocoding in progress
       setGeocodingInProgress((prev) => ({ ...prev, [cacheKey]: false }))
@@ -430,11 +407,9 @@ const StaffIncidentsPage: React.FC = () => {
       setIsAssigning(true)
       setEmailStatus(null)
 
-      console.log("🔄 Assigning team to incident:", { incidentId, teamId })
 
       const response = await incidentsApi.assignTeamToIncident(incidentId, teamId)
 
-      console.log("✅ Team assignment response:", response)
 
       // Update local state
       setIncidents((prev) =>
@@ -459,13 +434,11 @@ const StaffIncidentsPage: React.FC = () => {
           sent: true,
           details: response.emailDetails,
         })
-        console.log("📧 Email notifications sent successfully:", response.emailDetails)
       } else {
         setEmailStatus({
           sent: false,
           details: response.emailDetails || { error: "No email details provided" },
         })
-        console.log("⚠️ Email notifications failed:", response.emailDetails)
       }
 
       setTimeout(() => {
@@ -473,7 +446,6 @@ const StaffIncidentsPage: React.FC = () => {
         setEmailStatus(null)
       }, 3000)
     } catch (error) {
-      console.error("❌ Error assigning team to incident:", error)
       setEmailStatus({
         sent: false,
         details: { error: error instanceof Error ? error.message : "Unknown error" },
@@ -488,11 +460,9 @@ const StaffIncidentsPage: React.FC = () => {
       setIsAssigning(true)
       setEmailStatus(null)
 
-      console.log("🔄 Assigning staff to incident:", { incidentId, staffId })
 
       const response = await incidentsApi.assignStaffToIncident(incidentId, staffId)
 
-      console.log("✅ Staff assignment response:", response)
 
       // Update local state
       setIncidents((prev) =>
@@ -516,13 +486,11 @@ const StaffIncidentsPage: React.FC = () => {
           sent: true,
           details: response.emailDetails,
         })
-        console.log("📧 Email notification sent successfully:", response.emailDetails)
       } else {
         setEmailStatus({
           sent: false,
           details: response.emailDetails || { error: "No email details provided" },
         })
-        console.log("⚠️ Email notification failed:", response.emailDetails)
       }
 
       setTimeout(() => {
@@ -530,7 +498,6 @@ const StaffIncidentsPage: React.FC = () => {
         setEmailStatus(null)
       }, 3000)
     } catch (error) {
-      console.error("❌ Error assigning staff to incident:", error)
       setEmailStatus({
         sent: false,
         details: { error: error instanceof Error ? error.message : "Unknown error" },
@@ -548,7 +515,6 @@ const StaffIncidentsPage: React.FC = () => {
       // Check authentication before making request
       const currentAuthState = getAuthState()
       if (!currentAuthState.isAuthenticated || currentAuthState.userType !== 'staff') {
-        console.error("❌ User is not authenticated as staff - cannot update incident")
         showToast({
           type: "error",
           title: "Authentication Required",
@@ -570,12 +536,10 @@ const StaffIncidentsPage: React.FC = () => {
         return
       }
 
-      console.log("🔄 Updating incident:", { incidentId, status, notes })
 
       // Call the update API
       const response = await incidentsApi.updateIncidentStatus(incidentId, { status, notes })
 
-      console.log("✅ Update response:", response)
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to update incident')
@@ -610,7 +574,6 @@ const StaffIncidentsPage: React.FC = () => {
         setUpdateNotes("")
       }, 1000)
     } catch (error) {
-      console.error("❌ Error updating incident:", error)
 
       // Show error notification with detailed message
       const errorMessage = error instanceof Error 

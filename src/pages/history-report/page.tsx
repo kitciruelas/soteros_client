@@ -129,12 +129,10 @@ export default function HistoryReportPage() {
 
   useEffect(() => {
     const authState = getAuthState()
-    console.log("Auth state in History Report:", authState)
     if (!authState.isAuthenticated) {
       navigate("/auth/login")
       return
     }
-    console.log("User data in History Report:", authState.userData)
     setUserData(authState.userData as ExtendedUserData)
     setIsAuthenticated(true)
 
@@ -177,8 +175,8 @@ export default function HistoryReportPage() {
             await new Promise((resolve) => setTimeout(resolve, 1000))
             const address = await geocodeCoordinates(report.latitude!, report.longitude!)
             setGeocodedLocations((prev) => ({ ...prev, [coordKey]: address }))
-          } catch (error) {
-            console.error("Geocoding failed for", coordKey, error)
+          } catch {
+            // Geocoding failed for this coordinate
           }
         }
       }
@@ -198,10 +196,6 @@ export default function HistoryReportPage() {
       const userData = authState.userData as ExtendedUserData
       let userId = userData?.userId || userData?.user_id || userData?.id
 
-      console.log("🔍 Auth state:", authState)
-      console.log("🔍 User data for ID extraction:", userData)
-      console.log("🔍 Extracted userId:", userId)
-
       if (!userId) {
         const storageKeys = ["userInfo", "user", "admin", "staff"]
         for (const key of storageKeys) {
@@ -211,12 +205,9 @@ export default function HistoryReportPage() {
               const parsedData = JSON.parse(storedData)
               userId =
                 parsedData.userId || parsedData.user_id || parsedData.id || parsedData.admin_id || parsedData.staff_id
-              if (userId) {
-                console.log(`✅ Found userId ${userId} in storage key: ${key}`)
-                break
-              }
-            } catch (e) {
-              console.error(`Error parsing ${key} from storage:`, e)
+              if (userId) break
+            } catch {
+              // Skip invalid storage entry
             }
           }
         }
@@ -226,14 +217,12 @@ export default function HistoryReportPage() {
         throw new Error("User ID not found. Please try logging in again.")
       }
 
-      console.log("✅ Final userId for API call:", userId)
 
       // Health check with timeout
       const healthController = new AbortController()
       const healthTimeout = setTimeout(() => healthController.abort(), 5000)
 
       try {
-        console.log("🔍 Checking backend health...")
         const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soterosbackend-production.up.railway.app/api');
         const healthCheck = await fetch(`${apiBaseUrl}/health`, {
           signal: healthController.signal,
@@ -243,10 +232,8 @@ export default function HistoryReportPage() {
         if (!healthCheck.ok) {
           throw new Error(`Backend health check failed: ${healthCheck.status} ${healthCheck.statusText}`)
         }
-        console.log("✅ Backend health check passed")
-      } catch (healthError) {
+      } catch {
         clearTimeout(healthTimeout)
-        console.error("❌ Backend health check failed:", healthError)
         throw new Error("Cannot connect to backend server. Please ensure the server is running.")
       }
 
@@ -254,14 +241,10 @@ export default function HistoryReportPage() {
       const fetchController = new AbortController()
       const fetchTimeout = setTimeout(() => fetchController.abort(), 10000)
 
-      console.log(`🔍 Fetching incidents for user ID: ${userId}`)
-      
       // Get the correct API base URL
       const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://soterosbackend-production.up.railway.app/api');
       const apiUrl = `${apiBaseUrl}/incidents/user/${userId}`;
-      
-      console.log(`🔍 API URL: ${apiUrl}`)
-      
+
       const response = await fetch(apiUrl, {
         method: "GET",
           headers: {
@@ -273,13 +256,10 @@ export default function HistoryReportPage() {
 
       clearTimeout(fetchTimeout)
 
-      console.log("📡 Response status:", response.status, response.statusText)
-
       if (!response.ok) {
         let errorText
         try {
           errorText = await response.text()
-          console.error("Response body (text):", errorText)
 
           if (errorText.trim().startsWith("{") || errorText.trim().startsWith("[")) {
             const errorJson = JSON.parse(errorText)
@@ -287,14 +267,12 @@ export default function HistoryReportPage() {
           } else {
             throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`)
           }
-        } catch (parseError) {
-          console.error("Error parsing response:", parseError)
+        } catch {
           throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`)
         }
       }
 
       const data = await response.json()
-      console.log("✅ API response data:", data)
 
       if (data.success && data.incidents) {
         const reportsWithTimeline = data.incidents.map((incident: IncidentReport) => ({
@@ -303,12 +281,10 @@ export default function HistoryReportPage() {
         }))
 
         setIncidentReports(reportsWithTimeline)
-        console.log(`✅ Successfully loaded ${reportsWithTimeline.length} incident reports`)
       } else {
         throw new Error(data.message || "Failed to fetch incidents")
       }
     } catch (err) {
-      console.error("❌ Error fetching incident reports:", err)
       if (err instanceof Error && err.name === "AbortError") {
         setError("Request timed out. Please check your connection and try again.")
       } else {
@@ -521,8 +497,7 @@ export default function HistoryReportPage() {
         hour: "2-digit",
         minute: "2-digit",
       })
-    } catch (error) {
-      console.error("Date formatting error:", error)
+    } catch {
       return "Invalid Date"
     }
   }, [])
@@ -598,8 +573,8 @@ export default function HistoryReportPage() {
               return locationName
             }
           }
-        } catch (proxyError) {
-          console.log("Backend proxy geocoding failed, using coordinate format")
+        } catch {
+          // Backend proxy geocoding failed, use coordinate format
         }
 
         // Final fallback
@@ -608,8 +583,7 @@ export default function HistoryReportPage() {
         const locationName = `${Math.abs(lat).toFixed(4)}°${latDir}, ${Math.abs(lng).toFixed(4)}°${lngDir}`
         setLocationCache((prev) => ({ ...prev, [cacheKey]: locationName }))
         return locationName
-      } catch (error) {
-        console.error("Geocoding error:", error)
+      } catch {
         const locationName = `${lat.toFixed(4)}, ${lng.toFixed(4)}`
         setLocationCache((prev) => ({ ...prev, [cacheKey]: locationName }))
         return locationName

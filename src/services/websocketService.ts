@@ -60,14 +60,7 @@ class WebSocketService {
         // Get the WebSocket URL from environment or construct from API URL
         const apiUrl = import.meta.env.VITE_API_URL || 'https://soterosbackend-production.up.railway.app/api';
         let wsUrl;
-        
-        console.log('🔧 WebSocket Debug Info:');
-        console.log('- VITE_API_URL:', import.meta.env.VITE_API_URL);
-        console.log('- VITE_API_PORT:', import.meta.env.VITE_API_PORT);
-        console.log('- Current location:', window.location.href);
-        console.log('- API URL being used:', apiUrl);
-        console.log('- NODE_ENV:', import.meta.env.MODE);
-        
+
         // Check if we're in development mode
         const isDevelopment = import.meta.env.MODE === 'development' || 
                              window.location.hostname === 'localhost' || 
@@ -79,28 +72,22 @@ class WebSocketService {
           const host = window.location.hostname;
           const port = import.meta.env.VITE_API_PORT || '5000';
           wsUrl = `${protocol}//${host}:${port}?token=${encodeURIComponent(token)}`;
-          console.log('- Using development WebSocket URL (localhost)');
         } else if (apiUrl.startsWith('http')) {
           // Production: use Render backend WebSocket
           const wsHost = apiUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/api$/, '');
           const protocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
           wsUrl = `${protocol}//${wsHost}?token=${encodeURIComponent(token)}`;
-          console.log('- Using production WebSocket URL');
         } else {
           // Fallback: use localhost
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
           const host = window.location.hostname;
           const port = import.meta.env.VITE_API_PORT || '5000';
           wsUrl = `${protocol}//${host}:${port}?token=${encodeURIComponent(token)}`;
-          console.log('- Using fallback WebSocket URL (localhost)');
         }
-
-        console.log('🔌 Connecting to WebSocket:', wsUrl);
 
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-          console.log('✅ WebSocket connected successfully');
           this.connectionState = 'connected';
           this.reconnectAttempts = 0;
           this.isConnecting = false;
@@ -111,8 +98,7 @@ class WebSocketService {
         this.ws.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log('📨 WebSocket message received:', message);
-            
+
             // Handle pong responses for keep-alive
             if (message.type === 'pong') {
               this.lastPongTime = Date.now();
@@ -120,23 +106,17 @@ class WebSocketService {
             }
             
             this.handleMessage(message);
-          } catch (error) {
-            console.error('❌ Error parsing WebSocket message:', error);
+          } catch {
+            // Ignore parse errors
           }
         };
 
         this.ws.onclose = (event) => {
-          console.log('🔌 WebSocket connection closed:', {
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean
-          });
           this.connectionState = 'disconnected';
           this.isConnecting = false;
           this.stopKeepAlive();
           
           if (event.code !== 1000) { // Not a normal closure
-            console.log('🔄 Attempting to reconnect...');
             this.attemptReconnect(token);
           }
           
@@ -147,8 +127,6 @@ class WebSocketService {
         };
 
         this.ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
-          console.error('❌ WebSocket readyState:', this.ws?.readyState);
           this.connectionState = 'disconnected';
           this.isConnecting = false;
           reject(error);
@@ -171,12 +149,10 @@ class WebSocketService {
 
   private attemptReconnect(token: string) {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached');
       return;
     }
 
     this.reconnectAttempts++;
-    console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
     setTimeout(() => {
       this.connect(token).catch(() => {
@@ -190,8 +166,8 @@ class WebSocketService {
     handlers.forEach(handler => {
       try {
         handler(message.data);
-      } catch (error) {
-        console.error('Error in message handler:', error);
+      } catch {
+        // Ignore handler errors
       }
     });
   }
@@ -204,8 +180,6 @@ class WebSocketService {
         timestamp: new Date().toISOString()
       };
       this.ws.send(JSON.stringify(message));
-    } else {
-      console.warn('WebSocket is not connected. Cannot send message.');
     }
   }
 
@@ -248,7 +222,6 @@ class WebSocketService {
         // Check if we got a pong response within 15 seconds (more lenient)
         setTimeout(() => {
           if (Date.now() - this.lastPongTime > 15000 && this.ws) {
-            console.log('⚠️ WebSocket keep-alive timeout, reconnecting...');
             this.ws.close(1006, 'Keep-alive timeout');
           }
         }, 15000);

@@ -1040,7 +1040,6 @@ export const incidentsApi = {
     });
   },
   updateIncidentStatus: async (incidentId: number, payload: { status: string; notes?: string }) => {
-    console.log('📤 Updating incident status:', { incidentId, payload });
     return apiRequest<{ success: boolean; message: string }>(`/incidents/${incidentId}/update-status`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -1288,13 +1287,7 @@ export const safetyProtocolsApi = {
   uploadAttachment: async (file: File) => {
     const form = new FormData();
     form.append('attachment', file);
-    console.log('📤 Uploading file to Cloudinary:', {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
     const response = await apiFormRequest<{ success: boolean; filename: string; path: string; url: string }>(`/safety-protocols/upload`, form);
-    console.log('✅ Upload response:', response);
     return response;
   },
   createProtocol: async (payload: { title: string; description: string; type: 'fire'|'earthquake'|'medical'|'intrusion'|'general'; file_attachment?: string|null; created_by?: number|null }) => {
