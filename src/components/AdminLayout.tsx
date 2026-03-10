@@ -105,8 +105,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     
     // Fallback: try to load notification sound, if it fails, create a simple beep
     audio.addEventListener('error', () => {
-      console.log('Notification sound file not found, using fallback');
-      // Create a simple beep using Web Audio API
+      // Fallback: sound file failed to load
     });
     
     return () => {

@@ -57,128 +57,59 @@ export interface PaginatedResponse<T> {
 
 // Get auth token from localStorage with enhanced error handling
 export const getAuthToken = (): string | null => {
-  console.log('🔑 Getting auth token from storage...');
-  
   // Check localStorage first
   const userInfo = localStorage.getItem('userInfo');
   if (userInfo) {
     try {
       const parsed = JSON.parse(userInfo);
-      console.log('📦 userInfo found in localStorage:', { 
-        hasToken: !!parsed.token, 
-        tokenLength: parsed.token ? parsed.token.length : 0,
-        userType: parsed.userType || parsed.role,
-        id: parsed.id || parsed.user_id || parsed.staff_id || parsed.admin_id
-      });
       if (parsed.token && typeof parsed.token === 'string' && parsed.token.length > 10) {
-        console.log('✅ Token found in localStorage userInfo');
         return parsed.token;
-      } else {
-        console.warn('⚠️ userInfo exists but token is missing or invalid:', {
-          hasToken: !!parsed.token,
-          tokenType: typeof parsed.token,
-          tokenLength: parsed.token ? parsed.token.length : 0
-        });
-        // Try to see if there are other token fields
-        if (parsed.accessToken) {
-          console.log('ℹ️ Found accessToken field, trying that...');
-          if (typeof parsed.accessToken === 'string' && parsed.accessToken.length > 10) {
-            return parsed.accessToken;
-          }
-        }
       }
-    } catch (e) {
-      console.error('❌ Error parsing userInfo from localStorage:', e);
+      if (parsed.accessToken && typeof parsed.accessToken === 'string' && parsed.accessToken.length > 10) {
+        return parsed.accessToken;
+      }
+    } catch {
+      // Ignore parse errors
     }
-  } else {
-    console.log('ℹ️ No userInfo found in localStorage');
   }
-  
+
   // Check sessionStorage as fallback
   const sessionUserInfo = sessionStorage.getItem('userInfo');
   if (sessionUserInfo) {
     try {
       const parsed = JSON.parse(sessionUserInfo);
-      console.log('📦 userInfo found in sessionStorage:', { 
-        hasToken: !!parsed.token, 
-        tokenLength: parsed.token ? parsed.token.length : 0,
-        userType: parsed.userType || parsed.role 
-      });
       if (parsed.token && typeof parsed.token === 'string' && parsed.token.length > 10) {
-        console.log('✅ Token found in sessionStorage userInfo');
         return parsed.token;
-      } else {
-        console.warn('⚠️ sessionStorage userInfo exists but token is missing or invalid');
       }
-    } catch (e) {
-      console.error('❌ Error parsing userInfo from sessionStorage:', e);
+    } catch {
+      // Ignore parse errors
     }
-  } else {
-    console.log('ℹ️ No userInfo found in sessionStorage');
   }
-  
+
   // Fallback to check for admin token (legacy support)
   const adminToken = localStorage.getItem('adminToken');
-  if (adminToken && adminToken.length > 10) {
-    console.log('Using legacy adminToken, length:', adminToken.length);
-    return adminToken;
-  } else if (adminToken) {
-    console.warn('adminToken found but too short:', adminToken.length);
-  } else {
-    console.log('No adminToken found in localStorage');
-  }
-  
+  if (adminToken && adminToken.length > 10) return adminToken;
+
   // Check for staff token (legacy support)
   const staffToken = localStorage.getItem('staffToken');
-  if (staffToken && staffToken.length > 10) {
-    console.log('Using legacy staffToken, length:', staffToken.length);
-    return staffToken;
-  } else if (staffToken) {
-    console.warn('staffToken found but too short:', staffToken.length);
-  } else {
-    console.log('No staffToken found in localStorage');
-  }
-  
+  if (staffToken && staffToken.length > 10) return staffToken;
+
   // Check for regular user token (legacy support)
   const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
-  if (userToken && userToken.length > 10) {
-    console.log('Using legacy userToken, length:', userToken.length);
-    return userToken;
-  } else if (userToken) {
-    console.warn('userToken found but too short:', userToken.length);
-  } else {
-    console.log('No userToken found in localStorage');
-  }
-  
+  if (userToken && userToken.length > 10) return userToken;
+
   // Also check sessionStorage for legacy tokens
   const sessionStaffToken = sessionStorage.getItem('staffToken');
-  if (sessionStaffToken && sessionStaffToken.length > 10) {
-    console.log('Using staffToken from sessionStorage, length:', sessionStaffToken.length);
-    return sessionStaffToken;
-  }
-  
+  if (sessionStaffToken && sessionStaffToken.length > 10) return sessionStaffToken;
+
   const sessionToken = sessionStorage.getItem('token');
-  if (sessionToken && sessionToken.length > 10) {
-    console.log('Using token from sessionStorage, length:', sessionToken.length);
-    return sessionToken;
-  }
-  
-  console.warn('❌ No valid token found in any storage location');
-  console.warn('📋 Debug info - checking all storage keys:');
-  const allKeys = ['userInfo', 'staffToken', 'adminToken', 'token', 'userToken', 'staff', 'user', 'admin'];
-  allKeys.forEach(key => {
-    const local = localStorage.getItem(key);
-    const session = sessionStorage.getItem(key);
-    if (local) console.log(`  localStorage.${key}:`, local.substring(0, 50) + '...');
-    if (session) console.log(`  sessionStorage.${key}:`, session.substring(0, 50) + '...');
-  });
+  if (sessionToken && sessionToken.length > 10) return sessionToken;
+
   return null;
 };
 
 // Clear authentication data on token errors
 export const clearAuthDataOnError = (): void => {
-  console.log('Clearing auth data due to token error');
-  
   // Clear all authentication storage
   localStorage.removeItem('userInfo');
   sessionStorage.removeItem('userInfo');
@@ -207,15 +138,8 @@ const createHeaders = (): HeadersInit => {
   
   const token = getAuthToken();
   if (token) {
-    // Always add the token and let the backend validate it
-    // Don't try to guess expiration on frontend - backend will return proper error codes
     headers['Authorization'] = `Bearer ${token}`;
-    console.log('Authorization header set with token (length:', token.length, ')');
-  } else {
-    console.warn('⚠️ No token found - request will be sent without Authorization header');
-    console.warn('⚠️ This may cause 401 errors. User may need to log in again.');
   }
-  
   return headers;
 };
 
@@ -231,16 +155,12 @@ export const apiFormRequest = async <T = any>(
   if (token) headers['Authorization'] = `Bearer ${token}`;
   
   const config: RequestInit = { method: 'POST', body: formData, headers, ...options };
-  
-  console.log(`API Form Request: POST ${url}`);
-  
+
   try {
     const response = await fetch(url, config);
     
     // Handle 401 Unauthorized and 403 Forbidden responses (token issues)
     if (response.status === 401 || (response.status === 403 && !endpoint.includes('/routing/'))) {
-      console.warn(`Authentication error (${response.status}) for ${endpoint}`);
-      
       let errorData;
       try {
         errorData = await response.json();
@@ -267,21 +187,12 @@ export const apiFormRequest = async <T = any>(
         errorMessage = response.statusText || errorMessage;
       }
 
-      console.error(`API Form Error for ${endpoint}:`, {
-        status: response.status,
-        statusText: response.statusText,
-        errorData,
-        url
-      });
-
       throw new Error(errorMessage);
     }
     
     const responseData = await response.json();
-    console.log(`API Form Success for ${endpoint}:`, responseData.success !== undefined ? responseData.success : 'No success field');
     return responseData;
   } catch (error) {
-    console.error(`API form request failed for ${endpoint}:`, error);
 
     if (error instanceof Error) {
       if (error.message.includes('Authentication') || error.message.includes('token')) {
@@ -307,13 +218,6 @@ export const apiRequest = async <T = any>(
     ...options,
   };
   
-  // Suppress API request log for login endpoints to avoid cluttering console
-  if (!endpoint.includes('/auth/login/')) {
-    console.log(`API Request: ${config.method || 'GET'} ${url}`);
-    console.log('Environment:', import.meta.env.MODE);
-    console.log('API Base URL:', FINAL_API_BASE_URL);
-  }
-  
   try {
     const response = await fetch(url, config);
     
@@ -322,11 +226,6 @@ export const apiRequest = async <T = any>(
     // Don't treat 403 as auth error for routing endpoints since they may return 403 from external APIs
     // Don't clear auth data for login endpoints since user is trying to log in
     if (response.status === 401 || (response.status === 403 && !endpoint.includes('/routing/'))) {
-      // Only log warning if NOT a login endpoint
-      if (!endpoint.includes('/auth/login/')) {
-        console.warn(`Authentication error (${response.status}) for ${endpoint}`);
-      }
-
       let errorData;
       try {
         errorData = await response.json();
@@ -334,17 +233,9 @@ export const apiRequest = async <T = any>(
         errorData = { message: 'Authentication failed' };
       }
 
-      // Only clear auth data if NOT a login endpoint
       if (!endpoint.includes('/auth/login/')) {
-        // Check if token exists before clearing - if no token, we've already cleared
         const hadToken = !!getAuthToken();
-        if (hadToken) {
-          console.warn('🔄 Token was present but invalid - clearing auth data');
-          clearAuthDataOnError();
-        } else {
-          console.warn('⚠️ No token found and got 401 - auth data may have been already cleared');
-        }
-        // Throw specific error for authentication issues
+        if (hadToken) clearAuthDataOnError();
         throw new Error(errorData.message || 'Authentication failed. Please log in again.');
       }
     }
@@ -378,14 +269,6 @@ export const apiRequest = async <T = any>(
         
       }
 
-      // Log detailed error information
-      console.error(`API Error for ${endpoint}:`, {
-        status: response.status,
-        statusText: response.statusText,
-        errorData,
-        url
-      });
-
       // Create error with full error data attached for detailed error handling
       const error = new Error(errorMessage);
       (error as any).responseData = errorData;
@@ -394,17 +277,8 @@ export const apiRequest = async <T = any>(
     }
     
     const responseData = await response.json();
-    // Suppress API success log for login endpoints to avoid cluttering console
-    if (!endpoint.includes('/auth/login/')) {
-      console.log(`API Success for ${endpoint}:`, responseData.success !== undefined ? responseData.success : 'No success field');
-    }
     return responseData;
   } catch (error) {
-    // Suppress API error log for login endpoints to avoid cluttering console
-    if (!endpoint.includes('/auth/login/')) {
-      console.error(`API request failed for ${endpoint}:`, error);
-    }
-
     // Re-throw the error with additional context
     if (error instanceof Error) {
       if (error.message.includes('Authentication') || error.message.includes('token')) {

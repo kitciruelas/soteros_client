@@ -95,9 +95,7 @@ const Navbar: React.FC<NavbarProps> = () => {
     audio.preload = 'auto';
     setNotificationSound(audio);
     
-    audio.addEventListener('error', () => {
-      console.log('Notification sound file not found, using fallback');
-    });
+    audio.addEventListener('error', () => {});
     
     return () => {
       if (audio) {
